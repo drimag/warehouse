@@ -1,0 +1,36 @@
+/* styles/layout.css */
+
+.app-layout {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 60px;
+  border-right: 1px solid black;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 1rem;
+  gap: 1rem;
+}
+
+/* Icon button */
+.nav-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: lightgray;
+  cursor: pointer;
+}
+
+.nav-icon:hover {
+  background: orange;
+}
+
+/* Main content area */
+.main-content {
+  flex: 1;
+  overflow: auto;
+}
