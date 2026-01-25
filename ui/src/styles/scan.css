@@ -1,0 +1,61 @@
+.scan-page {
+  padding: 2rem;
+  max-width: 500px;
+}
+
+.scan-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.2rem;
+}
+
+.scan-field label {
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-bottom: 0.4rem;
+}
+
+.scan-field input,
+.scan-field select {
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #111;
+  color: white;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-buttons button {
+  flex: 1;
+  padding: 0.6rem;
+  background: #222;
+  border: 1px solid #333;
+  color: white;
+  cursor: pointer;
+}
+
+.action-buttons button.active {
+  background: #16a34a;
+}
+
+.primary-btn {
+  width: 100%;
+  padding: 0.8rem;
+  background: #16a34a;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.scan-result {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+}
