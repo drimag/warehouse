@@ -32,7 +32,7 @@ export default function Inventory() {
 
   return (
     <div className="page">
-      <h1 className="page-title">Units</h1>
+      <h1 className="page-title">Inventory</h1>
       <UnitFilters
         warehouse={warehouse}
         setWarehouse={setWarehouse}
