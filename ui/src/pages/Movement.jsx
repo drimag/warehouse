@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import MovementTable from "../components/MovementTable";
 import MovementsFilterBar from "../components/MovementsFilterBar.jsx";
 import "../styles/layout.css";
@@ -9,7 +10,7 @@ const mockMovements = [
     vin: "VIN123",
     fromWarehouse: "Warehouse A",
     toWarehouse: "Warehouse B",
-    action: "SEND",
+    action: "STORED",
     timestamp: "2026-01-22 10:21",
   },
   {
@@ -17,7 +18,7 @@ const mockMovements = [
     vin: "VIN123",
     fromWarehouse: "Warehouse B",
     toWarehouse: "Warehouse B",
-    action: "RECEIVE",
+    action: "IN_TRANSIT",
     timestamp: "2026-01-22 14:05",
   },
   {
@@ -25,12 +26,14 @@ const mockMovements = [
     vin: "VIN456",
     fromWarehouse: "Warehouse B",
     toWarehouse: "Warehouse A",
-    action: "SEND",
+    action: "STORED",
     timestamp: "2026-01-23 09:12",
   },
 ];
 
 export default function Movement() {
+  const navigate = useNavigate();
+
   const [movements] = useState(mockMovements);
   const [searchVin, setSearchVin] = useState("");
   const [from, setFrom] = useState("ALL");
@@ -60,7 +63,10 @@ export default function Movement() {
         setAction={setAction}
       />
 
-      <MovementTable movements={filtered} />
+      <MovementTable 
+        movements={filtered} 
+        onRowClick={(vin) => navigate(`/units/`)}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import MovementRow from "./MovementRow";
 
-export default function MovementTable({ movements }) {
+export default function MovementTable({ movements, onRowClick }) {
   return (
     <table className="table">
       <thead>
@@ -15,7 +15,11 @@ export default function MovementTable({ movements }) {
 
       <tbody>
         {movements.map((m) => (
-          <MovementRow key={m.id} movement={m} />
+          <MovementRow 
+            key={m.id} 
+            movement={m} 
+            onClick={() => onRowClick(m.vin)}
+          />
         ))}
 
         {movements.length === 0 && (

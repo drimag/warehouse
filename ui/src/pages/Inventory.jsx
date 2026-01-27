@@ -44,7 +44,7 @@ export default function Inventory() {
 
       <UnitTable
         units={filteredUnits}
-        onRowClick={(vin) => navigate(`/units/${vin}`)}
+        onRowClick={(vin) => navigate(`/units/`)}
       />
     </div>
   );

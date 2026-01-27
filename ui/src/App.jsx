@@ -4,10 +4,12 @@ import Inventory from "./pages/Inventory";
 import Scan from "./pages/Scan";
 import Movement from "./pages/Movement";
 import Sidebar from "./components/Sidebar";
+import UnitPage from "./pages/UnitHistory";
 import "./styles/layout.css";
 import "./styles/tables.css";
 import "./styles/scan.css";
 import "./styles/sidebar.css";
+import "./styles/unit.css";
 
 function App() {
   return (
@@ -19,6 +21,7 @@ function App() {
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/scan" element={<Scan />} />
           <Route path="/movement" element={<Movement />} />
+          <Route path="/units" element={<UnitPage />} />
         </Routes>
       </div>
     </div>
