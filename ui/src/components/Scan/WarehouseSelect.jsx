@@ -1,9 +1,9 @@
 const warehouses = ["A", "B", "C"];
 
-export default function WarehouseSelect({ warehouse, setWarehouse }) {
+export default function WarehouseSelect({ warehouse, setWarehouse, title }) {
   return (
     <div className="scan-field">
-      <label>Warehouse</label>
+      <label>{title}</label>
       <select
         value={warehouse}
         onChange={(e) => setWarehouse(e.target.value)}

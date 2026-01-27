@@ -9,6 +9,7 @@ export default function Scan() {
   const [vin, setVin] = useState("");
   const [action, setAction] = useState("receive");
   const [warehouse, setWarehouse] = useState("");
+  const [warehouse2, setWarehouse2] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = () => {
@@ -17,19 +18,22 @@ export default function Scan() {
   };
 
   return (
-    <div className="page-centered">
+    <div className="page-centered page">
       <h1 className="page-title">Scan Unit</h1>
 
       <ScanInput vin={vin} setVin={setVin} />
       <ActionSelector action={action} setAction={setAction} />
-      <WarehouseSelect warehouse={warehouse} setWarehouse={setWarehouse} />
+      <div className="warehouse-row">
+        <WarehouseSelect warehouse={warehouse} setWarehouse={setWarehouse} title="Origin"/>
+        <WarehouseSelect warehouse={warehouse2} setWarehouse={setWarehouse2} title="Destination"/>
+      </div>
 
       <button className="primary-btn" onClick={handleSubmit}>
         Confirm
       </button>
 
       {submitted && (
-        <ScanResult vin={vin} action={action} warehouse={warehouse} />
+        <ScanResult vin={vin} action={action} warehouse1={warehouse} warehouse2={warehouse2}/>
       )}
     </div>
     

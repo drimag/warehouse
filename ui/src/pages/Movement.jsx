@@ -17,7 +17,7 @@ const mockMovements = [
     id: 2,
     vin: "VIN123",
     fromWarehouse: "Warehouse B",
-    toWarehouse: "Warehouse B",
+    toWarehouse: "Warehouse C",
     action: "IN_TRANSIT",
     timestamp: "2026-01-22 14:05",
   },
