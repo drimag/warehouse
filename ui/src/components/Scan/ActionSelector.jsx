@@ -4,22 +4,22 @@ export default function ActionSelector({ action, setAction }) {
       <label>Status</label>
       <div className="action-buttons">
         <button
-          className={action === "receive" ? "active" : ""}
-          onClick={() => setAction("receive")}
+          className={action === "STORED" ? "active" : ""}
+          onClick={() => setAction("STORED")}
         >
-          Receive Unit
+          STORED
         </button>
         <button
-          className={action === "send" ? "active" : ""}
-          onClick={() => setAction("send")}
+          className={action === "IN_TRANSIT" ? "active" : ""}
+          onClick={() => setAction("IN_TRANSIT")}
         >
-          Transfer Unit
+          IN_TRANSIT
         </button>
         <button
-          className={action === "pending" ? "active" : ""}
-          onClick={() => setAction("pending")}
+          className={action === "PENDING" ? "active" : ""}
+          onClick={() => setAction("PENDING")}
         >
-          Pending
+          PENDING
         </button>
       </div>
     </div>

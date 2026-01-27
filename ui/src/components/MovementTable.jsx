@@ -7,9 +7,9 @@ export default function MovementTable({ movements }) {
         <tr>
           <th>Time</th>
           <th>VIN</th>
-          <th>From</th>
-          <th>To</th>
-          <th>Action</th>
+          <th>Origin</th>
+          <th>Destination</th>
+          <th>Status</th>
         </tr>
       </thead>
 
