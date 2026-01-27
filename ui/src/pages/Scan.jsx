@@ -17,8 +17,8 @@ export default function Scan() {
   };
 
   return (
-    <div className="scan-page">
-      <h1>Scan Unit</h1>
+    <div className="page-centered">
+      <h1 className="page-title">Scan Unit</h1>
 
       <ScanInput vin={vin} setVin={setVin} />
       <ActionSelector action={action} setAction={setAction} />
@@ -32,5 +32,6 @@ export default function Scan() {
         <ScanResult vin={vin} action={action} warehouse={warehouse} />
       )}
     </div>
+    
   );
 }
