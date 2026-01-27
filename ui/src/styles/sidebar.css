@@ -1,0 +1,23 @@
+/* Sidebar */
+.sidebar {
+  width: 60px;
+  border-right: 1px solid black;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 1.5rem;
+  gap: 1rem;
+}
+
+/* Icon button */
+.nav-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: lightgray;
+  cursor: pointer;
+}
+
+.nav-icon:hover {
+  background: orange;
+}

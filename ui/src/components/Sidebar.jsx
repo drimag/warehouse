@@ -1,6 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import "../styles/layout.css";
-
 export default function Sidebar() {
   const navigate = useNavigate();
 
