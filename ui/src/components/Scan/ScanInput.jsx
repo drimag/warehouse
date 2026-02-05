@@ -1,7 +1,7 @@
-export default function ScanInput({ vin, setVin }) {
+export default function ScanInput({ vin, setVin, title }) {
   return (
     <div className="scan-field">
-      <label>VIN</label>
+      <label>{title}</label>
       <input
         type="text"
         value={vin}

@@ -5,6 +5,7 @@ import Scan from "./pages/Scan";
 import Movement from "./pages/Movement";
 import Sidebar from "./components/Sidebar";
 import UnitPage from "./pages/UnitHistory";
+import StockIn from "./pages/StockIn";
 import "./styles/layout.css";
 import "./styles/tables.css";
 import "./styles/scan.css";
@@ -22,6 +23,7 @@ function App() {
           <Route path="/scan" element={<Scan />} />
           <Route path="/movement" element={<Movement />} />
           <Route path="/units" element={<UnitPage />} />
+          <Route path="/stockin" element={<StockIn />} />
         </Routes>
       </div>
     </div>
