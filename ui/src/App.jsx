@@ -6,6 +6,7 @@ import Movement from "./pages/Movement";
 import Sidebar from "./components/Sidebar";
 import UnitPage from "./pages/UnitHistory";
 import StockIn from "./pages/StockIn";
+import StockOut from "./pages/StockOut";
 import "./styles/layout.css";
 import "./styles/tables.css";
 import "./styles/scan.css";
@@ -24,6 +25,7 @@ function App() {
           <Route path="/movement" element={<Movement />} />
           <Route path="/units" element={<UnitPage />} />
           <Route path="/stockin" element={<StockIn />} />
+          <Route path="/stockout" element={<StockOut />} />
         </Routes>
       </div>
     </div>
