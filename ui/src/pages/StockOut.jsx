@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import ScanInput from "../components/Scan/ScanInput";
 import WarehouseSelect from "../components/Scan/WarehouseSelect";
 import PhotoUpload from "../components/Scan/PhotoUpload";
@@ -6,37 +6,114 @@ import ScanResult from "../components/Scan/ScanResult";
 import GenericSelect from "../components/Scan/GenericSelect";
 import "../styles/scan.css";
 import WaybillResult from "../components/Scan/WaybillResult";
+import Scan from "./Scan";
 
 export default function StockOut() {
+  const originRef = useRef(null);
+  const destRef = useRef(null);
+  const driverRef = useRef(null);
+  const truckRef = useRef(null);
+  const qtyRef = useRef(null);
+  const photoRef = useRef(null);
+
   const [waybill, setWaybill] = useState("");
-  const [warehouse, setWarehouse] = useState("");
-  const [warehouse2, setWarehouse2] = useState("");
+  const [origin, setOrigin] = useState("");
+  const [destination, setDestination] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [preview, setPreview] = useState(null);
   const [driver, setDriver] = useState("");
   const [truck, setTruck] = useState("");
   const [quantity, setQuantity] = useState(0);
 
-  const driverList = ["Driver A", "Driver B", "Driver C"]
-  const truckList = ["Truck A", "Truck B", "Truck C"]
+  const driverList = ["Driver A", "Driver B", "Driver C"];
+  const truckList = ["Truck A", "Truck B", "Truck C"];
+  const warehouseList = ["Warehouse A", "Warehouse B", "Warehouse C"];
+
   const handleSubmit = () => {
     if (!waybill || !warehouse) return;
     setSubmitted(true);
+  };
+
+  const focusNext = (nextRef) => {
+    const element = nextRef.current;
+    if (!element) return;
+    element.focus();
+
+    if (element.tagName === "SELECT" && "showPicker" in element) {
+      try {
+        element.showPicker();
+      } catch (err) {
+        console.warn("Auto-picker blocked or unsupported:", err);
+      }
+    } else if (element.tagName === "INPUT" && element.type === "file") {
+      element.click();
+    }
   };
 
   return (
     <div className="page-centered page">
       <h1 className="page-title">Stock Out</h1>
 
-      <ScanInput vin={waybill} setVin={setWaybill} title={"New Waybill"} />
+      <ScanInput
+        vin={waybill}
+        setVin={setWaybill}
+        title={"New Waybill"}
+        onKeyDown={(e) => e.key === "Enter" && focusNext(originRef)}
+      />
+
       <div className="warehouse-row">
-        <WarehouseSelect warehouse={warehouse} setWarehouse={setWarehouse} title="Origin"/>
-        <WarehouseSelect warehouse={warehouse2} setWarehouse={setWarehouse2} title="Destination"/>
+        <GenericSelect
+          ref={originRef}
+          selected={origin}
+          setSelected={(val) => {
+            setOrigin(val);
+            focusNext(destRef);
+          }}
+          title={"Origin"}
+          options={warehouseList}
+        />
+
+        <GenericSelect
+          ref={destRef}
+          selected={destination}
+          setSelected={(val) => {
+            setDestination(val);
+            focusNext(driverRef);
+          }}
+          title={"Destination"}
+          options={warehouseList}
+        />
       </div>
-      <GenericSelect selected={driver} setSelected={setDriver} title={"Driver"} options={driverList} placeholder={"Select Driver"}/>
-      <GenericSelect selected={truck} setSelected={setTruck} title={"Truck"} options={truckList} placeholder={"Select Truck"}/>
-      <ScanInput vin={quantity} setVin={setQuantity} title="Quantity" />
-      <PhotoUpload title={"Photo"} preview={preview} setPreview={setPreview}/>
+
+      <GenericSelect
+        ref={driverRef}
+        selected={driver}
+        setSelected={(val) => {
+          setDriver(val);
+          focusNext(truckRef);
+        }}
+        title={"Driver"}
+        options={driverList}
+      />
+      <GenericSelect
+        ref={truckRef}
+        selected={truck}
+        setSelected={(val) => {
+          setTruck(val);
+          focusNext(qtyRef);
+        }}
+        title={"Truck"}
+        options={truckList}
+      />
+
+      <ScanInput
+        ref={qtyRef}
+        vin={quantity}
+        setVin={setQuantity}
+        title="Quantity"
+        onKeyDown={(e) => e.key === "Enter" && focusNext(photoRef)}
+      />
+      <PhotoUpload ref={photoRef} title={"Photo"} preview={preview} setPreview={setPreview} />
 
       <button className="primary-btn" onClick={handleSubmit}>
         Confirm

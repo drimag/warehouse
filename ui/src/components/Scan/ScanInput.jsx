@@ -1,14 +1,18 @@
-export default function ScanInput({ vin, setVin, title }) {
+import { forwardRef } from "react";
+
+const ScanInput = forwardRef(({ vin, setVin, title, onKeyDown }, ref) => {
   return (
     <div className="scan-field">
       <label>{title}</label>
-      <input
+      <input 
         type="text"
-        value={vin}
-        onChange={(e) => setVin(e.target.value)}
-        placeholder="Scan or type VIN"
-        autoFocus
+        ref={ref} 
+        value={vin} 
+        onChange={(e) => setVin(e.target.value)} 
+        onKeyDown={onKeyDown}
       />
     </div>
   );
-}
+});
+
+export default ScanInput;
