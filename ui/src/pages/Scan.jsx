@@ -1,7 +1,6 @@
 import { useState } from "react";
 import ScanInput from "../components/Scan/ScanInput";
 import ActionSelector from "../components/Scan/ActionSelector";
-import WarehouseSelect from "../components/Scan/WarehouseSelect";
 import ScanResult from "../components/Scan/ScanResult";
 import "../styles/scan.css";
 

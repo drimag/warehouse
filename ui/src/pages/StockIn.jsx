@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import ScanInput from "../components/Scan/ScanInput";
-import WarehouseSelect from "../components/Scan/WarehouseSelect";
 import PhotoUpload from "../components/Scan/PhotoUpload";
 import GenericSelect from "../components/Scan/GenericSelect";
 import ScanResult from "../components/Scan/ScanResult";
@@ -14,6 +13,7 @@ export default function StockIn() {
   const [preview, setPreview] = useState(null);
 
   const warehouseList = ["Warehouse A", "Warehouse B", "Warehouse C"];
+  const waybillList = ["Waybill A", "Waybill B", "Waybill C"];
 
   const destRef = useRef(null);
   const photoRef = useRef(null);
@@ -43,6 +43,17 @@ export default function StockIn() {
     <div className="page-centered page">
       <h1 className="page-title">Stock In</h1>
 
+      <GenericSelect
+        selected={waybill}
+        setSelected={(val) => {
+          setWaybill(val);
+          focusNext(destRef);
+        }}
+        title={"Select Waybill"}
+        options={waybillList}
+        placeholder={"Select Waybill"}
+      />
+
       <ScanInput
         vin={waybill}
         setVin={setWaybill}
@@ -50,6 +61,7 @@ export default function StockIn() {
         onKeyDown={(e) => e.key === "Enter" && focusNext(destRef)}
         placeholder={"Enter Waybill"}
       />
+
       <GenericSelect
         ref={destRef}
         selected={destination}
@@ -57,10 +69,11 @@ export default function StockIn() {
           setDestination(val);
           focusNext(photoRef);
         }}
-        title={"Origin"}
+        title={"Destination"}
         options={warehouseList}
         placeholder={"Select Warehouse"}
       />
+
       <PhotoUpload
         ref={photoRef}
         title={"Photo"}
