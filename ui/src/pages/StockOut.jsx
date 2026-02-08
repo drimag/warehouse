@@ -9,6 +9,7 @@ import WaybillResult from "../components/Scan/WaybillResult";
 import Scan from "./Scan";
 
 export default function StockOut() {
+  const wayscanRef = useRef(null);
   const originRef = useRef(null);
   const destRef = useRef(null);
   const driverRef = useRef(null);
@@ -16,7 +17,8 @@ export default function StockOut() {
   const qtyRef = useRef(null);
   const photoRef = useRef(null);
 
-  const [waybill, setWaybill] = useState("");
+  const [waybillname, setWaybillName] = useState("");
+  const [waybillcode, setWaybillCode] = useState("");
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -55,11 +57,20 @@ export default function StockOut() {
       <h1 className="page-title">Stock Out</h1>
 
       <ScanInput
-        vin={waybill}
-        setVin={setWaybill}
-        title={"New Waybill"}
+        vin={waybillname}
+        setVin={setWaybillName}
+        title={"Name Waybill"}
+        onKeyDown={(e) => e.key === "Enter" && focusNext(wayscanRef)}
+        placeholder={"Name New Waybill"}
+      />
+
+      <ScanInput
+        ref={wayscanRef}
+        vin={waybillcode}
+        setVin={setWaybillCode}
+        title={"Scan Waybill"}
         onKeyDown={(e) => e.key === "Enter" && focusNext(originRef)}
-        placeholder={"Enter New Waybill"}
+        placeholder={"Scan New Waybill"}
       />
 
       <div className="warehouse-row">
