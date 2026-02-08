@@ -46,8 +46,9 @@ export default function StockIn() {
       <ScanInput
         vin={waybill}
         setVin={setWaybill}
-        title={"New Waybill"}
+        title={"Scan Waybill"}
         onKeyDown={(e) => e.key === "Enter" && focusNext(destRef)}
+        placeholder={"Enter Waybill"}
       />
       <GenericSelect
         ref={destRef}
@@ -58,6 +59,7 @@ export default function StockIn() {
         }}
         title={"Origin"}
         options={warehouseList}
+        placeholder={"Select Warehouse"}
       />
       <PhotoUpload
         ref={photoRef}

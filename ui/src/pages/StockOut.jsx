@@ -59,6 +59,7 @@ export default function StockOut() {
         setVin={setWaybill}
         title={"New Waybill"}
         onKeyDown={(e) => e.key === "Enter" && focusNext(originRef)}
+        placeholder={"Enter New Waybill"}
       />
 
       <div className="warehouse-row">
@@ -71,6 +72,7 @@ export default function StockOut() {
           }}
           title={"Origin"}
           options={warehouseList}
+          placeholder={"Select Warehouse"}
         />
 
         <GenericSelect
@@ -82,6 +84,7 @@ export default function StockOut() {
           }}
           title={"Destination"}
           options={warehouseList}
+          placeholder={"Select Warehouse"}
         />
       </div>
 
@@ -94,6 +97,7 @@ export default function StockOut() {
         }}
         title={"Driver"}
         options={driverList}
+        placeholder={"Select Driver"}
       />
       <GenericSelect
         ref={truckRef}
@@ -104,6 +108,7 @@ export default function StockOut() {
         }}
         title={"Truck"}
         options={truckList}
+        placeholder={"Select Truck"}
       />
 
       <ScanInput
@@ -112,8 +117,14 @@ export default function StockOut() {
         setVin={setQuantity}
         title="Quantity"
         onKeyDown={(e) => e.key === "Enter" && focusNext(photoRef)}
+        placeholder={"Enter Quantity"}
       />
-      <PhotoUpload ref={photoRef} title={"Photo"} preview={preview} setPreview={setPreview} />
+      <PhotoUpload
+        ref={photoRef}
+        title={"Photo"}
+        preview={preview}
+        setPreview={setPreview}
+      />
 
       <button className="primary-btn" onClick={handleSubmit}>
         Confirm
