@@ -29,7 +29,7 @@ const mockMovements = [
   }
 ];
 
-export default function Movement() {
+export default function Waybills() {
   const navigate = useNavigate();
   const [movements] = useState(mockMovements);
   const [searchWaybill, setSearchWaybill] = useState("");
@@ -40,7 +40,7 @@ export default function Movement() {
 
   return (
     <div className="page">
-      <h1 className="page-title">Movements History</h1>
+      <h1 className="page-title">Waybills</h1>
 
       <MovementsFilterBar
         searchWaybill={searchWaybill}

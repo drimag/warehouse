@@ -5,11 +5,15 @@ export default function MovementTable({ movements, onRowClick }) {
     <table className="table">
       <thead>
         <tr>
+          <th>Waybill</th>
+          <th>Driver</th>
+          <th>Truck</th>
           <th>Time</th>
-          <th>VIN</th>
-          <th>Origin</th>
-          <th>Destination</th>
           <th>Status</th>
+          <th>InOut</th>
+          <th>Quantity</th>
+          <th>Photo</th>
+          <th>User</th>
         </tr>
       </thead>
 
@@ -24,7 +28,7 @@ export default function MovementTable({ movements, onRowClick }) {
 
         {movements.length === 0 && (
           <tr>
-            <td colSpan="5" className="empty">
+            <td colSpan="9" className="empty">
               No movements found
             </td>
           </tr>
