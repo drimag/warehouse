@@ -1,4 +1,4 @@
-export default function MovementRow({ movement, onClick }) {
+export default function WaybillRow({ movement, onClick }) {
   return (
     <tr className="table-row" onClick={onClick}>
       <td>{movement.waybill}</td>

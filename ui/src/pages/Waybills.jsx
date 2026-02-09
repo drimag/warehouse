@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import MovementTable from "../components/MovementTable";
-import MovementsFilterBar from "../components/MovementsFilterBar.jsx";
+import WaybillTable from "../components/WaybillTable.jsx";
+import WaybillFilterBar from "../components/WaybillFilterBar.jsx";
 import "../styles/layout.css";
 
 const mockMovements = [
@@ -42,13 +42,13 @@ export default function Waybills() {
     <div className="page">
       <h1 className="page-title">Waybills</h1>
 
-      <MovementsFilterBar
+      <WaybillFilterBar
         searchWaybill={searchWaybill}
         setSearchWaybill={setSearchWaybill}
         // If you want to filter by Driver or Status, pass those props here too
       />
 
-      <MovementTable 
+      <WaybillTable 
         movements={filtered} 
         onRowClick={(vin) => navigate(`/units/${vin}`)}
       />

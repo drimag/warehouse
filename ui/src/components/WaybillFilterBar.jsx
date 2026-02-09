@@ -1,4 +1,4 @@
-export default function MovementsFilterBar({
+export default function WaybillFilterBar({
   searchWaybill,
   setSearchWaybill,
   from,

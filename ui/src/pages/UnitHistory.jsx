@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import UnitHeader from "../components/UnitHeader";
-import MovementTable from "../components/MovementTable";
+import MovementTable from "../components/WaybillTable";
 
 const mockUnit = {
   vin: "VIN123456",
