@@ -10,10 +10,11 @@ export default function WaybillResult({
   quantity,
   photo,
   user,
+  handleSubmit
 }) {
   return (
     <div className="scan-result">
-      <h3>Success</h3>
+      <h1>Confirm Details</h1>
       <p>
         <strong>Waybill:</strong> {waybill ? waybill : "Unknown Waybill"}
       </p>
@@ -46,7 +47,7 @@ export default function WaybillResult({
       </p>
       {photo ? (
         <div className="result-photo-container">
-          <img src={photo} alt="Scan attachment" className="scan-preview-img" />
+          <img src={photo} alt="Scan attachment" className="preview-small" />
         </div>
       ) : (
         <p>No Attached Photo</p>
@@ -54,6 +55,10 @@ export default function WaybillResult({
       <p>
         <strong>User:</strong> {user ? user : "Unknown User"}
       </p>
+
+      <button className="primary-btn" onClick={handleSubmit}>
+        Confirm
+      </button>
     </div>
   );
 }
