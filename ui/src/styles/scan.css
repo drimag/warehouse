@@ -111,3 +111,12 @@
   width: auto;
   object-fit: contain;
 }
+
+.scan-preview-img {
+  padding-top: 1rem;
+  max-height: 300px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
