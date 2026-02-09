@@ -1,33 +1,37 @@
-import UnitRow from "./UnitRow";
+import React from "react";
+import StatusBadge from "./StatusBadge";
 
 export default function UnitTable({ units, onRowClick }) {
   return (
-    <table className="table">
-      <thead>
-        <tr>
-          <th>VIN</th>
-          <th>Status</th>
-          <th>Warehouse</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        {units.map((u) => (
-          <UnitRow
-            key={u.vin}
-            unit={u}
-            onClick={() => onRowClick(u.vin)}
-          />
-        ))}
-
-        {units.length === 0 && (
+    <div>
+      <table className="table">
+        <thead>
           <tr>
-            <td colSpan="3" className="empty">
-              No units found
-            </td>
+            <th>VIN</th>
+            <th>Engine</th>
+            <th>Frame</th>
+            <th>Model</th>
+            <th>Color</th>
+            <th>Status</th>
+            <th>Warehouse</th>
           </tr>
-        )}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {units.map((u) => (
+            <tr key={u.vin} onClick={() => onRowClick(u.vin)} className="empty">
+              <td className="bold">{u.vin}</td>
+              <td>{u.engine}</td>
+              <td>{u.frame}</td>
+              <td>{u.model}</td>
+              <td>{u.color}</td>
+              <td>
+                <StatusBadge status={u.status} />
+              </td>
+              <td>{u.currentWarehouse || "N/A"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
