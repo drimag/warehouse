@@ -126,3 +126,28 @@
   padding-bottom: 1rem;
   font-weight: bold;
 }
+
+.toggle-btn {
+  padding: 10px 20px;
+  border: none;
+  background: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+/* The selected state */
+.toggle-btn.active {
+  background: #333;
+  color: white;
+}
+
+.button-row {
+  display: flex; /* Aligns children horizontally */
+  gap: 1rem; /* Adds space between the two selects */
+  width: 100%; /* Ensures it takes up the full width of the parent */
+  justify-content: center; /* Centers them if your page is centered */
+}
+.button-row > * {
+  flex: 1;
+}

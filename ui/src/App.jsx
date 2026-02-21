@@ -7,6 +7,7 @@ import UnitPage from "./pages/UnitHistory";
 import StockIn from "./pages/StockIn";
 import StockOut from "./pages/StockOut";
 import Waybills from "./pages/Waybills";
+import Scan from "./pages/Scan";
 import "./styles/layout.css";
 import "./styles/tables.css";
 import "./styles/scan.css";
@@ -26,6 +27,7 @@ function App() {
           <Route path="/units" element={<UnitPage />} />
           <Route path="/stockin" element={<StockIn />} />
           <Route path="/stockout" element={<StockOut />} />
+          <Route path="/scan" element={<Scan />} />
         </Routes>
       </div>
     </div>

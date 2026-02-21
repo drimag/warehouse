@@ -1,0 +1,205 @@
+import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import ScanInput from "../components/Scan/ScanInput";
+import PhotoUpload from "../components/Scan/PhotoUpload";
+import GenericSelect from "../components/Scan/GenericSelect";
+import "../styles/scan.css";
+import WaybillResult from "../components/Scan/WaybillResult";
+
+export default function Scan() {
+  const navigate = useNavigate();
+
+  const wayscanRef = useRef(null);
+  const originRef = useRef(null);
+  const destRef = useRef(null);
+  const driverRef = useRef(null);
+  const truckRef = useRef(null);
+  const qtyRef = useRef(null);
+  const photoRef = useRef(null);
+
+  const [selection, setSelection] = useState("DEPARTURE");
+  const [waybillname, setWaybillName] = useState("");
+  const [origin, setOrigin] = useState("Warehouse A");
+  const [destination, setDestination] = useState("Warehouse B");
+  const [submitted, setSubmitted] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [driver, setDriver] = useState("Driver A");
+  const [truck, setTruck] = useState("Truck A");
+  const [quantity, setQuantity] = useState(0);
+  const [showModal, setShowModal] = useState(false);
+  const [scan1, setScan1] = useState("");
+  const [scan2, setScan2] = useState("");
+
+  const driverList = ["Driver A", "Driver B", "Driver C"];
+  const truckList = ["Truck A", "Truck B", "Truck C"];
+  const warehouseList = ["Warehouse A", "Warehouse B", "Warehouse C"];
+  const waybillList = ["Waybill A", "Waybill B", "Waybill C"];
+
+  const handleSubmit = () => {
+    setSubmitted(true);
+  };
+
+  const handleConfirm = () => {
+    setShowModal(true);
+  };
+
+  const handleEnd = () => {
+    setShowModal(false);
+    setSubmitted(false);
+  };
+
+  const handleNext = () => {
+    setEngine("");
+    setFrame("");
+    setModel("");
+    setColor("");
+  };
+
+  const emptyFunc = () => {};
+
+  const focusNext = (nextRef) => {
+    const element = nextRef.current;
+    if (!element) return;
+    element.focus();
+
+    if (element.tagName === "SELECT" && "showPicker" in element) {
+      try {
+        element.showPicker();
+      } catch (err) {
+        console.warn("Auto-picker blocked or unsupported:", err);
+      }
+    } else if (element.tagName === "INPUT" && element.type === "file") {
+      element.click();
+    }
+  };
+
+  return (
+    <div className="page-centered page">
+      {!submitted ? (
+        <>
+          <h1 className="page-title"> Scan </h1>
+
+          <div className="button-row">
+            <button
+              type="button"
+              className={`scan-field toggle-btn ${selection === "DEPARTURE" ? "active" : ""}`}
+              onClick={() => setSelection("DEPARTURE")}
+            >
+              DEPARTURE
+            </button>
+
+            <button
+              type="button"
+              className={`scan-field toggle-btn ${selection === "ARRIVAL" ? "active" : ""}`}
+              onClick={() => setSelection("ARRIVAL")}
+            >
+              ARRIVAL
+            </button>
+          </div>
+
+          <GenericSelect
+            ref={originRef}
+            selected={waybillname}
+            setSelected={(val) => {
+              setWaybillName(val);
+              focusNext(destRef);
+            }}
+            title={"Select Waybill"}
+            options={waybillList}
+            placeholder={"Select Waybill"}
+          />
+
+          <button
+            type="button"
+            className="toggle-btn active scan-field"
+            onClick={() => navigate("/")}
+          >
+            GENERATE NEW WAYBILL
+          </button>
+
+          {waybillname && (
+            <div>
+              <GenericSelect
+                ref={driverRef}
+                selected={driver}
+                setSelected={(val) => {
+                  setDriver(val);
+                  focusNext(truckRef);
+                }}
+                title={"Driver"}
+                options={driverList}
+                placeholder={"Select Driver"}
+              />
+              <GenericSelect
+                ref={truckRef}
+                selected={truck}
+                setSelected={(val) => {
+                  setTruck(val);
+                  focusNext(qtyRef);
+                }}
+                title={"Truck"}
+                options={truckList}
+                placeholder={"Select Truck"}
+              />
+
+              <PhotoUpload
+                ref={photoRef}
+                title={"Photo"}
+                preview={preview}
+                setPreview={setPreview}
+              />
+            </div>
+          )}
+          <button className="primary-btn" onClick={handleSubmit}>
+            Proceed
+          </button>
+        </>
+      ) : (
+        <>
+          <WaybillResult
+            waybill={waybillname}
+            driver={"DriverName"}
+            truck={"TruckID"}
+            time={"currenttime"}
+            status={"Active"}
+            origin={"Warehouse"}
+            destination={"Destination"}
+            inout={"Incoming"}
+            photo={preview}
+            handleSubmit={handleConfirm}
+          />
+        </>
+      )}
+
+      {/* The Popout Overlay */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h1 className="page-title">Scan Next Unit</h1>
+            <ScanInput
+              vin={scan1}
+              setVin={setScan1}
+              title={"Scan"}
+              placeholder={"Scan Unit"}
+            />
+            <ScanInput
+              vin={scan2}
+              setVin={setScan2}
+              title={"ReScan"}
+              placeholder={"ReScan"}
+            />
+            <h3 className="scan-counter">1/5</h3>
+            <div className="warehouse-row">
+              <button className="primary-btn" onClick={handleNext}>
+                Next Unit
+              </button>
+              <button className="primary-btn" onClick={handleEnd}>
+                Finish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
