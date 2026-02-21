@@ -25,10 +25,8 @@ export default function StockOut() {
   const [truck, setTruck] = useState("");
   const [quantity, setQuantity] = useState(0);
   const [showModal, setShowModal] = useState(false);
-  const [engine, setEngine] = useState("");
-  const [frame, setFrame] = useState("");
-  const [model, setModel] = useState("");
-  const [color, setColor] = useState("");
+  const [scan1, setScan1] = useState("");
+  const [scan2, setScan2] = useState("");
 
   const driverList = ["Driver A", "Driver B", "Driver C"];
   const truckList = ["Truck A", "Truck B", "Truck C"];
@@ -148,7 +146,7 @@ export default function StockOut() {
             ref={qtyRef}
             vin={quantity}
             setVin={setQuantity}
-            title="Quantity"
+            title="Expected Quantity"
             onKeyDown={(e) => e.key === "Enter" && focusNext(photoRef)}
             placeholder={"Enter Quantity"}
           />
@@ -186,29 +184,18 @@ export default function StockOut() {
           <div className="modal-content">
             <h1 className="page-title">Scan Next Unit</h1>
             <ScanInput
-              vin={engine}
-              setVin={setEngine}
-              title={"Engine"}
-              placeholder={"Enter Unit Engine"}
+              vin={scan1}
+              setVin={setScan1}
+              title={"Scan"}
+              placeholder={"Scan Unit"}
             />
             <ScanInput
-              vin={frame}
-              setVin={setFrame}
-              title={"Frame"}
-              placeholder={"Enter Unit Frame"}
+              vin={scan2}
+              setVin={setScan2}
+              title={"ReScan"}
+              placeholder={"ReScan"}
             />
-            <ScanInput
-              vin={model}
-              setVin={setModel}
-              title={"Model"}
-              placeholder={"Enter Unit Model"}
-            />
-            <ScanInput
-              vin={color}
-              setVin={setColor}
-              title={"Color"}
-              placeholder={"Enter Unit Color"}
-            />
+            <h3 className="scan-counter">1/5</h3>
             <div className="warehouse-row">
               <button className="primary-btn" onClick={handleNext}>
                 Next Unit

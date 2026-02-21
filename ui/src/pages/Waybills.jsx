@@ -50,7 +50,7 @@ export default function Waybills() {
 
       <WaybillTable 
         movements={filtered} 
-        onRowClick={(vin) => navigate(`/units/${vin}`)}
+        // onRowClick={(vin) => navigate(`/units/${vin}`)}
       />
     </div>
   );

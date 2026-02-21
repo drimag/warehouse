@@ -54,7 +54,7 @@ export default function Movement() {
       <MovementTable 
         movements={filtered} 
         // We navigate to the specific unit detail page when a row is clicked
-        onRowClick={(vin) => navigate(`/units/${vin}`)}
+        onRowClick={(vin) => navigate(`/units/`)}
       />
     </div>
   );

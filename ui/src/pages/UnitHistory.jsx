@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import UnitHeader from "../components/UnitHeader";
-import MovementTable from "../components/WaybillTable";
+import MovementTable from "../components/MovementTable";
 
 const mockUnit = {
   vin: "VIN123456",
@@ -11,29 +11,23 @@ const mockUnit = {
 
 const mockMovements = [
   {
-    id: 1,
-    vin: "VIN123456",
-    fromWarehouse: "Warehouse A",
-    toWarehouse: "Warehouse B",
-    action: "STORED",
-    timestamp: "2026-01-22 10:21",
+    movementId: "MOV-1001",
+    timeScanned: "2026-01-22 10:21:05",
+    waybill: "WB-8821",
+    vin: "1HGCM82635A001",
   },
   {
-    id: 2,
-    vin: "VIN123456",
-    fromWarehouse: "Warehouse B",
-    toWarehouse: "Warehouse C",
-    action: "IN_TRANSIT",
-    timestamp: "2026-01-22 14:05",
+    movementId: "MOV-1002",
+    timeScanned: "2026-01-22 10:22:14",
+    waybill: "WB-8821",
+    vin: "1HGCM82635A002",
   },
   {
-    id: 3,
-    vin: "VIN123456",
-    fromWarehouse: "Warehouse B",
-    toWarehouse: "Warehouse A",
-    action: "STORED",
-    timestamp: "2026-01-23 09:12",
-  },
+    movementId: "MOV-1003",
+    timeScanned: "2026-01-22 14:05:33",
+    waybill: "WB-9940",
+    vin: "JTDZN3EU4F1009",
+  }
 ];
 
 export default function UnitPage() {
