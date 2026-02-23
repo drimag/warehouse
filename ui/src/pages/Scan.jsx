@@ -25,7 +25,7 @@ export default function Scan() {
   const [preview, setPreview] = useState(null);
   const [driver, setDriver] = useState("Driver A");
   const [truck, setTruck] = useState("Truck A");
-  const [quantity, setQuantity] = useState(0);
+  const [quantity, setQuantity] = useState(5);
   const [showModal, setShowModal] = useState(false);
   const [scan1, setScan1] = useState("");
   const [scan2, setScan2] = useState("");
@@ -36,11 +36,12 @@ export default function Scan() {
   const waybillList = ["Waybill A", "Waybill B", "Waybill C"];
 
   const handleSubmit = () => {
-    setSubmitted(true);
+    setShowModal(true);
   };
 
-  const handleConfirm = () => {
-    setShowModal(true);
+  const handleFinish = () => {
+    setShowModal(false);
+    setSubmitted(true);
   };
 
   const handleEnd = () => {
@@ -85,7 +86,7 @@ export default function Scan() {
               className={`scan-field toggle-btn ${selection === "DEPARTURE" ? "active" : ""}`}
               onClick={() => setSelection("DEPARTURE")}
             >
-              DEPARTURE
+              Departure
             </button>
 
             <button
@@ -93,7 +94,7 @@ export default function Scan() {
               className={`scan-field toggle-btn ${selection === "ARRIVAL" ? "active" : ""}`}
               onClick={() => setSelection("ARRIVAL")}
             >
-              ARRIVAL
+              Arrival
             </button>
           </div>
 
@@ -108,14 +109,16 @@ export default function Scan() {
             options={waybillList}
             placeholder={"Select Waybill"}
           />
-
-          <button
-            type="button"
-            className="toggle-btn active scan-field"
-            onClick={() => navigate("/")}
-          >
-            GENERATE NEW WAYBILL
-          </button>
+          <div className="scan-field">
+            <label>No Waybill?</label>
+            <button
+              type="button"
+              className="toggle-btn active scan-field"
+              onClick={() => navigate("/waybill")}
+            >
+              Generate New Waybill
+            </button>
+          </div>
 
           {waybillname && (
             <div>
@@ -148,11 +151,11 @@ export default function Scan() {
                 preview={preview}
                 setPreview={setPreview}
               />
+              <button className="primary-btn" onClick={handleSubmit}>
+                Proceed
+              </button>
             </div>
           )}
-          <button className="primary-btn" onClick={handleSubmit}>
-            Proceed
-          </button>
         </>
       ) : (
         <>
@@ -165,8 +168,9 @@ export default function Scan() {
             origin={"Warehouse"}
             destination={"Destination"}
             inout={"Incoming"}
+            quantity={quantity}
             photo={preview}
-            handleSubmit={handleConfirm}
+            handleSubmit={handleEnd}
           />
         </>
       )}
@@ -193,7 +197,7 @@ export default function Scan() {
               <button className="primary-btn" onClick={handleNext}>
                 Next Unit
               </button>
-              <button className="primary-btn" onClick={handleEnd}>
+              <button className="primary-btn" onClick={handleFinish}>
                 Finish
               </button>
             </div>
