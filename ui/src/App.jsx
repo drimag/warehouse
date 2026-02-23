@@ -8,6 +8,7 @@ import StockIn from "./pages/StockIn";
 import StockOut from "./pages/StockOut";
 import Waybills from "./pages/Waybills";
 import Scan from "./pages/Scan";
+import Waybill from "./pages/Waybill";
 import "./styles/layout.css";
 import "./styles/tables.css";
 import "./styles/scan.css";
@@ -28,6 +29,7 @@ function App() {
           <Route path="/stockin" element={<StockIn />} />
           <Route path="/stockout" element={<StockOut />} />
           <Route path="/scan" element={<Scan />} />
+          <Route path="/waybill" element={<Waybill />} />
         </Routes>
       </div>
     </div>

@@ -51,3 +51,10 @@
   width: 90%;
   max-width: 400px;
 }
+
+.divider {
+  border: none;             
+  border-top: 1px solid #333; 
+  margin: 1.2rem 0;             
+  width: 100%;                
+}
