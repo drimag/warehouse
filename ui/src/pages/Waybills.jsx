@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import WaybillTable from "../components/WaybillTable.jsx";
 import GenericTable from "../components/GenericTable.jsx";
 import WaybillFilterBar from "../components/WaybillFilterBar.jsx";
 import "../styles/layout.css";
@@ -119,7 +118,7 @@ export default function Waybills() {
       <GenericTable
         columns={columns}
         data={mockWaybills}
-        onRowClick={(row) => navigate("/")}
+        onRowClick={(row) => navigate("/waybill_logs")}
       />
     </div>
   );

@@ -9,11 +9,13 @@ import StockOut from "./pages/StockOut";
 import Waybills from "./pages/Waybills";
 import Scan from "./pages/Scan";
 import Waybill from "./pages/Waybill";
+import WaybillLogs from "./pages/WaybillLogs";
 import "./styles/layout.css";
 import "./styles/tables.css";
 import "./styles/scan.css";
 import "./styles/sidebar.css";
 import "./styles/unit.css";
+import "./styles/wbheader.css";
 
 function App() {
   return (
@@ -25,6 +27,7 @@ function App() {
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/movement" element={<Movement />} />
           <Route path="/waybills" element={<Waybills />} />
+          <Route path="/waybill_logs" element={<WaybillLogs />} />
           <Route path="/units" element={<UnitPage />} />
           <Route path="/stockin" element={<StockIn />} />
           <Route path="/stockout" element={<StockOut />} />
