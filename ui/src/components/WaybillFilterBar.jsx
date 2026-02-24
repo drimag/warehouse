@@ -8,8 +8,7 @@ export default function WaybillFilterBar({
   action,
   setAction,
 }) {
-  const warehouses = ["WaybillA", "WaybillB"];
-  const status = ["Active", "Processed"];
+  const status = ["DRAFT", "ADVICE", "IN_TRANSIT", "ARRIVED", "CLOSED"];
   const inOut = ["In", "Out"];
 
   return (
@@ -21,17 +20,26 @@ export default function WaybillFilterBar({
         onChange={(e) => setSearchWaybill(e.target.value)}
       />
 
+      <input
+        className="input"
+        placeholder="Driver"
+        value={searchWaybill}
+        onChange={(e) => setSearchWaybill(e.target.value)}
+      />
+
+      <input
+        className="input"
+        placeholder="Client"
+        value={searchWaybill}
+        onChange={(e) => setSearchWaybill(e.target.value)}
+      />
+
       <select className="select" value={from} onChange={(e) => setFrom(e.target.value)}>
         {status.map((w) => (
           <option key={w}>{w}</option>
         ))}
       </select>
 
-      <select className="select" value={action} onChange={(e) => setAction(e.target.value)}>
-        {inOut.map((a) => (
-          <option key={a}>{a}</option>
-        ))}
-      </select>
     </div>
   );
 }
