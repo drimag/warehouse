@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import ScanInput from "../components/Scan/ScanInput";
 import PhotoUpload from "../components/Scan/PhotoUpload";
 import GenericSelect from "../components/Scan/GenericSelect";
-import ScanResult from "../components/Scan/ScanResult";
 import "../styles/scan.css";
 import WaybillResult from "../components/Scan/WaybillResult";
 

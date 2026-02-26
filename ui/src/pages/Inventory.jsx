@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import UnitTable from "../components/UnitTable";
 import UnitFilters from "../components/UnitFilters";
 import GenericTable from "../components/GenericTable";
 

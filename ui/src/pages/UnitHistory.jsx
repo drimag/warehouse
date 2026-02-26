@@ -1,6 +1,5 @@
 import { useParams } from "react-router-dom";
 import UnitHeader from "../components/UnitHeader";
-import MovementTable from "../components/MovementTable";
 import GenericTable from "../components/GenericTable";
 
 const mockUnit = {

@@ -1,10 +1,10 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ScanInput from "../components/Scan/ScanInput";
-import PhotoUpload from "../components/Scan/PhotoUpload";
 import GenericSelect from "../components/Scan/GenericSelect";
-import "../styles/scan.css";
 import WaybillConfirm from "../components/WaybillConfirm";
+
+import "../styles/scan.css";
 
 export default function Waybill() {
   const navigate = useNavigate();
