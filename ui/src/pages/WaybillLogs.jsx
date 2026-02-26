@@ -55,8 +55,8 @@ const logColumns = [
 ];
 
 const adviceColumns = [
-  { 
-    label: "Type", 
+  {
+    label: "Type",
     key: "type",
     // render: (val) => (
     //   <strong style={{ color: val === 'DEPARTURE' ? '#1976d2' : '#2e7d32' }}>
@@ -64,21 +64,50 @@ const adviceColumns = [
     //   </strong>
     // )
   },
-  { 
-    label: "Scheduled For", 
+  {
+    label: "Scheduled For",
     key: "expected_time",
-    // render: (val) => new Date(val).toLocaleString([], { 
-    //   month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" 
+    // render: (val) => new Date(val).toLocaleString([], {
+    //   month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit"
     // })
   },
-  { 
-    label: "Created At", 
+  {
+    label: "Created At",
     key: "timestamp",
-    // render: (val) => new Date(val).toLocaleDateString([], { 
-    //   month: "short", day: "2-digit" 
+    // render: (val) => new Date(val).toLocaleDateString([], {
+    //   month: "short", day: "2-digit"
     // })
   },
-  { label: "User", key: "user_name" }
+  { label: "User", key: "user_name" },
+];
+
+const scanColumns = [
+  {
+    label: "Scanned Value",
+    key: "scan",
+    // render: (val) => <code style={{ fontSize: '1rem', color: '#333' }}>{val}</code>
+  },
+  {
+    label: "Match Status",
+    key: "status",
+    // render: (status) => (
+    //   <span className={`badge badge-${status.toLowerCase()}`}>
+    //     {status}
+    //   </span>
+    // )
+  },
+  {
+    label: "Scan Time",
+    key: "timestamp",
+    // render: (val) => new Date(val).toLocaleTimeString([], {
+    //   hour: '2-digit', minute: '2-digit', second: '2-digit'
+    // })
+  },
+  {
+    label: "Log Ref",
+    key: "waybill_log_id",
+    render: (val) => <small>Log: {val}</small>,
+  },
 ];
 
 export const MOCK_WB_ADVICE = [
@@ -86,18 +115,18 @@ export const MOCK_WB_ADVICE = [
     id: "adv-101",
     waybill_id: "wb-7721",
     type: "DEPARTURE",
-    expected_time: "2026-02-24T08:00:00Z", 
-    timestamp: "2026-02-23T14:00:00Z",     
-    user_name: "admin2"
+    expected_time: "2026-02-24T08:00:00Z",
+    timestamp: "2026-02-23T14:00:00Z",
+    user_name: "admin2",
   },
   {
     id: "adv-102",
     waybill_id: "wb-7721",
     type: "ARRIVAL",
-    expected_time: "2026-02-25T16:00:00Z", 
+    expected_time: "2026-02-25T16:00:00Z",
     timestamp: "2026-02-23T14:05:00Z",
-    user_name: "admin1"
-  }
+    user_name: "admin1",
+  },
 ];
 
 export const MOCK_WAYBILL_LOGS = [
@@ -133,6 +162,30 @@ export const MOCK_WAYBILL_LOGS = [
   },
 ];
 
+export const MOCK_SCANS = [
+  {
+    id: "scan-901",
+    waybill_log_id: "log-2", // Matches the "Departure" log
+    scan: "ENG-882910",
+    status: "MATCHED",
+    timestamp: "2026-02-24T10:05:12Z",
+  },
+  {
+    id: "scan-902",
+    waybill_log_id: "log-2",
+    scan: "ENG-882911",
+    status: "MATCHED",
+    timestamp: "2026-02-24T10:06:45Z",
+  },
+  {
+    id: "scan-903",
+    waybill_log_id: "log-2",
+    scan: "ENG-882912", // Example of a bad scan
+    status: "PENDING",
+    timestamp: "2026-02-24T10:08:00Z",
+  },
+];
+
 export default function WaybillLogs() {
   return (
     <div className="page">
@@ -154,6 +207,14 @@ export default function WaybillLogs() {
         emptyMessage="No activity logged for this waybill yet."
       />
 
+      <hr className="divider" />
+
+      <h1 className="page-title">Unit Scan</h1>
+      <GenericTable
+        columns={scanColumns}
+        data={MOCK_SCANS}
+        emptyMessage="No scans recorded for this session."
+      />
     </div>
   );
 }
