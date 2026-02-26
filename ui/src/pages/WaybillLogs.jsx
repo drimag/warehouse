@@ -204,7 +204,16 @@ export default function WaybillLogs() {
 
       <hr className="divider" />
 
-      <h1 className="page-title">Unit Scan</h1>
+      <h1 className="page-title">Unit Scan In</h1>
+      <GenericTable
+        columns={scanColumns}
+        data={MOCK_SCANS}
+        emptyMessage="No scans recorded for this session."
+      />
+
+      <hr className="divider" />
+
+      <h1 className="page-title">Unit Scan Out</h1>
       <GenericTable
         columns={scanColumns}
         data={MOCK_SCANS}
