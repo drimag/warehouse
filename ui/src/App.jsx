@@ -15,7 +15,6 @@ import "./styles/tables.css";
 import "./styles/scan.css";
 import "./styles/sidebar.css";
 import "./styles/unit.css";
-import "./styles/wbheader.css";
 
 function App() {
   return (
