@@ -1,13 +1,5 @@
-import { useParams } from "react-router-dom";
 import UnitHeader from "../components/UnitHeader";
 import GenericTable from "../components/GenericTable";
-
-const mockUnit = {
-  vin: "VIN123456",
-  status: "IN_STORAGE",
-  location: "Warehouse A",
-  lastUpdate: "2026-01-25 14:32",
-};
 
 const unitLogColumns = [
   {

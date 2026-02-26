@@ -1,28 +1,27 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import UnitFilters from "../components/UnitFilters";
 import GenericTable from "../components/GenericTable";
 
 const unitColumns = [
-  { 
-    label: "Engine No.", 
+  {
+    label: "Engine No.",
     key: "engine",
-    render: (val) => <strong>{val}</strong> 
+    render: (val) => <strong>{val}</strong>,
   },
   { label: "Frame", key: "frame" },
   { label: "Model", key: "model" },
   { label: "Color", key: "color" },
   { label: "DA", key: "da" },
   { label: "Last Known Warehouse", key: "current_warehouse" },
-  { 
-    label: "Status", 
+  {
+    label: "Status",
     key: "status",
     render: (status) => (
-      <span className={`badge badge-${status.toLowerCase().replace(' ', '_')}`}>
+      <span className={`badge badge-${status.toLowerCase().replace(" ", "_")}`}>
         {status}
       </span>
-    )
-  }
+    ),
+  },
 ];
 
 export const MOCK_UNITS = [
@@ -33,7 +32,7 @@ export const MOCK_UNITS = [
     color: "Super White",
     da: "DA-2026-005",
     current_warehouse: "Laguna Plant",
-    status: "IN STORAGE"
+    status: "IN STORAGE",
   },
   {
     engine: "ENG-882911",
@@ -42,7 +41,7 @@ export const MOCK_UNITS = [
     color: "Attitude Black",
     da: "DA-2026-005",
     current_warehouse: "In Transit",
-    status: "IN TRANSIT"
+    status: "IN TRANSIT",
   },
   {
     engine: "ENG-994012",
@@ -51,7 +50,7 @@ export const MOCK_UNITS = [
     color: "Silver Metallic",
     da: "DA-2026-009",
     current_warehouse: "Davao Port",
-    status: "IN STORAGE"
+    status: "IN STORAGE",
   },
   {
     engine: "ENG-773104",
@@ -60,8 +59,8 @@ export const MOCK_UNITS = [
     color: "Red Mica",
     da: "DA-2026-012",
     current_warehouse: "Manila Hub",
-    status: "CLOSED"
-  }
+    status: "CLOSED",
+  },
 ];
 
 export default function Inventory() {
@@ -70,19 +69,11 @@ export default function Inventory() {
   return (
     <div className="page">
       <h1 className="page-title">Units</h1>
-      
-      <UnitFilters
-        // warehouse={warehouse}
-        // setWarehouse={setWarehouse}
-        // status={status}
-        // setStatus={setStatus}
-        // search={search}
-        // setSearch={setSearch}
-        // placeholder="Search VIN, Engine, or Frame..."
-      />
-      <GenericTable 
-        columns={unitColumns} 
-        data={MOCK_UNITS} 
+
+      <UnitFilters />
+      <GenericTable
+        columns={unitColumns}
+        data={MOCK_UNITS}
         onRowClick={(unit) => navigate("/units/")}
       />
     </div>

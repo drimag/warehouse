@@ -9,7 +9,6 @@ import WaybillResult from "../components/Scan/WaybillResult";
 export default function Scan() {
   const navigate = useNavigate();
 
-  const wayscanRef = useRef(null);
   const originRef = useRef(null);
   const destRef = useRef(null);
   const driverRef = useRef(null);

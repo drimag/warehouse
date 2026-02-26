@@ -90,11 +90,6 @@ const scanColumns = [
   {
     label: "Match Status",
     key: "status",
-    // render: (status) => (
-    //   <span className={`badge badge-${status.toLowerCase()}`}>
-    //     {status}
-    //   </span>
-    // )
   },
   {
     label: "Scan Time",
@@ -165,7 +160,7 @@ export const MOCK_WAYBILL_LOGS = [
 export const MOCK_SCANS = [
   {
     id: "scan-901",
-    waybill_log_id: "log-2", // Matches the "Departure" log
+    waybill_log_id: "log-2",
     scan: "ENG-882910",
     status: "MATCHED",
     timestamp: "2026-02-24T10:05:12Z",
@@ -180,7 +175,7 @@ export const MOCK_SCANS = [
   {
     id: "scan-903",
     waybill_log_id: "log-2",
-    scan: "ENG-882912", // Example of a bad scan
+    scan: "ENG-882912",
     status: "PENDING",
     timestamp: "2026-02-24T10:08:00Z",
   },

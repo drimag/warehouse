@@ -9,39 +9,18 @@ import "../styles/scan.css";
 export default function Waybill() {
   const navigate = useNavigate();
 
-  const wayscanRef = useRef(null);
-  const originRef = useRef(null);
-  const destRef = useRef(null);
-  const driverRef = useRef(null);
-  const truckRef = useRef(null);
-  const qtyRef = useRef(null);
-  const photoRef = useRef(null);
-
-  const [selection, setSelection] = useState("DEPARTURE");
   const [waybillname, setWaybillName] = useState("");
   const [origin, setOrigin] = useState("Warehouse A");
   const [destination, setDestination] = useState("Warehouse B");
   const [submitted, setSubmitted] = useState(false);
-  const [preview, setPreview] = useState(null);
   const [driver, setDriver] = useState("Driver A");
-  const [truck, setTruck] = useState("Truck A");
   const [quantity, setQuantity] = useState(5);
-  const [showAdvice, setShowAdvice] = useState(false);
-  const [scan1, setScan1] = useState("");
-  const [scan2, setScan2] = useState("");
 
-  const driverList = ["Driver A", "Driver B", "Driver C"];
-  const truckList = ["Truck A", "Truck B", "Truck C"];
   const warehouseList = ["Warehouse A", "Warehouse B", "Warehouse C"];
-  const waybillList = ["Waybill A", "Waybill B", "Waybill C"];
   const waybillType = ["DEPARTURE", "ARRIVAL"];
 
   const handleSubmit = () => {
     setSubmitted(true);
-  };
-
-  const handleAdvice = () => {
-    setShowAdvice(true);
   };
 
   const handleEnd = () => {
@@ -55,8 +34,6 @@ export default function Waybill() {
     setModel("");
     setColor("");
   };
-
-  const emptyFunc = () => {};
 
   const focusNext = (nextRef) => {
     const element = nextRef.current;

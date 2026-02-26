@@ -79,7 +79,7 @@ const mockWaybills = [
     driver_name: "Juan Luna",
     client_name: "Mitsubishi Motors",
     expected_quantity: 30,
-    actual_quantity: 0, // Nothing scanned yet
+    actual_quantity: 0, 
     last_updated: "2026-02-24T09:15:00Z",
   },
   {
@@ -92,7 +92,7 @@ const mockWaybills = [
     driver_name: "Maria Clara",
     client_name: "Isuzu PH",
     expected_quantity: 25,
-    actual_quantity: 22, // 3 Missing/Ghost units!
+    actual_quantity: 22,
     last_updated: "2026-02-24T10:05:00Z",
   },
 ];
