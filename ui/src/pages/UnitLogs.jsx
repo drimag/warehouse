@@ -66,7 +66,7 @@ const mockUnitDetail = {
   last_updated: "2026-02-24T15:30:00Z",
 };
 
-export default function UnitPage() {
+export default function UnitLogs() {
   return (
     <div className="page">
       <UnitHeader unit={mockUnitDetail} />

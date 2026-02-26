@@ -1,13 +1,13 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
-import Inventory from "./pages/Inventory";
+import Units from "./pages/Units";
 import Sidebar from "./components/Sidebar";
-import UnitPage from "./pages/UnitHistory";
+import UnitLogs from "./pages/UnitLogs";
 import StockIn from "./pages/StockIn";
 import StockOut from "./pages/StockOut";
 import Waybills from "./pages/Waybills";
 import Scan from "./pages/Scan";
-import Waybill from "./pages/WaybillForm";
+import WaybillForm from "./pages/WaybillForm";
 import WaybillLogs from "./pages/WaybillLogs";
 import "./styles/layout.css";
 import "./styles/tables.css";
@@ -22,14 +22,14 @@ function App() {
       <div className="main-content">
         <Routes>
           <Route path="/" element={<Navigate to="/inventory" />} />
-          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/units" element={<Units />} />
+          <Route path="/unit_logs" element={<UnitLogs />} />
           <Route path="/waybills" element={<Waybills />} />
           <Route path="/waybill_logs" element={<WaybillLogs />} />
-          <Route path="/units" element={<UnitPage />} />
           <Route path="/stockin" element={<StockIn />} />
           <Route path="/stockout" element={<StockOut />} />
           <Route path="/scan" element={<Scan />} />
-          <Route path="/waybill" element={<Waybill />} />
+          <Route path="/waybill_form" element={<WaybillForm />} />
         </Routes>
       </div>
     </div>

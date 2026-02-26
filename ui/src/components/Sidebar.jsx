@@ -4,14 +4,14 @@ export default function Sidebar() {
 
   return (
     <div className="sidebar">
-      <div className="nav-icon" onClick={() => navigate("/inventory")} />
       <div className="nav-icon" onClick={() => navigate("/units")} />
+      <div className="nav-icon" onClick={() => navigate("/unit_logs")} />
       <div className="nav-icon" onClick={() => navigate("/waybills")} />
       <div className="nav-icon" onClick={() => navigate("/waybill_logs")} />
       <div className="nav-icon" onClick={() => navigate("/stockin")} />
       <div className="nav-icon" onClick={() => navigate("/stockout")} />
       <div className="nav-icon" onClick={() => navigate("/scan")} />
-      <div className="nav-icon" onClick={() => navigate("/waybill")} />
+      <div className="nav-icon" onClick={() => navigate("/waybill_form")} />
     </div>
   );
 }

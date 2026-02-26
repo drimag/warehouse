@@ -63,7 +63,7 @@ export const MOCK_UNITS = [
   },
 ];
 
-export default function Inventory() {
+export default function Units() {
   const navigate = useNavigate();
 
   return (
