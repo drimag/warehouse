@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ScanInput from "../components/Scan/ScanInput";
 import GenericSelect from "../components/Scan/GenericSelect";
@@ -6,7 +6,7 @@ import WaybillConfirm from "../components/WaybillConfirm";
 
 import "../styles/scan.css";
 
-export default function Waybill() {
+export default function WaybillForm() {
   const navigate = useNavigate();
 
   const [waybillname, setWaybillName] = useState("");
@@ -66,7 +66,7 @@ export default function Waybill() {
 
           <div className="warehouse-row">
             <GenericSelect
-              ref={originRef}
+              // ref={}
               selected={origin}
               setSelected={(val) => {
                 setOrigin(val);
@@ -78,7 +78,7 @@ export default function Waybill() {
             />
 
             <GenericSelect
-              ref={destRef}
+              // ref={destRef}
               selected={destination}
               setSelected={(val) => {
                 setDestination(val);
@@ -97,7 +97,7 @@ export default function Waybill() {
           <h1 className="page-title"> Advice </h1>
           <div>
             <GenericSelect
-              ref={driverRef}
+              // ref={driverRef}
               selected={driver}
               setSelected={(val) => {
                 setDriver(val);

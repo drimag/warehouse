@@ -7,7 +7,7 @@ import StockIn from "./pages/StockIn";
 import StockOut from "./pages/StockOut";
 import Waybills from "./pages/Waybills";
 import Scan from "./pages/Scan";
-import Waybill from "./pages/Waybill";
+import Waybill from "./pages/WaybillForm";
 import WaybillLogs from "./pages/WaybillLogs";
 import "./styles/layout.css";
 import "./styles/tables.css";
