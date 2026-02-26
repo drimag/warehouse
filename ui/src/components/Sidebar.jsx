@@ -12,6 +12,7 @@ export default function Sidebar() {
       <div className="nav-icon" onClick={() => navigate("/stockout")} />
       <div className="nav-icon" onClick={() => navigate("/scan")} />
       <div className="nav-icon" onClick={() => navigate("/waybill_form")} />
+      <div className="nav-icon" onClick={() => navigate("/unit_form")} />
     </div>
   );
 }
