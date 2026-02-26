@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GenericTable from "../components/GenericTable.jsx";
-import WaybillFilterBar from "../components/WaybillFilterBar.jsx";
+import WaybillFilterBar from "../components/Waybills/WaybillFilterBar.jsx";
 import "../styles/layout.css";
 
 const columns = [

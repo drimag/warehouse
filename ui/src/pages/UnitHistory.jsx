@@ -1,4 +1,4 @@
-import UnitHeader from "../components/UnitHeader";
+import UnitHeader from "../components/Units/UnitHeader";
 import GenericTable from "../components/GenericTable";
 
 const unitLogColumns = [

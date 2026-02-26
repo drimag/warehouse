@@ -1,6 +1,6 @@
-import WarehouseFilter from "./Filters/WarehouseFilter";
-import StatusFilter from "./Filters/StatusFilter";
-import VinSearch from "./Filters/VinSearch";
+import WarehouseFilter from "../Filters/WarehouseFilter";
+import StatusFilter from "../Filters/StatusFilter";
+import VinSearch from "../Filters/VinSearch";
 
 export default function UnitFilters({
   warehouse,

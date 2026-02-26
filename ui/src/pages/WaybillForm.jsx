@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ScanInput from "../components/Scan/ScanInput";
 import GenericSelect from "../components/Scan/GenericSelect";
-import WaybillConfirm from "../components/WaybillConfirm";
+import WaybillConfirm from "../components/Waybills/WaybillConfirm";
 
 import "../styles/scan.css";
 

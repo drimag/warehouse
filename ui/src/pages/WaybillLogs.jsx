@@ -1,4 +1,4 @@
-import WaybillHeader from "../components/WaybillHeader";
+import WaybillHeader from "../components/Waybills/WaybillHeader";
 import GenericTable from "../components/GenericTable";
 
 const mockWaybill = {

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import UnitFilters from "../components/UnitFilters";
+import UnitFilters from "../components/Units/UnitFilters";
 import GenericTable from "../components/GenericTable";
 
 const unitColumns = [
