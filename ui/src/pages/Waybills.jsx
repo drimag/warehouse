@@ -1,57 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import GenericTable from "../components/GenericTable.jsx";
 import WaybillFilterBar from "../components/Waybills/WaybillFilterBar.jsx";
 import "../styles/layout.css";
 
 const columns = [
-  { label: "Waybill", key: "waybill_number" },
-  { label: "Client", key: "client_name" },
-  {
-    label: "Origin/Dest",
-    key: "origin_name",
-    render: (_, row) => (
-      <div style={{ fontSize: "0.85rem" }}>
-        <strong>{row.origin_name}</strong> → {row.destination_name}
-      </div>
-    ),
-  },
-  { label: "Driver", key: "driver_name" },
-  { label: "Truck", key: "truck_plate" },
-  {
-    label: "Status",
-    key: "status",
-    render: (status) => (
-      <span className={`badge badge-${status.toLowerCase()}`}>{status}</span>
-    ),
-  },
-  {
-    label: "Qty (Act/Exp)",
-    key: "actual_quantity",
-    render: (_, row) => {
-      const isMismatch = row.actual_quantity !== row.expected_quantity;
-      return (
-        <span
-          style={{
-            color: isMismatch ? "red" : "inherit",
-            fontWeight: isMismatch ? "bold" : "normal",
-          }}
-        >
-          {row.actual_quantity} / {row.expected_quantity}
-        </span>
-      );
-    },
-  },
+  { label: "Waybill ID", key: "id" }, // Matches 'id' in DB
+  { label: "Origin", key: "origin" },
+  { label: "Destination", key: "destination" },
+  { label: "Status", key: "status" },
+  { label: "Logs", key: "log_count" },
   {
     label: "Last Update",
     key: "last_updated",
-    // render: (val) =>
-    //   new Date(val).toLocaleTimeString([], {
-    //     month: "short",
-    //     day: "2-digit",
-    //     hour: "2-digit",
-    //     minute: "2-digit",
-    //   }),
   },
 ];
 
@@ -79,7 +40,7 @@ const mockWaybills = [
     driver_name: "Juan Luna",
     client_name: "Mitsubishi Motors",
     expected_quantity: 30,
-    actual_quantity: 0, 
+    actual_quantity: 0,
     last_updated: "2026-02-24T09:15:00Z",
   },
   {
@@ -99,12 +60,20 @@ const mockWaybills = [
 
 export default function Waybills() {
   const navigate = useNavigate();
-  // const [movements] = useState(mockMovements);
-  // const [searchWaybill, setSearchWaybill] = useState("");
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // const filtered = movements.filter((m) => {
-  //   return m.waybill.toLowerCase().includes(searchWaybill.toLowerCase());
-  // });
+  useEffect(() => {
+    fetch('http://localhost:5000/api/waybills')
+      .then(res => res.json())
+      .then(json => {
+        setData(json);
+        setLoading(false);
+      })
+      .catch(err => console.error("Fetch error:", err));
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div className="page">
@@ -117,7 +86,7 @@ export default function Waybills() {
 
       <GenericTable
         columns={columns}
-        data={mockWaybills}
+        data={data}
         onRowClick={(row) => navigate("/waybill_logs")}
       />
     </div>
