@@ -4,6 +4,8 @@ import GenericTable from "../components/GenericTable.jsx";
 import WaybillFilterBar from "../components/Waybills/WaybillFilterBar.jsx";
 import "../styles/layout.css";
 
+const API_BASE = process.env.REACT_APP_API_BASE_URL;
+
 const columns = [
   { label: "Waybill ID", key: "id" }, // Matches 'id' in DB
   { label: "Origin", key: "origin" },
@@ -64,7 +66,7 @@ export default function Waybills() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/waybills')
+    fetch(`${API_BASE}/waybills`)
       .then(res => res.json())
       .then(json => {
         setData(json);
