@@ -1,4 +1,4 @@
-const db = require('./config/db');
+const db = require("./config/db");
 
 const seedDatabase = async () => {
   try {
@@ -18,7 +18,7 @@ const seedDatabase = async () => {
     `);
     console.log("🗑️  Old tables dropped.");
 
-// 2. CREATE TABLES
+    // 2. CREATE TABLES
     await db.query(`
       CREATE TABLE units (
         engine VARCHAR(50) PRIMARY KEY,
@@ -39,10 +39,18 @@ const seedDatabase = async () => {
       CREATE TABLE waybill_logs (
         id VARCHAR(150) PRIMARY KEY, -- Smart ID: WAYBILL_ID-STATUS
         waybill_id VARCHAR(100) REFERENCES waybills(id) ON DELETE CASCADE,
-        status VARCHAR(20),
+        status VARCHAR(20),          -- e.g., 'DEPARTURE', 'ARRIVAL'
         driver VARCHAR(100),
         truck VARCHAR(50),
+        quantity INTEGER DEFAULT 0,  -- The actual quantity being moved
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE wb_advice (
+        id SERIAL PRIMARY KEY,
+        waybill_id VARCHAR(100) REFERENCES waybills(id) ON DELETE CASCADE,
+        expected_qty INTEGER DEFAULT 0,
+        expected_date TIMESTAMP
       );
 
       CREATE TABLE waybill_scans (
@@ -63,29 +71,46 @@ const seedDatabase = async () => {
 
     // 4. GENERATE SMART WAYBILL ID
     // Format: [Origin]-[Dest]-[Date]-[Sequence]
-    const wbId = "LAG-MNL-20260302-001"; 
+    const wbId = "LAG-MNL-20260302-001";
 
-    await db.query(`
-      INSERT INTO waybills (id, status, origin, destination, client)
-      VALUES ($1, 'IN_TRANSIT', 'LAGUNA', 'MANILA', 'HONDA PH')
-    `, [wbId]);
+    await db.query(
+      `
+        INSERT INTO waybills (id, status, origin, destination, client)
+        VALUES ($1, 'IN_TRANSIT', 'LAGUNA', 'MANILA', 'HONDA PH')
+      `,
+      [wbId],
+    );
 
     // 5. GENERATE SMART LOG ID
-    // Format: [Waybill ID]-[Status]
-    const logId = `${wbId}-DEPARTURE`;
+    const logStatus = "DEPARTURE";
+    const logId = `${wbId}-${logStatus}`; 
+    const actualQty = 8; 
 
-    await db.query(`
-      INSERT INTO waybill_logs (id, waybill_id, status, driver, truck)
-      VALUES ($1, $2, 'DEPARTURE', 'Ricardo Dalisay', 'TRK-HINO-99')
-    `, [logId, wbId]);
+    // 2. Run the query
+    await db.query(
+      `
+        INSERT INTO waybill_logs (id, waybill_id, status, driver, truck, quantity)
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `,
+      [logId, wbId, logStatus, "Ricardo Dalisay", "TRK-HINO-99", actualQty],
+    );
 
-    // 6. INSERT WAYBILL SCANS
+    // 6. INSERT ADVICE
     await db.query(`
+      INSERT INTO wb_advice (waybill_id, expected_qty) 
+      VALUES ('LAG-MNL-20260302-001', 10)
+    `);
+
+    // 7. INSERT WAYBILL SCANS
+    await db.query(
+      `
       INSERT INTO waybill_scans (waybill_log_id, scan, status)
       VALUES 
       ($1, 'JA69ED080239', 'MATCHED'),
       ($1, 'JA69ED080240', 'MATCHED')
-    `, [logId]);
+    `,
+      [logId],
+    );
 
     console.log("✨ Smart Database seeded successfully!");
     process.exit(0);
