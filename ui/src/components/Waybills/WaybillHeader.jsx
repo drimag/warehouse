@@ -1,7 +1,7 @@
 export default function WaybillHeader({ waybill }) {
   // Simple check for quantity alert
   const qtyColor =
-    waybill.actual_quantity !== waybill.expected_quantity ? "red" : "inherit";
+    waybill.actual_qty !== waybill.expected_qty ? "red" : "inherit";
 
   return (
     <div className="unit-header">
