@@ -29,7 +29,7 @@ function App() {
           <Route path="/unit_logs" element={<UnitLogs />} />
           <Route path="/waybills" element={<Waybills />} />
           <Route path="/waybill_form" element={<WaybillForm />} />
-          <Route path="/waybill_logs" element={<WaybillLogs />} />
+          <Route path="/waybill_logs/:id" element={<WaybillLogs />} />
           <Route path="/stockin" element={<StockIn />} />
           <Route path="/stockout" element={<StockOut />} />
           <Route path="/scan" element={<Scan />} />

@@ -75,7 +75,7 @@ export default function Waybills() {
       <GenericTable
         columns={columns}
         data={data}
-        onRowClick={(row) => navigate("/waybill_logs")}
+        onRowClick={(row) => navigate("/waybill_logs/" + row.id)}
       />
     </div>
   );
