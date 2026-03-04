@@ -1,4 +1,4 @@
-const db = require('../config/db');
+const db = require("../config/db");
 
 const Waybill = {
   fetchAll: async () => {
@@ -13,9 +13,33 @@ const Waybill = {
   },
 
   findById: async (id) => {
-    const { rows } = await db.query('SELECT * FROM waybills WHERE id = $1', [id]);
+    const { rows } = await db.query("SELECT * FROM waybills WHERE id = $1", [
+      id,
+    ]);
     return rows[0];
-  }
+  },
+
+  getAllWaybills: async () => {
+    const query = `
+      SELECT 
+        w.id, w.origin, w.destination, w.status, w.client,
+        latest_log.driver, latest_log.truck, latest_log.quantity AS actual_qty,
+        latest_log.timestamp AS last_updated,
+        wa.expected_qty
+      FROM waybills w
+      LEFT JOIN wb_advice wa ON w.id = wa.waybill_id
+      LEFT JOIN (
+        SELECT DISTINCT ON (waybill_id) 
+          waybill_id, driver, truck, quantity, timestamp
+        FROM waybill_logs
+        ORDER BY waybill_id, timestamp DESC
+      ) latest_log ON w.id = latest_log.waybill_id
+      ORDER BY last_updated DESC NULLS LAST;
+    `;
+    
+    const { rows } = await db.query(query);
+    return rows; // Just return the rows!
+  },
 };
 
 module.exports = Waybill;

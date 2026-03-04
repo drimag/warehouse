@@ -1,22 +1,44 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from '../services/api';
+import { api } from "../services/api";
 import GenericTable from "../components/GenericTable.jsx";
 import WaybillFilterBar from "../components/Waybills/WaybillFilterBar.jsx";
 import "../styles/layout.css";
 
 const columns = [
-  { label: "Waybill ID", key: "id" }, // Matches 'id' in DB
-  { label: "Origin", key: "origin" },
-  { label: "Destination", key: "destination" },
-  { label: "Status", key: "status" },
-  { label: "Logs", key: "log_count" },
+  { label: "Waybill ID", key: "id" },
+  { label: "Client", key: "client" },
   {
-    label: "Last Update",
-    key: "last_updated",
+    label: "Route",
+    render: (_, row) => (
+      <div style={{ fontSize: "0.85rem" }}>
+        <strong>{row.origin}</strong>
+        <span style={{ margin: "0 5px", color: "#666" }}>→</span>
+        {row.destination}
+      </div>
+    ),
   },
+  { label: "Driver", key: "driver" },
+  { label: "Truck", key: "truck" },
+  { label: "Status", key: "status" },
+  {
+    label: "Qty (Act/Exp)",
+    render: (_, row) => {
+      const isMismatch = row.actual_qty !== row.expected_qty;
+      return (
+        <span
+          style={{
+            color: isMismatch ? "red" : "inherit",
+            fontWeight: isMismatch ? "bold" : "normal",
+          }}
+        >
+          {row.actual_qty} / {row.expected_qty}
+        </span>
+      );
+    },
+  },
+  { label: "Last Update", key: "last_updated" },
 ];
-
 
 export default function Waybills() {
   const navigate = useNavigate();
@@ -25,18 +47,20 @@ export default function Waybills() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    api.getWaybills()
-      .then(json => {
+    api
+      .getWaybills()
+      .then((json) => {
         setData(json);
         setLoading(false);
       })
-      .catch(err => {
+      .catch((err) => {
         setError(err.message);
         setLoading(false);
       });
   }, []);
 
-  if (loading) return <div className="p-10 text-center">🚚 Loading Shipments...</div>;
+  if (loading)
+    return <div className="p-10 text-center">🚚 Loading Shipments...</div>;
   if (error) return <div className="p-10 text-red-500">❌ Error: {error}</div>;
 
   return (
