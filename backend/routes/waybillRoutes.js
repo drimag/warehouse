@@ -4,6 +4,6 @@ const waybillController = require('../controllers/waybillController');
 
 // URL: /api/waybills
 router.get('/', waybillController.getAllWaybills);
-router.get('/waybillInfo/:id', waybillController.getWaybillInfo);
+router.get('/:id', waybillController.getWaybillInfo);
 
 module.exports = router;

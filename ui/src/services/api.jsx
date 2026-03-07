@@ -9,12 +9,9 @@ const handleResponse = async (response) => {
 };
 
 export const api = {
-  // GET all waybills
   getWaybills: () => fetch(`${BASE_URL}/waybills`).then(handleResponse),
-  getWaybillInfo: (id) => fetch(`${BASE_URL}/waybills/waybillInfo/${id}`).then(handleResponse),
+  getWaybillInfo: (id) => fetch(`${BASE_URL}/waybills/${id}`).then(handleResponse),
   getUnits: () => fetch(`${BASE_URL}/units`).then(handleResponse),
   getUnitHistory: (engine) => fetch(`${BASE_URL}/units/${engine}`).then(handleResponse),
 
-  // GET a single waybill by ID (for the Detail View later)
-  //   getWaybillById: (id) => fetch(`${BASE_URL}/waybills/${id}`).then(handleResponse),
 };
