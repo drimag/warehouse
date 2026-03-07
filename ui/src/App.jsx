@@ -5,8 +5,6 @@ import Units from "./pages/Units";
 import UnitForm from "./pages/UnitForm";
 import UnitLogs from "./pages/UnitLogs";
 import Scan from "./pages/Scan";
-import StockIn from "./pages/StockIn";
-import StockOut from "./pages/StockOut";
 import Waybills from "./pages/Waybills";
 import WaybillForm from "./pages/WaybillForm";
 import WaybillLogs from "./pages/WaybillLogs";
@@ -30,8 +28,6 @@ function App() {
           <Route path="/waybills" element={<Waybills />} />
           <Route path="/waybill_form" element={<WaybillForm />} />
           <Route path="/waybill_logs/:id" element={<WaybillLogs />} />
-          <Route path="/stockin" element={<StockIn />} />
-          <Route path="/stockout" element={<StockOut />} />
           <Route path="/scan" element={<Scan />} />
         </Routes>
       </div>

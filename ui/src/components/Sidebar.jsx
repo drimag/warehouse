@@ -6,8 +6,6 @@ export default function Sidebar() {
     <div className="sidebar">
       <div className="nav-icon" onClick={() => navigate("/units")} />
       <div className="nav-icon" onClick={() => navigate("/waybills")} />
-      <div className="nav-icon" onClick={() => navigate("/stockin")} />
-      <div className="nav-icon" onClick={() => navigate("/stockout")} />
       <div className="nav-icon" onClick={() => navigate("/scan")} />
       <div className="nav-icon" onClick={() => navigate("/waybill_form")} />
       <div className="nav-icon" onClick={() => navigate("/unit_form")} />
