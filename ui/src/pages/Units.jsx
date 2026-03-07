@@ -44,7 +44,7 @@ export default function Units() {
       <GenericTable
         columns={unitColumns}
         data={data}
-        onRowClick={(unit) => navigate("/units/")}
+        onRowClick={(row) => navigate("/unit_logs/" + row.engine)}
       />
     </div>
   );
