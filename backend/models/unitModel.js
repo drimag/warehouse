@@ -14,10 +14,15 @@ const Unit = {
 
   // Get specific unit details + its chronological history
   getUnitHistory: async (engine) => {
-    const unitDetails = await db.query(
-      "SELECT * FROM units WHERE engine = $1", 
-      [engine]
-    );
+
+    const detailsQuery = `
+      SELECT 
+        u.*, 
+        (SELECT MAX(timestamp) FROM unit_logs WHERE engine = u.engine) AS last_updated
+      FROM units u 
+      WHERE u.engine = $1
+    `;
+    const unitDetails = await db.query(detailsQuery, [engine]);
 
     const historyQuery = `
       SELECT 
@@ -36,7 +41,6 @@ const Unit = {
       WHERE ul.engine = $1
       ORDER BY ul.timestamp DESC;
     `;
-    
     const history = await db.query(historyQuery, [engine]);
 
     return {

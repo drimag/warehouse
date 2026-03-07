@@ -21,7 +21,7 @@ export default function UnitHeader({ unit }) {
           <strong>DA:</strong> {unit.da}
         </span>
         <span>
-          <strong>Warehouse:</strong> {unit.current_warehouse}
+          <strong>Last Known Warehouse:</strong> {unit.last_warehouse}
         </span>
 
         {/* Status & Timing */}
