@@ -1,70 +1,40 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import UnitFilters from "../components/Units/UnitFilters";
 import GenericTable from "../components/GenericTable";
+import { api } from "../services/api";
 
 const unitColumns = [
-  {
-    label: "Engine No.",
-    key: "engine",
-    render: (val) => <strong>{val}</strong>,
-  },
+  { label: "Engine No.", key: "engine" },
   { label: "Frame", key: "frame" },
   { label: "Model", key: "model" },
   { label: "Color", key: "color" },
   { label: "DA", key: "da" },
-  { label: "Last Known Warehouse", key: "current_warehouse" },
-  {
-    label: "Status",
-    key: "status",
-    render: (status) => (
-      <span className={`badge badge-${status.toLowerCase().replace(" ", "_")}`}>
-        {status}
-      </span>
-    ),
-  },
-];
-
-export const MOCK_UNITS = [
-  {
-    engine: "ENG-882910",
-    frame: "FRM-XP122",
-    model: "Hilux G",
-    color: "Super White",
-    da: "DA-2026-005",
-    current_warehouse: "Laguna Plant",
-    status: "IN STORAGE",
-  },
-  {
-    engine: "ENG-882911",
-    frame: "FRM-XP123",
-    model: "Hilux G",
-    color: "Attitude Black",
-    da: "DA-2026-005",
-    current_warehouse: "In Transit",
-    status: "IN TRANSIT",
-  },
-  {
-    engine: "ENG-994012",
-    frame: "FRM-ZV990",
-    model: "Fortuner V",
-    color: "Silver Metallic",
-    da: "DA-2026-009",
-    current_warehouse: "Davao Port",
-    status: "IN STORAGE",
-  },
-  {
-    engine: "ENG-773104",
-    frame: "FRM-LK551",
-    model: "Vios E",
-    color: "Red Mica",
-    da: "DA-2026-012",
-    current_warehouse: "Manila Hub",
-    status: "CLOSED",
-  },
+  { label: "Last Known Warehouse", key: "last_warehouse" },
+  { label: "Status", key: "status" },
 ];
 
 export default function Units() {
   const navigate = useNavigate();
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    api
+      .getUnits()
+      .then((json) => {
+        setData(json);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <div className="p-10 text-center">🚚 Loading Shipments...</div>;
+  if (error) return <div className="p-10 text-red-500">❌ Error: {error}</div>;
 
   return (
     <div className="page">
@@ -73,7 +43,7 @@ export default function Units() {
       <UnitFilters />
       <GenericTable
         columns={unitColumns}
-        data={MOCK_UNITS}
+        data={data}
         onRowClick={(unit) => navigate("/units/")}
       />
     </div>
