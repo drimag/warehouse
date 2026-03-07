@@ -25,7 +25,10 @@ const seedDatabase = async () => {
         frame VARCHAR(50) NOT NULL,
         model VARCHAR(100),
         color VARCHAR(50),
-        status VARCHAR(20) DEFAULT 'AVAILABLE'
+        status VARCHAR(20) DEFAULT 'AVAILABLE',
+        da VARCHAR(50),  
+        last_warehouse VARCHAR(50), 
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
       CREATE TABLE waybills (
@@ -46,6 +49,15 @@ const seedDatabase = async () => {
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
+      CREATE TABLE unit_logs (
+        id SERIAL PRIMARY KEY,
+        waybill_log_id VARCHAR(100) REFERENCES waybill_logs(id) ON DELETE SET NULL,
+        engine VARCHAR(50) REFERENCES units(engine) ON DELETE CASCADE,
+        event VARCHAR(50), -- 'GENERATED', 'DEPARTURE', 'ARRIVAL'
+        user_id VARCHAR(50),
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
       CREATE TABLE wb_advice (
         id SERIAL PRIMARY KEY,
         waybill_id VARCHAR(100) REFERENCES waybills(id) ON DELETE CASCADE,
@@ -61,17 +73,17 @@ const seedDatabase = async () => {
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-
+    
     // 3. INSERT YOUR SPECIFIC UNIT DATA
     await db.query(`
-      INSERT INTO units (engine, frame, model, color) VALUES
-      ('JA69ED080239', 'K2VS1020393', 'ACB125CBFTIV', 'PG'),
-      ('JA69ED080240', 'K2VS1020394', 'ACB125CBFTIV', 'BK')
+      INSERT INTO units (engine, frame, model, color, da, last_warehouse, status) VALUES
+      ('JA69ED080239', 'K2VS1020393', 'ACB125CBFTIV', 'PG', '92556549', 'WH-LAGUNA', 'IN_TRANSIT'),
+      ('JA69ED080240', 'K2VS1020394', 'ACB125CBFTIV', 'BK', '92556549', 'WH-LAGUNA', 'IN_TRANSIT')
     `);
-
+    
     // --- WAYBILL 1: COMPLETE CYCLE (DEPARTURE & ARRIVAL) ---
     const wbId1 = "LAG-MNL-20260305-001";
-
+    
     // 1. Waybill Instance
     await db.query(
       `INSERT INTO waybills (id, status, origin, destination, client) VALUES ($1, 'ARRIVED', 'LAGUNA', 'MANILA', 'HONDA PH')`,
@@ -90,6 +102,13 @@ const seedDatabase = async () => {
       `INSERT INTO waybill_logs (id, waybill_id, status, driver, truck, quantity) VALUES ($1, $2, 'DEPARTURE', $3, $4, 5)`,
       [depLogId1, wbId1, "Ricardo Dalisay", "TRK-HINO-99"],
     );
+
+    await db.query(`
+      INSERT INTO unit_logs (waybill_log_id, engine, event, user_id) VALUES
+      ('${depLogId1}', 'JA69ED080239', 'DEPARTURE', 'OPERATOR_RICARDO'),
+      ('${depLogId1}', 'JA69ED080240', 'DEPARTURE', 'OPERATOR_RICARDO')
+    `);
+    
 
     // 4. Departure Scans (5 Units)
     const scanOutCodes = [
