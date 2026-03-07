@@ -1,5 +1,4 @@
 export default function WaybillHeader({ waybill }) {
-  // Simple check for quantity alert
   const qtyColor =
     waybill.actual_qty !== waybill.expected_qty ? "red" : "inherit";
 
@@ -33,7 +32,7 @@ export default function WaybillHeader({ waybill }) {
         </span>
 
         {/* Quantities & Time */}
-        <span>
+        <span style={{ color: qtyColor }}>
           <strong>Quantity:</strong> {waybill.actual_qty} /{" "}
           {waybill.expected_qty}
         </span>

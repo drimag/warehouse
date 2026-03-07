@@ -59,8 +59,7 @@ export default function Waybills() {
       });
   }, []);
 
-  if (loading)
-    return <div className="p-10 text-center">🚚 Loading Shipments...</div>;
+  if (loading) return <div className="p-10 text-center">🚚 Loading Shipments...</div>;
   if (error) return <div className="p-10 text-red-500">❌ Error: {error}</div>;
 
   return (

@@ -71,6 +71,8 @@ export default function WaybillLogs() {
     (scan) => scan.log_status === "DEPARTURE",
   );
 
+  if (!waybillData || !waybillData.details) return <div>⚠️ Waybill not found.</div>;
+
   return (
     <div className="page">
       <WaybillHeader waybill={waybillData.details} />
