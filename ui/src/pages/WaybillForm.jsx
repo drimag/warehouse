@@ -4,11 +4,22 @@ import ScanInput from "../components/Scan/ScanInput";
 import GenericSelect from "../components/Scan/GenericSelect";
 import WaybillConfirm from "../components/Waybills/WaybillConfirm";
 import SearchableSelect from "../components/SearchableSelect";
+import DatePicker from "../components/Scan/DatePicker";
 
 import "../styles/scan.css";
 
 export default function WaybillForm() {
   const navigate = useNavigate();
+
+  const getLocalISOString = () => {
+    const now = new Date();
+    // Adjust for the user's local timezone offset
+    const offset = now.getTimezoneOffset() * 60000;
+    const localTime = new Date(now - offset);
+
+    // Returns "YYYY-MM-DDTHH:MM" (exactly what the input needs)
+    return localTime.toISOString().slice(0, 16);
+  };
 
   const [waybillname, setWaybillName] = useState("");
   const [origin, setOrigin] = useState("Warehouse A");
@@ -16,8 +27,10 @@ export default function WaybillForm() {
   const [submitted, setSubmitted] = useState(false);
   const [driver, setDriver] = useState("");
   const [quantity, setQuantity] = useState(5);
+  const [expectedDate, setExpectedDate] = useState(getLocalISOString());
 
   const warehouseList = ["Warehouse A", "Warehouse B", "Warehouse C"];
+  const mockWaybillList = ["waybill A", "second waybill", "pangatlong waybill"];
   const waybillType = ["DEPARTURE", "ARRIVAL"];
 
   const handleSubmit = () => {
@@ -98,7 +111,6 @@ export default function WaybillForm() {
           <hr className="divider" />
           <h1 className="page-title"> Advice </h1>
           <div>
-
             <SearchableSelect
               selected={driver}
               setSelected={(val) => {
@@ -109,9 +121,14 @@ export default function WaybillForm() {
               options={waybillType}
               placeholder={"Select Waybill Type"}
             />
-            <ScanInput
-              title={"Expected Time"}
-              placeholder={"Enter Expected Time"}
+
+            <DatePicker
+              selected={expectedDate}
+              setSelected={(val) => {
+                setExpectedDate(val);
+                focusNext(truckRef);
+              }}
+              title={"Expected Date"}
             />
 
             <ScanInput
