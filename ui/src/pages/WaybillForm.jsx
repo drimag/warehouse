@@ -8,18 +8,10 @@ import DatePicker from "../components/Scan/DatePicker";
 
 import "../styles/scan.css";
 
+import { getLocalISOString } from "../utils/dateUtils";
+
 export default function WaybillForm() {
   const navigate = useNavigate();
-
-  const getLocalISOString = () => {
-    const now = new Date();
-    // Adjust for the user's local timezone offset
-    const offset = now.getTimezoneOffset() * 60000;
-    const localTime = new Date(now - offset);
-
-    // Returns "YYYY-MM-DDTHH:MM" (exactly what the input needs)
-    return localTime.toISOString().slice(0, 16);
-  };
 
   const [waybillname, setWaybillName] = useState("");
   const [origin, setOrigin] = useState("Warehouse A");
