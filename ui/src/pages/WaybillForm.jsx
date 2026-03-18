@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { use, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ScanInput from "../components/Scan/ScanInput";
 import GenericSelect from "../components/Scan/GenericSelect";
@@ -20,10 +20,12 @@ export default function WaybillForm() {
   const [driver, setDriver] = useState("");
   const [quantity, setQuantity] = useState(5);
   const [expectedDate, setExpectedDate] = useState(getLocalISOString());
+  const [client, setClient] = useState("");
 
   const warehouseList = ["Warehouse A", "Warehouse B", "Warehouse C"];
-  const mockWaybillList = ["waybill A", "second waybill", "pangatlong waybill"];
   const waybillType = ["DEPARTURE", "ARRIVAL"];
+  const mockClients = ["unang clinet", "2nd cliyente", "sanninmen"];
+
 
   const handleSubmit = () => {
     setSubmitted(true);
@@ -68,6 +70,17 @@ export default function WaybillForm() {
             setVin={setWaybillName}
             title={"Waybill Name"}
             placeholder={"Enter Waybill Name"}
+          />
+
+          <SearchableSelect
+            selected={client}
+            setSelected={(val) => {
+              setClient(val);
+              focusNext(truckRef);
+            }}
+            title={"Client"}
+            options={mockClients}
+            placeholder={"Enter Client"}
           />
 
           <div className="warehouse-row">
