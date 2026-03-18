@@ -113,7 +113,7 @@ export default function Scan() {
             <button
               type="button"
               className="toggle-btn active scan-field"
-              onClick={() => navigate("/waybill")}
+              onClick={() => navigate("/waybill_form")}
             >
               Generate New Waybill
             </button>
