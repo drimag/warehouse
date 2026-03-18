@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ScanInput from "../components/Scan/ScanInput";
 import GenericSelect from "../components/Scan/GenericSelect";
 import WaybillConfirm from "../components/Waybills/WaybillConfirm";
+import SearchableSelect from "../components/SearchableSelect";
 
 import "../styles/scan.css";
 
@@ -13,7 +14,7 @@ export default function WaybillForm() {
   const [origin, setOrigin] = useState("Warehouse A");
   const [destination, setDestination] = useState("Warehouse B");
   const [submitted, setSubmitted] = useState(false);
-  const [driver, setDriver] = useState("Driver A");
+  const [driver, setDriver] = useState("");
   const [quantity, setQuantity] = useState(5);
 
   const warehouseList = ["Warehouse A", "Warehouse B", "Warehouse C"];
@@ -89,6 +90,7 @@ export default function WaybillForm() {
               placeholder={"Select Warehouse"}
             />
           </div>
+
           <button className="primary-btn" onClick={handleSubmit}>
             Create New Waybill
           </button>
@@ -96,8 +98,8 @@ export default function WaybillForm() {
           <hr className="divider" />
           <h1 className="page-title"> Advice </h1>
           <div>
-            <GenericSelect
-              // ref={driverRef}
+
+            <SearchableSelect
               selected={driver}
               setSelected={(val) => {
                 setDriver(val);

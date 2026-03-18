@@ -29,14 +29,45 @@
   box-shadow: 0 0 0 1px #2684ff;
 }
 
+/* TO DO: UPDATE THESE OTHER FIELDS TO USE THE "is placeholder" class */
 .scan-field select:has(option:checked[value=""]) {
   color: #9ca3af;
 }
-.scan-field option:not([value=""]) {
+.scan-field option:not([value=""]){
   color: black;
 }
-.scan-field option[value=""] {
+.scan-field option[value=""]{
   color: #9ca3af;
+}
+
+.scan-field input.is-placeholder {
+  color: #9ca3af; 
+}
+
+.scan-field input:not(.is-placeholder) {
+  color: black;
+}
+
+/* 2. The Dropdown List logic */
+.dropdown-list {
+  background: white;
+  border: 1px solid #ccc;
+  /* ... your other positioning styles ... */
+}
+
+.dropdown-item {
+  color: black; /* Real options are always black */
+  padding: 8px;
+  cursor: pointer;
+}
+
+/* If you ever add a "None" or "Clear" option inside the UL */
+.dropdown-item.none-option {
+  color: #9ca3af;
+}
+
+.dropdown-item:hover {
+  background-color: #f3f4f6;
 }
 
 .action-buttons {
@@ -150,4 +181,20 @@
 }
 .button-row > * {
   flex: 1;
+}
+
+.searchable-select-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown-list {
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border-radius: 4px;
+}
+
+.search-input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
