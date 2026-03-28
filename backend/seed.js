@@ -26,7 +26,7 @@ const seedDatabase = async () => {
     
     await db.query(`
       CREATE TABLE units (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id VARCHAR(50) PRIMARY KEY,
         engine VARCHAR(50) UNIQUE,
         frame VARCHAR(50) UNIQUE,
         model VARCHAR(50),
@@ -65,7 +65,7 @@ const seedDatabase = async () => {
       -- Selective SCD2 Implementation
       CREATE TABLE unit_history (
         history_id UUID PRIMARY KEY,
-        unit_id UUID REFERENCES units(id) ON DELETE CASCADE,
+        unit_id VARCHAR(50) REFERENCES units(id) ON DELETE CASCADE,
         engine VARCHAR(50) UNIQUE,
         frame VARCHAR(50) UNIQUE,
         model VARCHAR(50),
@@ -108,18 +108,82 @@ const seedDatabase = async () => {
       CREATE TABLE waybill_manifest (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         waybill_id VARCHAR(100) REFERENCES waybills(id)  ON DELETE CASCADE,
-        unit_id UUID REFERENCES units(id),
+        unit_id VARCHAR(50) REFERENCES units(id),
         manifest_type TEXT NOT NULL, 
         user_id VARCHAR(100), -- subject to change
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
 
       CREATE TABLE unit_advice (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id VARCHAR(50) PRIMARY KEY DEFAULT gen_random_uuid(),
         advice_id VARCHAR(100) REFERENCES waybill_advice(id) ON DELETE CASCADE,
-        unit_id UUID REFERENCES units(id),
+        unit_id VARCHAR(50) REFERENCES units(id),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
+    `);
+
+    await db.query(`
+      -- 1. Create 2 Units (Started as IN_STORAGE)
+      INSERT INTO units (id, engine, frame, status, current_location)
+      VALUES 
+        ('1', 'ENG-P1-001', 'FRM-P1-001', 'IN_STORAGE', 'Makati Warehouse'),
+        ('2', 'ENG-P1-002', 'FRM-P1-002', 'IN_STORAGE', 'Makati Warehouse');
+
+      -- 2. Create the Waybill (Started as LOADING)
+      INSERT INTO waybills (id, status, origin, destination, client, truck, driver)
+      VALUES ('wb1', 'LOADING', 'Makati Warehouse', 'Cebu Hub', 'Client Alpha', 'ABC-1234', 'Juan Dela Cruz');
+
+      -- 3. Link them in the Manifest (The "Scan")
+      INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type)
+      VALUES 
+        ('wb1', '1', 'PICKUP'),
+        ('wb1', '2', 'PICKUP');
+
+      -- 4. TRIGGER ACTION: Move to IN_TRANSIT
+      -- This will automatically expire the 'IN_STORAGE' history and create 'IN_TRANSIT' history
+      UPDATE units SET status = 'IN_TRANSIT', current_location = 'ABC-1234' WHERE id IN ('1', '2');
+      UPDATE waybills SET status = 'IN_TRANSIT' WHERE id = 'wb1';
+
+      -- 1. Create the Advice (The Plan)
+      INSERT INTO waybill_advice (id, origin, destination, client, expected_quantity)
+      VALUES ('adv2', 'Batangas Port', 'Davao Depot', 'Client Beta', 3);
+
+      -- 2. Create 3 Units
+      INSERT INTO units (id, engine, frame, status, current_location)
+      VALUES 
+        ('3', 'ENG-P2-003', 'FRM-P2-003', 'IN_STORAGE', 'Batangas Port'),
+        ('4', 'ENG-P2-004', 'FRM-P2-004', 'IN_STORAGE', 'Batangas Port'),
+        ('5', 'ENG-P2-005', 'FRM-P2-005', 'IN_STORAGE', 'Batangas Port');
+
+      -- 3. Create Unit Advice (The Expected List)
+      INSERT INTO unit_advice (advice_id, unit_id)
+      VALUES 
+        ('adv2', '3'),
+        ('adv2', '4'),
+        ('adv2', '5');
+
+      -- 4. Create Waybill and Cycle through Statuses to populate SCD2 History
+      INSERT INTO waybills (id, advice_id, status, origin, destination, client, truck, driver)
+      VALUES ('wb2', 'adv2', 'LOADING', 'Batangas Port', 'Davao Depot', 'Client Beta', 'XYZ-9876', 'Jose Rizal');
+
+      -- Simulating the Physical Movement
+      -- Departure Scan
+      INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
+      VALUES ('wb2', '3', 'PICKUP'), ('wb2', '4', 'PICKUP'), ('wb2', '5', 'PICKUP');
+
+      UPDATE waybills SET status = 'IN_TRANSIT' WHERE id = 'wb2';
+      UPDATE units SET status = 'IN_TRANSIT', current_location = 'XYZ-9876' WHERE id IN ('3', '4', '5');
+
+      -- Arrival Scan
+      INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
+      VALUES ('wb2', '3', 'DROPOFF'), ('wb2', '4', 'DROPOFF'), ('wb2', '5', 'DROPOFF');
+
+      UPDATE waybills SET status = 'ARRIVED' WHERE id = 'wb2';
+      UPDATE units SET status = 'IN_STORAGE', current_location = 'Davao Depot' WHERE id IN ('3', '4', '5');
+
+      -- Final Closure
+      UPDATE waybills SET status = 'CLOSED' WHERE id = 'wb2';
+      
     `);
 
     console.log("✨ Smart Database seeded successfully!");
