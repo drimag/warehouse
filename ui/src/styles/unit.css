@@ -8,7 +8,13 @@
 
 .unit-meta {
   display: flex;
+  flex-wrap: wrap;
   gap: 2rem;
+  font-size: 0.9rem;
+}
+
+.unit-meta span {
+  white-space: nowrap;   /* Keeps "Status: IN_TRANSIT" from splitting in half */
   font-size: 0.9rem;
 }
 
