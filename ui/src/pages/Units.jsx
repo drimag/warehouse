@@ -10,7 +10,7 @@ const unitColumns = [
   { label: "Model", key: "model" },
   { label: "Color", key: "color" },
   { label: "DA", key: "da" },
-  { label: "Last Known Warehouse", key: "last_warehouse" },
+  { label: "Current Location", key: "current_location" },
   { label: "Status", key: "status" },
 ];
 
@@ -44,7 +44,7 @@ export default function Units() {
       <GenericTable
         columns={unitColumns}
         data={data}
-        onRowClick={(row) => navigate("/unit_logs/" + row.engine)}
+        onRowClick={(row) => navigate("/unit_logs/" + row.id)}
       />
     </div>
   );

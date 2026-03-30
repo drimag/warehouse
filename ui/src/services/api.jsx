@@ -12,6 +12,6 @@ export const api = {
   getWaybills: () => fetch(`${BASE_URL}/waybills`).then(handleResponse),
   getWaybillInfo: (id) => fetch(`${BASE_URL}/waybills/${id}`).then(handleResponse),
   getUnits: () => fetch(`${BASE_URL}/units`).then(handleResponse),
-  getUnitHistory: (engine) => fetch(`${BASE_URL}/units/${engine}`).then(handleResponse),
+  getUnitHistory: (unitID) => fetch(`${BASE_URL}/units/${unitID}`).then(handleResponse),
 
 };

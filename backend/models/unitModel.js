@@ -1,63 +1,39 @@
-const db = require('../config/db');
+const db = require("../config/db");
 
 const Unit = {
-  // Get all units for the main Inventory list
-  fetchAll: async () => {
-    const query = `
-      SELECT engine, frame, model, color, status, da, last_warehouse 
-      FROM units 
-      ORDER BY engine ASC;
-    `;
-    const { rows } = await db.query(query);
-    return rows;
+  // Page 1: Display all units
+  getAll: async () => {
+    const res = await db.query(
+      'SELECT id, engine, frame, model, color, da, status, current_location FROM units ORDER BY updated_at DESC'
+    );
+    return res.rows;
   },
 
-  // Get specific unit details + its chronological history
-  getUnitHistory: async (engine) => {
-
-    const detailsQuery = `
-      SELECT 
-        u.*, 
-        (SELECT MAX(timestamp) FROM unit_logs WHERE engine = u.engine) AS last_updated
-      FROM units u 
-      WHERE u.engine = $1
-    `;
-    const unitDetails = await db.query(detailsQuery, [engine]);
-
-    const historyQuery = `
-      SELECT 
-        ul.event,
-        ul.timestamp,
-        ul.user_id,
-        wl.status AS movement_status,
-        wl.waybill_id,
-        wl.driver,
-        wl.truck,
-        w.origin,
-        w.destination
-      FROM unit_logs ul
-      LEFT JOIN waybill_logs wl ON ul.waybill_log_id = wl.id
-      LEFT JOIN waybills w ON wl.waybill_id = w.id
-      WHERE ul.engine = $1
-      ORDER BY ul.timestamp DESC;
-    `;
-    const history = await db.query(historyQuery, [engine]);
-
-    return {
-      details: unitDetails.rows[0],
-      history: history.rows
-    };
+  // Page 2: Display particular unit
+  getById: async (id) => {
+    const res = await db.query('SELECT * FROM units WHERE id = $1', [id]);
+    return res.rows[0];
   },
 
-  updateLocation: async (engine, warehouse, status) => {
+  // Page 5: Update Unit during Scan
+  // Note: The trigger will automatically create the unit_history entry
+  updateStatus: async (id, status, location, client) => {
     const query = `
       UPDATE units 
-      SET current_warehouse = $2, status = $3 
-      WHERE engine = $1
-      RETURNING *;
-    `;
-    const { rows } = await db.query(query, [engine, warehouse, status]);
-    return rows[0];
+      SET status = $2, current_location = $3, updated_at = now() 
+      WHERE id = $1 
+      RETURNING *`;
+    const res = await client.query(query, [id, status, location]);
+    return res.rows[0];
+  },
+
+  // Page 7: Post new units
+  create: async (engine, frame, status, location) => {
+    const res = await db.query(
+      'INSERT INTO units (engine, frame, status, current_location) VALUES ($1, $2, $3, $4) RETURNING *',
+      [engine, frame, status, location]
+    );
+    return res.rows[0];
   }
 };
 

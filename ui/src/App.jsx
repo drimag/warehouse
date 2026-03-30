@@ -24,7 +24,7 @@ function App() {
           <Route path="/" element={<Navigate to="/units" />} />
           <Route path="/units" element={<Units />} />
           <Route path="/unit_form" element={<UnitForm />} />
-          <Route path="/unit_logs/:engine" element={<UnitLogs />} />
+          <Route path="/unit_logs/:unitID" element={<UnitLogs />} />
           <Route path="/waybills" element={<Waybills />} />
           <Route path="/waybill_form" element={<WaybillForm />} />
           <Route path="/waybill_logs/:id" element={<WaybillLogs />} />

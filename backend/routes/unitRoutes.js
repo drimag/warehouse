@@ -4,6 +4,6 @@ const unitController = require('../controllers/unitController');
 
 // URL: /api/units
 router.get('/', unitController.getAllUnits);
-router.get('/:engine', unitController.getUnitHistory);
+router.get('/:unitID', unitController.getUnitHistory);
 
 module.exports = router;
