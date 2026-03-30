@@ -64,10 +64,10 @@ const seedDatabase = async () => {
 
       -- Selective SCD2 Implementation
       CREATE TABLE unit_history (
-        history_id UUID PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         unit_id VARCHAR(50) REFERENCES units(id) ON DELETE CASCADE,
-        engine VARCHAR(50) UNIQUE,
-        frame VARCHAR(50) UNIQUE,
+        engine VARCHAR(50),
+        frame VARCHAR(50),
         model VARCHAR(50),
         color VARCHAR(50),
         status VARCHAR(50),
@@ -79,7 +79,7 @@ const seedDatabase = async () => {
       );
 
       CREATE TABLE waybill_history (
-        history_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         waybill_id VARCHAR(100) REFERENCES waybills(id) ON DELETE CASCADE,
         status VARCHAR(50),
         origin VARCHAR(50),
@@ -122,12 +122,43 @@ const seedDatabase = async () => {
       );
     `);
 
+    await db.query(
+      `
+      -- 1. Create the Function
+      CREATE OR REPLACE FUNCTION handle_unit_scd2()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        -- 1. 'Expire' the old version
+        UPDATE unit_history
+        SET eff_end = now(),
+            is_current = FALSE
+        WHERE unit_id = NEW.id AND is_current = TRUE;
+
+        -- 2. Insert the new version
+        INSERT INTO unit_history (
+          unit_id, engine, frame, model, color, status, current_location, eff_start, is_current
+        )
+        VALUES (
+          NEW.id, NEW.engine, NEW.frame, NEW.model, NEW.color, NEW.status, NEW.current_location, now(), TRUE
+        );
+
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+
+      -- 2. Create the Trigger
+      CREATE TRIGGER on_unit_update
+      AFTER INSERT OR UPDATE ON units
+      FOR EACH ROW EXECUTE FUNCTION handle_unit_scd2();
+      `
+    )
+
     await db.query(`
       -- 1. Create 2 Units (Started as IN_STORAGE)
-      INSERT INTO units (id, engine, frame, status, current_location)
+      INSERT INTO units (id, engine, frame, model, color, status, current_location)
       VALUES 
-        ('1', 'ENG-P1-001', 'FRM-P1-001', 'IN_STORAGE', 'Makati Warehouse'),
-        ('2', 'ENG-P1-002', 'FRM-P1-002', 'IN_STORAGE', 'Makati Warehouse');
+        ('1', 'ENG-P1-001', 'FRM-P1-001', 'Model1', 'RD', 'IN_STORAGE', 'Makati Warehouse'),
+        ('2', 'ENG-P1-002', 'FRM-P1-002', 'Model1', 'RD', 'IN_STORAGE', 'Makati Warehouse');
 
       -- 2. Create the Waybill (Started as LOADING)
       INSERT INTO waybills (id, status, origin, destination, client, truck, driver)
@@ -149,11 +180,11 @@ const seedDatabase = async () => {
       VALUES ('adv2', 'Batangas Port', 'Davao Depot', 'Client Beta', 3);
 
       -- 2. Create 3 Units
-      INSERT INTO units (id, engine, frame, status, current_location)
+      INSERT INTO units (id, engine, frame, model, color, status, current_location)
       VALUES 
-        ('3', 'ENG-P2-003', 'FRM-P2-003', 'IN_STORAGE', 'Batangas Port'),
-        ('4', 'ENG-P2-004', 'FRM-P2-004', 'IN_STORAGE', 'Batangas Port'),
-        ('5', 'ENG-P2-005', 'FRM-P2-005', 'IN_STORAGE', 'Batangas Port');
+        ('3', 'ENG-P2-003', 'FRM-P2-003', 'Model2', 'BL', 'IN_STORAGE', 'Batangas Port'),
+        ('4', 'ENG-P2-004', 'FRM-P2-004', 'Model2', 'BL', 'IN_STORAGE', 'Batangas Port'),
+        ('5', 'ENG-P2-005', 'FRM-P2-005', 'Model2', 'BL', 'IN_STORAGE', 'Batangas Port');
 
       -- 3. Create Unit Advice (The Expected List)
       INSERT INTO unit_advice (advice_id, unit_id)
