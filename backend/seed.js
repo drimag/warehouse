@@ -151,7 +151,54 @@ const seedDatabase = async () => {
       AFTER INSERT OR UPDATE ON units
       FOR EACH ROW EXECUTE FUNCTION handle_unit_scd2();
       `
-    )
+    );
+
+    await db.query(`
+      -- 1. Create the Function for Waybills
+      CREATE OR REPLACE FUNCTION handle_waybill_scd2()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        -- 1. 'Expire' the previous current version
+        UPDATE waybill_history
+        SET eff_end = now(),
+            is_current = FALSE
+        WHERE waybill_id = NEW.id AND is_current = TRUE;
+
+        -- 2. Insert the new version with updated details
+        INSERT INTO waybill_history (
+          waybill_id, 
+          status, 
+          origin, 
+          destination, 
+          truck, 
+          driver, 
+          departure_photo_url,
+          arrival_photo_url,
+          eff_start, 
+          is_current
+        )
+        VALUES (
+          NEW.id, 
+          NEW.status, 
+          NEW.origin, 
+          NEW.destination, 
+          NEW.truck, 
+          NEW.driver, 
+          NEW.departure_photo_url, 
+          NEW.arrival_photo_url,
+          now(), 
+          TRUE
+        );
+
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+
+      -- 2. Create the Trigger on the Waybills table
+      CREATE TRIGGER on_waybill_update
+      AFTER INSERT OR UPDATE ON waybills
+      FOR EACH ROW EXECUTE FUNCTION handle_waybill_scd2();
+    `)
 
     await db.query(`
       -- 1. Create 2 Units (Started as IN_STORAGE)
@@ -167,8 +214,8 @@ const seedDatabase = async () => {
       -- 3. Link them in the Manifest (The "Scan")
       INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type)
       VALUES 
-        ('wb1', '1', 'PICKUP'),
-        ('wb1', '2', 'PICKUP');
+        ('wb1', '1', 'DEPARTURE'),
+        ('wb1', '2', 'DEPARTURE');
 
       -- 4. TRIGGER ACTION: Move to IN_TRANSIT
       -- This will automatically expire the 'IN_STORAGE' history and create 'IN_TRANSIT' history
@@ -200,14 +247,14 @@ const seedDatabase = async () => {
       -- Simulating the Physical Movement
       -- Departure Scan
       INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
-      VALUES ('wb2', '3', 'PICKUP'), ('wb2', '4', 'PICKUP'), ('wb2', '5', 'PICKUP');
+      VALUES ('wb2', '3', 'DEPARTURE'), ('wb2', '4', 'DEPARTURE'), ('wb2', '5', 'DEPARTURE');
 
       UPDATE waybills SET status = 'IN_TRANSIT' WHERE id = 'wb2';
       UPDATE units SET status = 'IN_TRANSIT', current_location = 'XYZ-9876' WHERE id IN ('3', '4', '5');
 
       -- Arrival Scan
       INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
-      VALUES ('wb2', '3', 'DROPOFF'), ('wb2', '4', 'DROPOFF'), ('wb2', '5', 'DROPOFF');
+      VALUES ('wb2', '3', 'ARRIVAL'), ('wb2', '4', 'ARRIVAL'), ('wb2', '5', 'ARRIVAL');
 
       UPDATE waybills SET status = 'ARRIVED' WHERE id = 'wb2';
       UPDATE units SET status = 'IN_STORAGE', current_location = 'Davao Depot' WHERE id IN ('3', '4', '5');
