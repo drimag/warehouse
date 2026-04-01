@@ -5,13 +5,14 @@ import WaybillHeader from "../components/Waybills/WaybillHeader";
 import GenericTable from "../components/GenericTable";
 
 const logColumns = [
-  { label: "Status",  key: "status" },
-  { 
-    label: "Route", key: "route",
+  { label: "Status", key: "status" },
+  {
+    label: "Route",
+    key: "route",
     render: (val, row) => `${row.origin} → ${row.destination}`,
   },
-  { label: "Truck",  key: "truck" },
-  { label: "Driver",  key: "driver" },
+  { label: "Truck", key: "truck" },
+  { label: "Driver", key: "driver" },
   {
     label: "Photos",
     key: "photos",
@@ -40,11 +41,41 @@ const logColumns = [
     ),
   },
 ];
+
 const adviceColumns = [
-  { label: "Type", key: "type" },
-  { label: "Scheduled For", key: "expected_time" },
-  { label: "Created At", key: "timestamp" },
-  { label: "User", key: "user_name" },
+  { label: "Advice ID", key: "id" },
+  { label: "Client", key: "client" },
+  {
+    label: "Route",
+    render: (_, row) => (
+      <div style={{ fontSize: "0.85rem" }}>
+        <strong>{row.origin}</strong>
+        <span style={{ margin: "0 5px", color: "#666" }}>→</span>
+        {row.destination}
+      </div>
+    ),
+  },
+  {
+    label: "Driver",
+    key: "driver",
+    render: (val) => val ?? "---",
+  },
+  {
+    label: "Truck",
+    key: "truck",
+    render: (val) => val ?? "---",
+  },
+  {
+    label: "Status",
+    key: "status",
+    render: (val) => <span className="status-tag">{val ?? "---"}</span>,
+  },
+  {
+    label: "Expected Quantity",
+    key: "expected_quantity",
+    render: (val) => val ?? "0", // Or "---" if you prefer
+  },
+  { label: "Created At", key: "created_at" },
 ];
 
 const scanColumns = [
@@ -80,7 +111,7 @@ export default function WaybillLogs() {
   if (!waybillData) return <div>Waybill not found.</div>;
 
   if (!waybillData) return <div>⚠️ Waybill not found.</div>;
-
+  console.log("advice ", waybillData.advice);
   return (
     <div className="page">
       <WaybillHeader waybill={waybillData.details} />
@@ -97,8 +128,8 @@ export default function WaybillLogs() {
       <h1 className="page-title">Waybill Advice</h1>
       <GenericTable
         columns={adviceColumns}
-        data={waybillData.stateHistory}
-        emptyMessage="No activity logged for this waybill yet."
+        data={waybillData.advice ? [waybillData.advice] : []}
+        emptyMessage="No advice logged"
       />
 
       <hr className="divider" />

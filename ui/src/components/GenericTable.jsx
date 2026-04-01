@@ -1,9 +1,15 @@
-export default function GenericTable({ 
-  columns, 
-  data, 
-  onRowClick, 
-  emptyMessage = "No data found" 
+export default function GenericTable({
+  columns,
+  data,
+  onRowClick,
+  emptyMessage = "No data found",
 }) {
+  const safeData = Array.isArray(data) ? data : [];
+
+  if (safeData.length === 0) {
+    return <div>{emptyMessage}</div>;
+  }
+
   return (
     <table className="table">
       <thead>
@@ -16,8 +22,8 @@ export default function GenericTable({
       <tbody>
         {data.length > 0 ? (
           data.map((item, index) => (
-            <tr 
-              key={item.id || index} 
+            <tr
+              key={item.id || index}
               onClick={() => onRowClick?.(item)}
               className={onRowClick ? "clickable" : ""}
             >
