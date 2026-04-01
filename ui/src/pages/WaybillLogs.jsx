@@ -66,11 +66,6 @@ const adviceColumns = [
     render: (val) => val ?? "---",
   },
   {
-    label: "Status",
-    key: "status",
-    render: (val) => <span className="status-tag">{val ?? "---"}</span>,
-  },
-  {
     label: "Expected Quantity",
     key: "expected_quantity",
     render: (val) => val ?? "0", // Or "---" if you prefer

@@ -5,7 +5,6 @@ const Advice = {
     const query = `
       SELECT 
         id,
-        status,
         origin,
         destination,
         client,
