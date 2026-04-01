@@ -3,7 +3,7 @@ const router = express.Router();
 const waybillController = require('../controllers/waybillController');
 
 // URL: /api/waybills
-router.get('/', waybillController.getAllWaybills);
-router.get('/:id', waybillController.getWaybillInfo);
+router.get('/', waybillController.getAllWaybillDisplay);
+router.get('/:id', waybillController.getWaybillDetails);
 
 module.exports = router;

@@ -5,26 +5,41 @@ import WaybillHeader from "../components/Waybills/WaybillHeader";
 import GenericTable from "../components/GenericTable";
 
 const logColumns = [
-  { label: "Time", key: "timestamp" },
-  { label: "Event/Status", key: "status" },
-  { label: "Driver", key: "driver" },
-  { label: "Truck", key: "truck" },
-  { label: "Qty", key: "quantity" },
-  {
-    label: "Photo",
-    key: "photo",
-    render: (photo) =>
-      photo ? (
-        <a href={photo} target="_blank" rel="noreferrer">
-          View Image
-        </a>
-      ) : (
-        "—"
-      ),
+  { label: "Status",  key: "status" },
+  { 
+    label: "Route", key: "route",
+    render: (val, row) => `${row.origin} → ${row.destination}`,
   },
-  { label: "User", key: "user_name" },
+  { label: "Truck",  key: "truck" },
+  { label: "Driver",  key: "driver" },
+  {
+    label: "Photos",
+    key: "photos",
+    render: (val, row) => (
+      <div className="flex gap-2">
+        {row.departure_photo_url && <span title="Departure Photo">📤</span>}
+        {row.arrival_photo_url && <span title="Arrival Photo">📥</span>}
+        {!row.departure_photo_url && !row.arrival_photo_url && "---"}
+      </div>
+    ),
+  },
+  {
+    label: "Effective Start",
+    key: "eff_start",
+    render: (val) => new Date(val).toLocaleString(),
+  },
+  {
+    label: "Active",
+    key: "is_current",
+    render: (val) => (
+      <span
+        className={`badge ${val ? "text-green-600 font-bold" : "text-gray-400"}`}
+      >
+        {val ? "● Current" : "○ Previous"}
+      </span>
+    ),
+  },
 ];
-
 const adviceColumns = [
   { label: "Type", key: "type" },
   { label: "Scheduled For", key: "expected_time" },
@@ -64,14 +79,7 @@ export default function WaybillLogs() {
   if (loading) return <div>Loading Waybill {id}...</div>;
   if (!waybillData) return <div>Waybill not found.</div>;
 
-  const scansIn = waybillData.scans.filter(
-    (scan) => scan.log_status === "ARRIVAL",
-  );
-  const scansOut = waybillData.scans.filter(
-    (scan) => scan.log_status === "DEPARTURE",
-  );
-
-  if (!waybillData || !waybillData.details) return <div>⚠️ Waybill not found.</div>;
+  if (!waybillData) return <div>⚠️ Waybill not found.</div>;
 
   return (
     <div className="page">
@@ -80,7 +88,7 @@ export default function WaybillLogs() {
       <h1 className="page-title">Waybill Logs</h1>
       <GenericTable
         columns={logColumns}
-        data={waybillData.logs}
+        data={waybillData.stateHistory}
         emptyMessage="No activity logged for this waybill yet."
       />
 
@@ -89,14 +97,14 @@ export default function WaybillLogs() {
       <h1 className="page-title">Waybill Advice</h1>
       <GenericTable
         columns={adviceColumns}
-        data={waybillData.advice}
+        data={waybillData.stateHistory}
         emptyMessage="No activity logged for this waybill yet."
       />
 
       <hr className="divider" />
 
       <h1 className="page-title">Unit Scan In</h1>
-      <GenericTable
+      {/* <GenericTable
         columns={scanColumns}
         data={scansIn}
         emptyMessage="No scans recorded for this session."
@@ -109,7 +117,7 @@ export default function WaybillLogs() {
         columns={scanColumns}
         data={scansOut}
         emptyMessage="No scans recorded for this session."
-      />
+      /> */}
     </div>
   );
 }

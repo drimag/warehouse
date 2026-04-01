@@ -1,8 +1,9 @@
 const Waybill = require('../models/waybillModel');
+const History = require('../models/historyModel');
 
-exports.getAllWaybills = async (req, res) => {
+exports.getAllWaybillDisplay = async (req, res) => {
   try {
-    const waybills = await Waybill.getAllWaybills();
+    const waybills = await Waybill.getAllWaybillDisplay();
     res.json(waybills);
   } catch (err) {
     console.error("❌ DATABASE ERROR:", err);
@@ -10,11 +11,25 @@ exports.getAllWaybills = async (req, res) => {
   }
 };
 
-exports.getWaybillInfo = async (req, res) => {
+exports.getWaybillDetails = async (req, res) => {
   try {
     const { id } = req.params;
-    const waybillInfo = await Waybill.getWaybillInfo(id);
-    res.json(waybillInfo);
+    const [details, stateHistory] = await Promise.all([
+      Waybill.getWaybillDisplayById(id),
+      History.getWaybillStateHistory(id)
+    ]);
+
+    if (!details) {
+      return res.status(404).json({ message: `Waybill ${id} not found.` });
+    }
+
+    console.log("stateHistory: ", stateHistory);
+
+    res.json({
+      details,
+      stateHistory
+    });
+
   } catch (err) {
     console.error("❌ DATABASE ERROR:", err);
     res.status(500).json({ error: err.message });

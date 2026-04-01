@@ -29,7 +29,15 @@ const History = {
       ORDER BY m.created_at ASC`;
     const res = await db.query(query, [waybillId]);
     return res.rows;
-  }
+  },
+
+  getWaybillStateHistory: async (waybillId) => {
+    const res = await db.query(
+      'SELECT id, waybill_id, status, origin, destination, truck, driver, departure_photo_url, arrival_photo_url, eff_start, eff_end, is_current FROM waybill_history WHERE waybill_id = $1 ORDER BY eff_start DESC',
+      [waybillId]
+    );
+    return res.rows;
+  },
 };
 
 module.exports = History;
