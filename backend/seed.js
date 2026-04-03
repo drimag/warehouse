@@ -39,7 +39,6 @@ const seedDatabase = async () => {
 
       CREATE TABLE waybill_advice (
         id VARCHAR(100) PRIMARY KEY, -- Smart ID: adv-ORIG-DEST-YYYYMMDD
-        status VARCHAR(50),
         origin VARCHAR(50),
         destination VARCHAR(50),
         client VARCHAR(100),
@@ -118,6 +117,7 @@ const seedDatabase = async () => {
         id VARCHAR(50) PRIMARY KEY DEFAULT gen_random_uuid(),
         advice_id VARCHAR(100) REFERENCES waybill_advice(id) ON DELETE CASCADE,
         unit_id VARCHAR(50) REFERENCES units(id),
+        
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
     `);
