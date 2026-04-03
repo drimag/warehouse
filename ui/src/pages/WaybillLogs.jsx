@@ -74,14 +74,11 @@ const adviceColumns = [
 ];
 
 const scanColumns = [
-  { label: "Scanned Value", key: "scan" },
-  { label: "Match Status", key: "status" },
-  { label: "Scan Time", key: "timestamp" },
-  {
-    label: "Log Ref",
-    key: "waybill_log_id",
-    render: (val) => <small>Log: {val}</small>,
-  },
+  { label: "Manifest ID", key: "id" },
+  { label: "Unit ID", key: "unit_id" },
+  { label: "Unit Engine", key: "engine" },
+  { label: "User", key: "user_id" },
+  { label: "Created At", key: "created_at" },
 ];
 
 export default function WaybillLogs() {
@@ -106,7 +103,16 @@ export default function WaybillLogs() {
   if (!waybillData) return <div>Waybill not found.</div>;
 
   if (!waybillData) return <div>⚠️ Waybill not found.</div>;
-  console.log("advice ", waybillData.advice);
+
+  const departureManifest =
+    waybillData.manifest?.filter(
+      (item) => item.manifest_type === "DEPARTURE",
+    ) || [];
+
+  const arrivalManifest =
+    waybillData.manifest?.filter((item) => item.manifest_type === "ARRIVAL") ||
+    [];
+
   return (
     <div className="page">
       <WaybillHeader waybill={waybillData.details} />
@@ -118,6 +124,30 @@ export default function WaybillLogs() {
         emptyMessage="No activity logged for this waybill yet."
       />
 
+      {departureManifest.length > 0 && (
+        <>
+          <hr className="divider" />
+          <h1 className="page-title">Units at Departure</h1>
+          <GenericTable
+            columns={scanColumns}
+            data={departureManifest}
+            emptyMessage="No units recorded"
+          />
+        </>
+      )}
+
+      {arrivalManifest.length > 0 && (
+        <>
+          <hr className="divider" />
+          <h1 className="page-title">Units at Arrival</h1>
+          <GenericTable
+            columns={scanColumns}
+            data={arrivalManifest}
+            emptyMessage="No units recorded"
+          />
+        </>
+      )}
+
       <hr className="divider" />
 
       <h1 className="page-title">Waybill Advice</h1>
@@ -128,22 +158,6 @@ export default function WaybillLogs() {
       />
 
       <hr className="divider" />
-
-      <h1 className="page-title">Unit Scan In</h1>
-      {/* <GenericTable
-        columns={scanColumns}
-        data={scansIn}
-        emptyMessage="No scans recorded for this session."
-      />
-
-      <hr className="divider" />
-
-      <h1 className="page-title">Unit Scan Out</h1>
-      <GenericTable
-        columns={scanColumns}
-        data={scansOut}
-        emptyMessage="No scans recorded for this session."
-      /> */}
     </div>
   );
 }

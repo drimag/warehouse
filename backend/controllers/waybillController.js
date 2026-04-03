@@ -17,10 +17,11 @@ exports.getWaybillDetails = async (req, res) => {
     const { id } = req.params;
 
     const details = await Waybill.getWaybillDisplayById(id);
-    const [stateHistory, advice, unitAdvice] = await Promise.all([
+    const [stateHistory, advice, manifest, unitAdvice] = await Promise.all([
       History.getWaybillStateHistory(id),
       Advice.getWaybillAdviceById(details.advice_id),
-      Advice.getUnitAdviceByWbAdviceId(details.advice_id),
+      Waybill.getWaybillManifestByWBID(id),
+      Advice.getUnitAdviceByWbAdviceId(details.advice_id)
     ]);
 
     if (!details) {
@@ -31,6 +32,7 @@ exports.getWaybillDetails = async (req, res) => {
       details,
       stateHistory,
       advice,
+      manifest,
       unitAdvice,
     });
   } catch (err) {

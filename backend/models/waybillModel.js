@@ -71,6 +71,24 @@ const Waybill = {
     return res.rows[0];
   },
 
+  getWaybillManifestByWBID: async (wbID) => {
+    const query = `
+      SELECT 
+        wm.id,
+        wm.waybill_id,
+        wm.unit_id,
+        u.engine,
+        wm.manifest_type,
+        wm.user_id,
+        wm.created_at
+      FROM waybill_manifest wm
+      LEFT JOIN units u ON wm.unit_id = u.id
+      WHERE wm.waybill_id = $1;
+    `;
+    const res = await db.query(query, [wbID]);
+    return res.rows || null;
+  },
+
   // Page 5/6: Create or Update Waybill
   upsert: async (data) => {
     const {
