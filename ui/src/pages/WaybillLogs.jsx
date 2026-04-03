@@ -81,6 +81,14 @@ const scanColumns = [
   { label: "Created At", key: "created_at" },
 ];
 
+const unitAdviceColumns = [
+  { label: "Unit Advice ID", key: "id" },
+  { label: "Waybill Advice ID", key: "advice_id" },
+  { label: "Unit ID", key: "unit_id" },
+  { label: "Unit Engine", key: "engine" },
+  { label: "Created At", key: "created_at" },
+];
+
 export default function WaybillLogs() {
   const { id } = useParams();
   const [waybillData, setWaybillData] = useState(null);
@@ -158,6 +166,13 @@ export default function WaybillLogs() {
       />
 
       <hr className="divider" />
+
+      <h1 className="page-title">Unit Advice</h1>
+      <GenericTable
+        columns={unitAdviceColumns}
+        data={waybillData.unitAdvice}
+        emptyMessage="No advice logged"
+      />
     </div>
   );
 }

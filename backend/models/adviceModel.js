@@ -25,8 +25,10 @@ const Advice = {
         ua.id,
         ua.advice_id,
         ua.unit_id,
+        u.engine,
         ua.created_at
       FROM unit_advice ua
+      LEFT JOIN units u ON ua.unit_id = u.id
       WHERE ua.advice_id = $1;
     `;
     const res = await db.query(query, [wbAdviceId]);
