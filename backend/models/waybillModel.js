@@ -7,6 +7,17 @@ const Waybill = {
     return res.rows;
   },
 
+  getWaybillsForScan: async () => {
+    const query = `
+      SELECT *
+      FROM waybills w
+      WHERE w.status = 'IN_TRANSIT' OR w.status = 'IN_STORAGE'
+    `;
+
+    const res = await db.query(query);
+    return res.rows;
+  },
+
   getAllWaybillDisplay: async () => {
     const query = `
     SELECT 

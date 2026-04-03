@@ -12,10 +12,20 @@ exports.getAllWaybillDisplay = async (req, res) => {
   }
 };
 
+exports.getWaybillForScan = async (req, res) => {
+  try {
+    const waybills = await Waybill.getWaybillsForScan();
+    res.json(waybills);
+  } catch (err) {
+    console.error("❌ DATABASE ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 exports.getWaybillDetails = async (req, res) => {
   try {
     const { id } = req.params;
-
+    console.log("called get waybill details");
     const details = await Waybill.getWaybillDisplayById(id);
     const [stateHistory, advice, manifest, unitAdvice] = await Promise.all([
       History.getWaybillStateHistory(id),

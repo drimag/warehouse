@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { api } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import ScanInput from "../components/Scan/ScanInput";
 import PhotoUpload from "../components/Scan/PhotoUpload";
@@ -16,6 +17,7 @@ export default function Scan() {
   const qtyRef = useRef(null);
   const photoRef = useRef(null);
 
+  const [loading, setLoading] = useState(true);
   const [selection, setSelection] = useState("DEPARTURE");
   const [waybillname, setWaybillName] = useState("");
   const [origin, setOrigin] = useState("Warehouse A");
@@ -32,7 +34,21 @@ export default function Scan() {
   const driverList = ["Driver A", "Driver B", "Driver C"];
   const truckList = ["Truck A", "Truck B", "Truck C"];
   const warehouseList = ["Warehouse A", "Warehouse B", "Warehouse C"];
-  const waybillList = ["Waybill A", "Waybill B", "Waybill C"];
+  const [waybillList, setWaybillList] = useState("");
+
+  useEffect(() => {
+    api
+      .getWaybillsForScan()
+      .then((data) => {
+        const idList = data.map(item => item.id);
+        setWaybillList(idList);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  });
 
   const handleSubmit = () => {
     setShowModal(true);
@@ -73,13 +89,14 @@ export default function Scan() {
     }
   };
 
+  if (loading) return <div>Loading Page...</div>;
   return (
     <div className="page-centered page">
       {!submitted ? (
         <>
-          <h1 className="page-title"> Scan </h1>
+          <h1 className="page-title"> Stock In / Stock Out </h1>
 
-          <div className="button-row">
+          {/* <div className="button-row">
             <button
               type="button"
               className={`scan-field toggle-btn ${selection === "DEPARTURE" ? "active" : ""}`}
@@ -95,7 +112,7 @@ export default function Scan() {
             >
               Arrival
             </button>
-          </div>
+          </div> */}
 
           <GenericSelect
             ref={originRef}
