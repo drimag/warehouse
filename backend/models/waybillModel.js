@@ -20,24 +20,37 @@ const Waybill = {
 
   getAllWaybillDisplay: async () => {
     const query = `
-    SELECT 
-      w.*, 
-      wa.expected_quantity AS expected_qty,
-      (
-        SELECT COUNT(*) 
-        FROM waybill_manifest wm 
-        WHERE wm.waybill_id = w.id 
-        AND (
-          -- If status is ARRIVED or CLOSED, count the 'DROPOFF' (Arrival) scans
-          (w.status IN ('ARRIVED', 'CLOSED') AND wm.manifest_type = 'ARRIVAL')
-          OR 
-          -- Otherwise, count the 'PICKUP' (Departure) scans
-          (w.status IN ('LOADING', 'IN_TRANSIT') AND wm.manifest_type = 'DEPARTURE')
-        )
-      ) AS actual_qty
-    FROM waybills w
-    LEFT JOIN waybill_advice wa ON w.advice_id = wa.id
-  `;
+      SELECT 
+        w.*, 
+        -- Location Names
+        o.name AS origin,
+        d.name AS destination,
+        -- Truck and Driver Names
+        t.plate_number AS truck,
+        dr.full_name AS driver,
+        -- Advice details
+        wa.expected_quantity AS expected_qty,
+        -- Subquery for Actual Quantity based on Status
+        (
+          SELECT COUNT(*) 
+          FROM waybill_manifest wm 
+          WHERE wm.waybill_id = w.id 
+          AND (
+            (w.status IN ('ARRIVED', 'CLOSED') AND wm.manifest_type = 'ARRIVAL')
+            OR 
+            (w.status IN ('LOADING', 'IN_TRANSIT') AND wm.manifest_type = 'DEPARTURE')
+          )
+        ) AS actual_qty
+      FROM waybills w
+      -- Join Locations twice (once for origin, once for destination)
+      LEFT JOIN locations o ON w.origin_id = o.id
+      LEFT JOIN locations d ON w.destination_id = d.id
+      -- Join Trucks and Drivers
+      LEFT JOIN trucks t ON w.truck_id = t.id
+      LEFT JOIN drivers dr ON w.driver_id = dr.id
+      -- Join Advice
+      LEFT JOIN waybill_advice wa ON w.advice_id = wa.id
+    `;
 
     const res = await db.query(query);
     return res.rows;
@@ -66,7 +79,7 @@ const Waybill = {
     `;
 
     const res = await db.query(query, [id]);
-    
+
     // Return the first row (or null if not found)
     return res.rows[0] || null;
   },
