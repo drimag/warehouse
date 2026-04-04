@@ -19,7 +19,7 @@ export default function Scan() {
 
   const [loading, setLoading] = useState(true);
   const [selection, setSelection] = useState("DEPARTURE");
-  const [waybillname, setWaybillName] = useState("");
+  const [waybillID, setWaybillID] = useState("");
   const [origin, setOrigin] = useState("Warehouse A");
   const [destination, setDestination] = useState("Warehouse B");
   const [submitted, setSubmitted] = useState(false);
@@ -35,12 +35,15 @@ export default function Scan() {
   const truckList = ["Truck A", "Truck B", "Truck C"];
   const warehouseList = ["Warehouse A", "Warehouse B", "Warehouse C"];
   const [waybillList, setWaybillList] = useState("");
+  const [validWaybills, setValidWaybills] = useState("");
+  const [selectedWaybill, setSelectedWaybill] = useState("");
 
   useEffect(() => {
     api
       .getWaybillsForScan()
       .then((data) => {
-        const idList = data.map(item => item.id);
+        const idList = data.map((item) => item.id);
+        setValidWaybills(data);
         setWaybillList(idList);
         setLoading(false);
       })
@@ -71,6 +74,15 @@ export default function Scan() {
     setColor("");
   };
 
+  const handleWaybillSelect = (id) => {
+    const selectedDetails = validWaybills.find((wb) => wb.id === id);
+    console.log(selectedDetails);
+    if (selectedDetails) {
+      setWaybillID(id);
+      setSelectedWaybill(selectedDetails);
+    }
+  };
+
   const emptyFunc = () => {};
 
   const focusNext = (nextRef) => {
@@ -96,29 +108,11 @@ export default function Scan() {
         <>
           <h1 className="page-title"> Stock In / Stock Out </h1>
 
-          {/* <div className="button-row">
-            <button
-              type="button"
-              className={`scan-field toggle-btn ${selection === "DEPARTURE" ? "active" : ""}`}
-              onClick={() => setSelection("DEPARTURE")}
-            >
-              Departure
-            </button>
-
-            <button
-              type="button"
-              className={`scan-field toggle-btn ${selection === "ARRIVAL" ? "active" : ""}`}
-              onClick={() => setSelection("ARRIVAL")}
-            >
-              Arrival
-            </button>
-          </div> */}
-
           <GenericSelect
             ref={originRef}
-            selected={waybillname}
+            selected={waybillID}
             setSelected={(val) => {
-              setWaybillName(val);
+              handleWaybillSelect(val);
               focusNext(destRef);
             }}
             title={"Select Waybill"}
@@ -136,12 +130,13 @@ export default function Scan() {
             </button>
           </div>
 
-          {waybillname && (
+          {waybillID && (
             <div>
               <GenericSelect
                 ref={driverRef}
-                selected={driver}
+                selected={selectedWaybill.driver}
                 setSelected={(val) => {
+                  console.log(selectedWaybill.driver)
                   setDriver(val);
                   focusNext(truckRef);
                 }}
