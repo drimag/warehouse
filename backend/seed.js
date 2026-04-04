@@ -60,11 +60,11 @@ const seedDatabase = async () => {
 
       CREATE TABLE IF NOT EXISTS waybill_advice (
         id VARCHAR(100) PRIMARY KEY, -- Smart ID: adv-ORIG-DEST-YYYYMMDD
-        origin_id INT,
-        destination_id INT,
+        origin_id INT REFERENCES locations(id),
+        destination_id INT REFERENCES locations(id),
         client VARCHAR(100),
-        truck_id INT,
-        driver_id INT,
+        truck_id INT REFERENCES trucks(id),
+        driver_id INT REFERENCES drivers(id),
         expected_quantity INTEGER,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
@@ -73,11 +73,11 @@ const seedDatabase = async () => {
         id VARCHAR(100) PRIMARY KEY, -- Smart ID: ORIG-DEST-YYYYMMDD
         advice_id VARCHAR(100), -- Smart ID: adv-ORIG-DEST-YYYYMMDD
         status VARCHAR(50),
-        origin_id INT,
-        destination_id INT,
+        origin_id INT REFERENCES locations(id),
+        destination_id INT REFERENCES locations(id),
         client VARCHAR(100),
-        truck_id INT,
-        driver_id INT,
+        truck_id INT REFERENCES trucks(id),
+        driver_id INT REFERENCES drivers(id),
         departure_photo_url TEXT,
         arrival_photo_url TEXT
       );
@@ -102,10 +102,10 @@ const seedDatabase = async () => {
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         waybill_id VARCHAR(100) REFERENCES waybills(id) ON DELETE CASCADE,
         status VARCHAR(50),
-        origin_id INT,
-        destination_id INT,
-        truck_id INT,
-        driver_id INT,
+        origin_id INT REFERENCES locations(id),
+        destination_id INT REFERENCES locations(id),
+        truck_id INT REFERENCES trucks(id),
+        driver_id INT REFERENCES drivers(id),
         departure_photo_url TEXT,
         arrival_photo_url TEXT,
         eff_start TIMESTAMP WITH TIME ZONE NOT NULL,
