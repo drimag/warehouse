@@ -3,10 +3,28 @@ const db = require("../config/db");
 const History = {
   // Page 2: Get SCD2 History for a Unit
   getUnitStateHistory: async (unitId) => {
-    const res = await db.query(
-      'SELECT id, unit_id, engine, frame, model, color, status, da, current_location, eff_start, eff_end, is_current FROM unit_history WHERE unit_id = $1 ORDER BY eff_start DESC',
-      [unitId]
-    );
+    const query = `
+      SELECT 
+        uh.id, 
+        uh.unit_id, 
+        uh.engine, 
+        uh.frame, 
+        uh.model, 
+        uh.color, 
+        uh.status, 
+        uh.da, 
+        -- Join location name for the audit trail
+        l.name AS last_known_location,
+        uh.eff_start, 
+        uh.eff_end, 
+        uh.is_current 
+      FROM unit_history uh
+      LEFT JOIN locations l ON uh.last_location_id = l.id
+      WHERE uh.unit_id = $1 
+      ORDER BY uh.eff_start DESC;
+    `;
+
+    const res = await db.query(query, [unitId]);
     return res.rows;
   },
 

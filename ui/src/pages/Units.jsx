@@ -10,7 +10,7 @@ const unitColumns = [
   { label: "Model", key: "model" },
   { label: "Color", key: "color" },
   { label: "DA", key: "da" },
-  { label: "Current Location", key: "current_location" },
+  { label: "Current Location", key: "last_known_location" },
   { label: "Status", key: "status" },
 ];
 

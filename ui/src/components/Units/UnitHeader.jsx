@@ -21,7 +21,7 @@ export default function UnitHeader({ unit }) {
           <strong>DA:</strong> {unit.da}
         </span>
         <span>
-          <strong>Current Location:</strong> {unit.current_location}
+          <strong>Current Location:</strong> {unit.last_known_location}
         </span>
 
         {/* Status & Timing */}
