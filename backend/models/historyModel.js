@@ -32,12 +32,34 @@ const History = {
   },
 
   getWaybillStateHistory: async (waybillId) => {
-    const res = await db.query(
-      'SELECT id, waybill_id, status, origin, destination, truck, driver, departure_photo_url, arrival_photo_url, eff_start, eff_end, is_current FROM waybill_history WHERE waybill_id = $1 ORDER BY eff_start DESC',
-      [waybillId]
-    );
+    const query = `
+      SELECT 
+        wh.id, 
+        wh.waybill_id, 
+        wh.status, 
+        -- Join names for history display
+        o.name AS origin, 
+        d.name AS destination, 
+        t.plate_number AS truck, 
+        dr.full_name AS driver, 
+        -- Metadata and Photos
+        wh.departure_photo_url, 
+        wh.arrival_photo_url, 
+        wh.eff_start, 
+        wh.eff_end, 
+        wh.is_current 
+      FROM waybill_history wh
+      LEFT JOIN locations o ON wh.origin_id = o.id
+      LEFT JOIN locations d ON wh.destination_id = d.id
+      LEFT JOIN trucks t ON wh.truck_id = t.id
+      LEFT JOIN drivers dr ON wh.driver_id = dr.id
+      WHERE wh.waybill_id = $1 
+      ORDER BY wh.eff_start DESC;
+    `;
+
+    const res = await db.query(query, [waybillId]);
     return res.rows;
-  },
+  }
 };
 
 module.exports = History;
