@@ -21,11 +21,32 @@ const seedDatabase = async () => {
       DROP TABLE IF EXISTS waybill_advice CASCADE;
       DROP TABLE IF EXISTS waybill_manifest CASCADE;
       DROP TABLE IF EXISTS activity_logs CASCADE;
+      DROP TABLE IF EXISTS trucks CASCADE;
+      DROP TABLE IF EXISTS locations CASCADE;
+      DROP TABLE IF EXISTS drivers CASCADE;
     `);
     console.log("🗑️  Old tables dropped.");
-    
+
     await db.query(`
-      CREATE TABLE units (
+      CREATE TABLE IF NOT EXISTS locations (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        type VARCHAR(50) NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS trucks (
+        id SERIAL PRIMARY KEY,
+        plate_number VARCHAR(20) UNIQUE NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS drivers (
+        id SERIAL PRIMARY KEY,
+        full_name VARCHAR(100) NOT NULL
+      );
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS units (
         id VARCHAR(50) PRIMARY KEY,
         engine VARCHAR(50) UNIQUE,
         frame VARCHAR(50) UNIQUE,
@@ -33,36 +54,36 @@ const seedDatabase = async () => {
         color VARCHAR(50),
         status VARCHAR(50) DEFAULT 'IN_STORAGE' NOT NULL,
         da VARCHAR(50),  
-        current_location VARCHAR(50) NOT NULL, 
+        last_location_id INT REFERENCES locations(id), 
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
 
-      CREATE TABLE waybill_advice (
+      CREATE TABLE IF NOT EXISTS waybill_advice (
         id VARCHAR(100) PRIMARY KEY, -- Smart ID: adv-ORIG-DEST-YYYYMMDD
-        origin VARCHAR(50),
-        destination VARCHAR(50),
+        origin_id VARCHAR(50),
+        destination_id VARCHAR(50),
         client VARCHAR(100),
-        truck VARCHAR(50),
-        driver VARCHAR(50),
+        truck_id VARCHAR(50),
+        driver_id VARCHAR(50),
         expected_quantity INTEGER,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
 
-      CREATE TABLE waybills (
+      CREATE TABLE IF NOT EXISTS waybills (
         id VARCHAR(100) PRIMARY KEY, -- Smart ID: ORIG-DEST-YYYYMMDD
         advice_id VARCHAR(100), -- Smart ID: adv-ORIG-DEST-YYYYMMDD
         status VARCHAR(50),
-        origin VARCHAR(50),
-        destination VARCHAR(50),
+        origin_id INT,
+        destination_id INT,
         client VARCHAR(100),
-        truck VARCHAR(50),
-        driver VARCHAR(50),
+        truck_id INT,
+        driver_id INT,
         departure_photo_url TEXT,
         arrival_photo_url TEXT
       );
 
       -- Selective SCD2 Implementation
-      CREATE TABLE unit_history (
+      CREATE TABLE IF NOT EXISTS unit_history (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         unit_id VARCHAR(50) REFERENCES units(id) ON DELETE CASCADE,
         engine VARCHAR(50),
@@ -71,20 +92,20 @@ const seedDatabase = async () => {
         color VARCHAR(50),
         status VARCHAR(50),
         da VARCHAR(50),
-        current_location VARCHAR(50),
+        last_location_id INT REFERENCES locations(id), 
         eff_start TIMESTAMP WITH TIME ZONE NOT NULL,
         eff_end TIMESTAMP WITH TIME ZONE,
         is_current BOOLEAN DEFAULT FALSE
       );
 
-      CREATE TABLE waybill_history (
+      CREATE TABLE IF NOT EXISTS waybill_history (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         waybill_id VARCHAR(100) REFERENCES waybills(id) ON DELETE CASCADE,
         status VARCHAR(50),
-        origin VARCHAR(50),
-        destination VARCHAR(50),
-        truck VARCHAR(50),
-        driver VARCHAR(50),
+        origin_id INT,
+        destination_id INT,
+        truck_id INT,
+        driver_id INT,
         departure_photo_url TEXT,
         arrival_photo_url TEXT,
         eff_start TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -93,7 +114,7 @@ const seedDatabase = async () => {
       );  
 
       -- Forensics Table
-      CREATE TABLE activity_logs (
+      CREATE TABLE IF NOT EXISTS activity_logs (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         user_id VARCHAR(100), -- subject to change
@@ -104,7 +125,7 @@ const seedDatabase = async () => {
       );
 
       -- Join Tables
-      CREATE TABLE waybill_manifest (
+      CREATE TABLE IF NOT EXISTS waybill_manifest (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         waybill_id VARCHAR(100) REFERENCES waybills(id)  ON DELETE CASCADE,
         unit_id VARCHAR(50) REFERENCES units(id),
@@ -113,7 +134,7 @@ const seedDatabase = async () => {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
 
-      CREATE TABLE unit_advice (
+      CREATE TABLE IF NOT EXISTS unit_advice (
         id VARCHAR(50) PRIMARY KEY DEFAULT gen_random_uuid(),
         advice_id VARCHAR(100) REFERENCES waybill_advice(id) ON DELETE CASCADE,
         unit_id VARCHAR(50) REFERENCES units(id),
@@ -135,10 +156,10 @@ const seedDatabase = async () => {
 
         -- 2. Insert the new version
         INSERT INTO unit_history (
-          unit_id, engine, frame, model, color, status, current_location, eff_start, is_current
+          unit_id, engine, frame, model, color, status, last_location_id, eff_start, is_current
         )
         VALUES (
-          NEW.id, NEW.engine, NEW.frame, NEW.model, NEW.color, NEW.status, NEW.current_location, now(), TRUE
+          NEW.id, NEW.engine, NEW.frame, NEW.model, NEW.color, NEW.status, NEW.last_location_id, now(), TRUE
         );
 
         RETURN NEW;
@@ -149,8 +170,38 @@ const seedDatabase = async () => {
       CREATE TRIGGER on_unit_update
       AFTER INSERT OR UPDATE ON units
       FOR EACH ROW EXECUTE FUNCTION handle_unit_scd2();
-      `
+      `,
     );
+
+    await db.query(`
+      INSERT INTO locations (id, name, type) 
+      VALUES
+        (1, 'Central Hub - Makati', 'WAREHOUSE'),
+        (2, 'North Luzon Depot', 'WAREHOUSE'),
+        (3, 'Cebu Distribution Center', 'WAREHOUSE'),
+        (4, 'Sta. Rosa Main Plant', 'PLANT'),
+        (5, 'End Consumer / Dealer', 'CONSUMER')
+      ON CONFLICT (id) DO UPDATE SET 
+        name = EXCLUDED.name, 
+        type = EXCLUDED.type;
+
+      INSERT INTO trucks (id, plate_number) 
+      VALUES
+        (1, 'NBD-1234'),
+        (2, 'RVM-5678'),
+        (3, 'WMS-9012'),
+        (4, 'TBA-0000')
+      ON CONFLICT (id) DO UPDATE SET 
+        plate_number = EXCLUDED.plate_number;
+
+      INSERT INTO drivers (id, full_name) 
+      VALUES
+        (1, 'Ricardo Dalisay'),
+        (2, 'Juan Dela Cruz'),
+        (3, 'Maria Clara')
+      ON CONFLICT (id) DO UPDATE SET 
+        full_name = EXCLUDED.full_name;
+      `);
 
     await db.query(`
       -- 1. Create the Function for Waybills
@@ -167,10 +218,10 @@ const seedDatabase = async () => {
         INSERT INTO waybill_history (
           waybill_id, 
           status, 
-          origin, 
-          destination, 
-          truck, 
-          driver, 
+          origin_id, 
+          destination_id, 
+          truck_id, 
+          driver_id, 
           departure_photo_url,
           arrival_photo_url,
           eff_start, 
@@ -179,10 +230,10 @@ const seedDatabase = async () => {
         VALUES (
           NEW.id, 
           NEW.status, 
-          NEW.origin, 
-          NEW.destination, 
-          NEW.truck, 
-          NEW.driver, 
+          NEW.origin_id, 
+          NEW.destination_id, 
+          NEW.truck_id, 
+          NEW.driver_id, 
           NEW.departure_photo_url, 
           NEW.arrival_photo_url,
           now(), 
@@ -197,18 +248,18 @@ const seedDatabase = async () => {
       CREATE TRIGGER on_waybill_update
       AFTER INSERT OR UPDATE ON waybills
       FOR EACH ROW EXECUTE FUNCTION handle_waybill_scd2();
-    `)
+    `);
 
     await db.query(`
       -- 1. Create 2 Units (Started as IN_STORAGE)
-      INSERT INTO units (id, engine, frame, model, color, status, current_location)
+      INSERT INTO units (id, engine, frame, model, color, status, last_location_id)
       VALUES 
-        ('1', 'ENG-P1-001', 'FRM-P1-001', 'Model1', 'RD', 'IN_STORAGE', 'Makati Warehouse'),
-        ('2', 'ENG-P1-002', 'FRM-P1-002', 'Model1', 'RD', 'IN_STORAGE', 'Makati Warehouse');
+        ('1', 'ENG-P1-001', 'FRM-P1-001', 'Model1', 'RD', 'IN_STORAGE', 1),
+        ('2', 'ENG-P1-002', 'FRM-P1-002', 'Model1', 'RD', 'IN_STORAGE', 1);
 
       -- 2. Create the Waybill (Started as LOADING)
-      INSERT INTO waybills (id, status, origin, destination, client, truck, driver)
-      VALUES ('wb1', 'LOADING', 'Makati Warehouse', 'Cebu Hub', 'Client Alpha', 'ABC-1234', 'Juan Dela Cruz');
+      INSERT INTO waybills (id, status, origin_id, destination_id, client, truck_id, driver_id)
+      VALUES ('wb1', 'LOADING', 1, 2, 'Client Alpha', 1, 1);
 
       -- 3. Link them in the Manifest (The "Scan")
       INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type)
@@ -218,19 +269,19 @@ const seedDatabase = async () => {
 
       -- 4. TRIGGER ACTION: Move to IN_TRANSIT
       -- This will automatically expire the 'IN_STORAGE' history and create 'IN_TRANSIT' history
-      UPDATE units SET status = 'IN_TRANSIT', current_location = 'ABC-1234' WHERE id IN ('1', '2');
+      UPDATE units SET status = 'IN_TRANSIT', last_location_id = 2 WHERE id IN ('1', '2');
       UPDATE waybills SET status = 'IN_TRANSIT' WHERE id = 'wb1';
 
       -- 1. Create the Advice (The Plan)
-      INSERT INTO waybill_advice (id, origin, destination, client, expected_quantity)
-      VALUES ('adv2', 'Batangas Port', 'Davao Depot', 'Client Beta', 3);
+      INSERT INTO waybill_advice (id, origin_id, destination_id, client, expected_quantity)
+      VALUES ('adv2', 2, 3, 'Client Beta', 3);
 
       -- 2. Create 3 Units
-      INSERT INTO units (id, engine, frame, model, color, status, current_location)
+      INSERT INTO units (id, engine, frame, model, color, status, last_location_id)
       VALUES 
-        ('3', 'ENG-P2-003', 'FRM-P2-003', 'Model2', 'BL', 'IN_STORAGE', 'Batangas Port'),
-        ('4', 'ENG-P2-004', 'FRM-P2-004', 'Model2', 'BL', 'IN_STORAGE', 'Batangas Port'),
-        ('5', 'ENG-P2-005', 'FRM-P2-005', 'Model2', 'BL', 'IN_STORAGE', 'Batangas Port');
+        ('3', 'ENG-P2-003', 'FRM-P2-003', 'Model2', 'BL', 'IN_STORAGE', 2),
+        ('4', 'ENG-P2-004', 'FRM-P2-004', 'Model2', 'BL', 'IN_STORAGE', 2),
+        ('5', 'ENG-P2-005', 'FRM-P2-005', 'Model2', 'BL', 'IN_STORAGE', 2);
 
       -- 3. Create Unit Advice (The Expected List)
       INSERT INTO unit_advice (advice_id, unit_id)
@@ -240,8 +291,8 @@ const seedDatabase = async () => {
         ('adv2', '5');
 
       -- 4. Create Waybill and Cycle through Statuses to populate SCD2 History
-      INSERT INTO waybills (id, advice_id, status, origin, destination, client, truck, driver)
-      VALUES ('wb2', 'adv2', 'LOADING', 'Batangas Port', 'Davao Depot', 'Client Beta', 'XYZ-9876', 'Jose Rizal');
+      INSERT INTO waybills (id, advice_id, status, origin_id, destination_id, client, truck_id, driver_id)
+      VALUES ('wb2', 'adv2', 'LOADING', 2, 3, 'Client Beta', 2, 2);
 
       -- Simulating the Physical Movement
       -- Departure Scan
@@ -249,14 +300,14 @@ const seedDatabase = async () => {
       VALUES ('wb2', '3', 'DEPARTURE'), ('wb2', '4', 'DEPARTURE'), ('wb2', '5', 'DEPARTURE');
 
       UPDATE waybills SET status = 'IN_TRANSIT' WHERE id = 'wb2';
-      UPDATE units SET status = 'IN_TRANSIT', current_location = 'XYZ-9876' WHERE id IN ('3', '4', '5');
+      UPDATE units SET status = 'IN_TRANSIT', last_location_id = 2 WHERE id IN ('3', '4', '5');
 
       -- Arrival Scan
       INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
       VALUES ('wb2', '3', 'ARRIVAL'), ('wb2', '4', 'ARRIVAL'), ('wb2', '5', 'ARRIVAL');
 
       UPDATE waybills SET status = 'ARRIVED' WHERE id = 'wb2';
-      UPDATE units SET status = 'IN_STORAGE', current_location = 'Davao Depot' WHERE id IN ('3', '4', '5');
+      UPDATE units SET status = 'IN_STORAGE', last_location_id = 2 WHERE id IN ('3', '4', '5');
 
       -- Final Closure
       UPDATE waybills SET status = 'CLOSED' WHERE id = 'wb2';
