@@ -60,11 +60,11 @@ const seedDatabase = async () => {
 
       CREATE TABLE IF NOT EXISTS waybill_advice (
         id VARCHAR(100) PRIMARY KEY, -- Smart ID: adv-ORIG-DEST-YYYYMMDD
-        origin_id VARCHAR(50),
-        destination_id VARCHAR(50),
+        origin_id INT,
+        destination_id INT,
         client VARCHAR(100),
-        truck_id VARCHAR(50),
-        driver_id VARCHAR(50),
+        truck_id INT,
+        driver_id INT,
         expected_quantity INTEGER,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
