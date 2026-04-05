@@ -55,6 +55,17 @@ const Unit = {
     const res = await db.query(query, [engine, frame, status, locationId]);
     return res.rows[0];
   },
+
+  findByVin: async (vin) => {
+    const query = `
+      SELECT * FROM units 
+      WHERE engine = $1 OR frame = $1 
+      LIMIT 1;
+    `;
+    const res = await db.query(query, [vin]);
+    console.log("vin, unit ", vin, res.rows[0]);
+    return res.rows[0] || null;
+  },
 };
 
 module.exports = Unit;

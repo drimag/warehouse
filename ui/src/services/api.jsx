@@ -10,11 +10,20 @@ const handleResponse = async (response) => {
 
 export const api = {
   getWaybills: () => fetch(`${BASE_URL}/waybills`).then(handleResponse),
-  getWaybillsForScan: () => fetch(`${BASE_URL}/waybills/scanning`).then(handleResponse),
-  getWaybillInfo: (id) => fetch(`${BASE_URL}/waybills/${id}`).then(handleResponse),
+  getWaybillsForScan: () =>
+    fetch(`${BASE_URL}/waybills/scanning`).then(handleResponse),
+  getWaybillInfo: (id) =>
+    fetch(`${BASE_URL}/waybills/${id}`).then(handleResponse),
   getUnits: () => fetch(`${BASE_URL}/units`).then(handleResponse),
-  getUnitHistory: (unitID) => fetch(`${BASE_URL}/units/${unitID}`).then(handleResponse),
+
+  getUnitHistory: (unitID) =>
+    fetch(`${BASE_URL}/units/history/${unitID}`).then(handleResponse),
+  findUnitByVin: (scan) =>
+    fetch(`${BASE_URL}/units/scan/${scan}`).then(handleResponse),
+
   getTrucks: () => fetch(`${BASE_URL}/references/trucks`).then(handleResponse),
-  getDrivers: () => fetch(`${BASE_URL}/references/drivers`).then(handleResponse),
-  getLocations: () => fetch(`${BASE_URL}/references/locations`).then(handleResponse)
+  getDrivers: () =>
+    fetch(`${BASE_URL}/references/drivers`).then(handleResponse),
+  getLocations: () =>
+    fetch(`${BASE_URL}/references/locations`).then(handleResponse),
 };
