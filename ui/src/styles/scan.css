@@ -105,6 +105,18 @@
   cursor: pointer;
 }
 
+.primary-btn:disabled {
+  width: 45%;
+  align-content: right;
+  padding: 0.8rem;
+  background: #ccc;
+  border: 1px solid black;
+  color: #888;
+  border-radius: 6px;
+  transform: none;
+  cursor: not-allowed;
+}
+
 .scan-result {
   margin-top: 1.5rem;
   padding: 1rem;

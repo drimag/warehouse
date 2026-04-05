@@ -18,7 +18,6 @@ export default function Scan() {
   const photoRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
-  const [selection, setSelection] = useState("DEPARTURE");
   const [waybillID, setWaybillID] = useState("");
   const [origin, setOrigin] = useState("Warehouse A");
   const [destination, setDestination] = useState("Warehouse B");
@@ -38,17 +37,22 @@ export default function Scan() {
   const [validWaybills, setValidWaybills] = useState("");
   const [selectedWaybill, setSelectedWaybill] = useState("");
 
+  const [confirmedScans, setConfirmedScans] = useState([]); // List of verified unit objects
+  const [error, setError] = useState("");
+  const [showRescan, setShowRescan] = useState(false);
+
   useEffect(() => {
     const fetchPageData = async () => {
       try {
         setLoading(true);
 
-        const [waybillData, truckData, driverData, locationData] = await Promise.all([
-          api.getWaybillsForScan(),
-          api.getTrucks(),
-          api.getDrivers(),
-          api.getLocations()
-        ]);
+        const [waybillData, truckData, driverData, locationData] =
+          await Promise.all([
+            api.getWaybillsForScan(),
+            api.getTrucks(),
+            api.getDrivers(),
+            api.getLocations(),
+          ]);
 
         const idList = waybillData.map((item) => item.id);
         const truckList = truckData.map((item) => item.plate_number);
@@ -85,16 +89,57 @@ export default function Scan() {
     setSubmitted(false);
   };
 
-  const handleNext = () => {
-    setEngine("");
-    setFrame("");
-    setModel("");
-    setColor("");
+  const handleNext = async () => {
+    setError("");
+
+    if (confirmedScans.includes(scan1)) {
+      setError(`Entry ${scan1} Already Scanned. Please try again.`);
+      setScan1("");
+      setScan2("");
+      return;
+    }
+
+    if (showRescan) {
+      if (scan1 !== scan2) {
+        setError("Mismatched scan values. Please try again.");
+        setScan1("");
+        setScan2("");
+        setShowRescan(false);
+        return;
+      } else {
+        setError("");
+        setScan1("");
+        setScan2("");
+        setConfirmedScans([...confirmedScans, scan1]);
+        return;
+      }
+    }
+
+    try {
+      const unit = await api.findUnitByVin(scan1);
+      if (unit) {
+        if (confirmedScans.includes(unit)) {
+          setError(`Unit ${unit} Already Included. Please try again.`);
+        } else {
+          setConfirmedScans([...confirmedScans, scan1]);
+          setScan1("");
+          setScan2("");
+          setShowRescan(false);
+        }
+      } else if (unit == null) {
+        setError(
+          `Entry ${scan1} not found in database. Please rescan to confirm.`,
+        );
+        setShowRescan(true);
+      }
+    } catch (err) {
+      console.log(err);
+      setError("Database connection error. Try again.");
+    }
   };
 
   const handleWaybillSelect = (id) => {
     const selectedDetails = validWaybills.find((wb) => wb.id === id);
-    console.log(selectedDetails);
     if (selectedDetails) {
       setWaybillID(id);
       setSelectedWaybill(selectedDetails);
@@ -189,15 +234,14 @@ export default function Scan() {
       ) : (
         <>
           <WaybillResult
-            waybill={waybillname}
+            waybill={selectedWaybill.id}
             driver={"DriverName"}
             truck={"TruckID"}
             time={"currenttime"}
             status={"Active"}
             origin={"Warehouse"}
             destination={"Destination"}
-            inout={"Incoming"}
-            quantity={quantity}
+            quantity={confirmedScans.length}
             photo={preview}
             handleSubmit={handleEnd}
           />
@@ -209,24 +253,44 @@ export default function Scan() {
         <div className="modal-overlay">
           <div className="modal-content">
             <h1 className="page-title">Scan Next Unit</h1>
+
+            {error && (
+              <p className="error-text" style={{ color: "red" }}>
+                {error}
+              </p>
+            )}
+
             <ScanInput
               vin={scan1}
               setVin={setScan1}
               title={"Scan"}
               placeholder={"Scan Unit"}
             />
-            <ScanInput
-              vin={scan2}
-              setVin={setScan2}
-              title={"ReScan"}
-              placeholder={"ReScan"}
-            />
-            <h3 className="scan-counter">1/5</h3>
+
+            {showRescan && (
+              <ScanInput
+                vin={scan2}
+                setVin={setScan2}
+                title={"ReScan"}
+                placeholder={"ReScan to Confirm"}
+              />
+            )}
+
+            <h3 className="scan-counter">{confirmedScans.length}/5</h3>
+
             <div className="warehouse-row">
-              <button className="primary-btn" onClick={handleNext}>
+              <button
+                className="primary-btn"
+                onClick={handleNext}
+                disabled={!scan1.trim()}
+              >
                 Next Unit
               </button>
-              <button className="primary-btn" onClick={handleFinish}>
+              <button
+                className="primary-btn"
+                onClick={handleFinish}
+                disabled={confirmedScans.length === 0}
+              >
                 Finish
               </button>
             </div>
