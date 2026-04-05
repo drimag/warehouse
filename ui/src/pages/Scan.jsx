@@ -31,27 +31,45 @@ export default function Scan() {
   const [scan1, setScan1] = useState("");
   const [scan2, setScan2] = useState("");
 
-  const driverList = ["Driver A", "Driver B", "Driver C"];
-  const truckList = ["Truck A", "Truck B", "Truck C"];
-  const warehouseList = ["Warehouse A", "Warehouse B", "Warehouse C"];
+  const [driverList, setDriverList] = useState("");
+  const [truckList, setTruckList] = useState("");
+  const [locationsList, setLocationsList] = useState("");
   const [waybillList, setWaybillList] = useState("");
   const [validWaybills, setValidWaybills] = useState("");
   const [selectedWaybill, setSelectedWaybill] = useState("");
 
   useEffect(() => {
-    api
-      .getWaybillsForScan()
-      .then((data) => {
-        const idList = data.map((item) => item.id);
-        setValidWaybills(data);
+    const fetchPageData = async () => {
+      try {
+        setLoading(true);
+
+        const [waybillData, truckData, driverData, locationData] = await Promise.all([
+          api.getWaybillsForScan(),
+          api.getTrucks(),
+          api.getDrivers(),
+          api.getLocations()
+        ]);
+
+        const idList = waybillData.map((item) => item.id);
+        const truckList = truckData.map((item) => item.plate_number);
+        const driverList = driverData.map((item) => item.full_name);
+        const locationList = locationData.map((item) => item.name);
+
+        setValidWaybills(waybillData);
         setWaybillList(idList);
-        setLoading(false);
-      })
-      .catch((err) => {
+        setTruckList(truckList);
+        setDriverList(driverList);
+        setLocationsList(locationList);
+      } catch (err) {
         console.error(err);
         setLoading(false);
-      });
-  });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPageData();
+  }, []);
 
   const handleSubmit = () => {
     setShowModal(true);
@@ -136,7 +154,7 @@ export default function Scan() {
                 ref={driverRef}
                 selected={selectedWaybill.driver}
                 setSelected={(val) => {
-                  console.log(selectedWaybill.driver)
+                  console.log(selectedWaybill.driver);
                   setDriver(val);
                   focusNext(truckRef);
                 }}
