@@ -117,6 +117,10 @@
   cursor: not-allowed;
 }
 
+.cancel-btn {
+  background: #C70000;
+}
+
 .scan-result {
   margin-top: 1.5rem;
   padding: 1rem;

@@ -9,8 +9,11 @@ const Waybill = {
 
   getWaybillsForScan: async () => {
     const query = `
-      SELECT *
+      SELECT 
+        w.*,
+        wa.expected_quantity
       FROM waybills w
+      LEFT JOIN waybill_advice wa ON w.advice_id = wa.id
       WHERE w.status = 'IN_TRANSIT' OR w.status = 'IN_STORAGE'
     `;
 

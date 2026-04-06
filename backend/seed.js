@@ -257,9 +257,13 @@ const seedDatabase = async () => {
         ('1', 'ENG-P1-001', 'FRM-P1-001', 'Model1', 'RD', 'IN_STORAGE', 1),
         ('2', 'ENG-P1-002', 'FRM-P1-002', 'Model1', 'RD', 'IN_STORAGE', 1);
 
+      -- 1.5. Create the Advice (The Plan)
+      INSERT INTO waybill_advice (id, origin_id, destination_id, client, expected_quantity)
+      VALUES ('adv1', 1, 2, 'Client Beta', 2);
+
       -- 2. Create the Waybill (Started as LOADING)
-      INSERT INTO waybills (id, status, origin_id, destination_id, client, truck_id, driver_id)
-      VALUES ('wb1', 'LOADING', 1, 2, 'Client Alpha', 1, 1);
+      INSERT INTO waybills (id, advice_id, status, origin_id, destination_id, client, truck_id, driver_id)
+      VALUES ('wb1', 'adv1', 'LOADING', 1, 2, 'Client Alpha', 1, 1);
 
       -- 3. Link them in the Manifest (The "Scan")
       INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type)

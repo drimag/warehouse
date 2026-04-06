@@ -6,9 +6,18 @@ import PhotoUpload from "../components/Scan/PhotoUpload";
 import GenericSelect from "../components/Scan/GenericSelect";
 import "../styles/scan.css";
 import WaybillResult from "../components/Scan/WaybillResult";
+import { useScan} from "../utils/useScan";
 
 export default function Scan() {
   const navigate = useNavigate();
+
+  const {
+    selectedWaybill, waybillID, confirmedScans, 
+    scan1, setScan1, scan2, setScan2,
+    showRescan, showModal, error, submitted,
+    handleWaybillSelect, startScan, handleNext, 
+    handleFinish, handleEnd, handleCancel
+  } = useScan();
 
   const originRef = useRef(null);
   const destRef = useRef(null);
@@ -17,29 +26,37 @@ export default function Scan() {
   const qtyRef = useRef(null);
   const photoRef = useRef(null);
 
-  const [loading, setLoading] = useState(true);
-  const [waybillID, setWaybillID] = useState("");
   const [origin, setOrigin] = useState("Warehouse A");
   const [destination, setDestination] = useState("Warehouse B");
-  const [submitted, setSubmitted] = useState(false);
   const [preview, setPreview] = useState(null);
   const [driver, setDriver] = useState("Driver A");
   const [truck, setTruck] = useState("Truck A");
   const [quantity, setQuantity] = useState(5);
-  const [showModal, setShowModal] = useState(false);
-  const [scan1, setScan1] = useState("");
-  const [scan2, setScan2] = useState("");
 
   const [driverList, setDriverList] = useState("");
   const [truckList, setTruckList] = useState("");
   const [locationsList, setLocationsList] = useState("");
+
   const [waybillList, setWaybillList] = useState("");
   const [validWaybills, setValidWaybills] = useState("");
-  const [selectedWaybill, setSelectedWaybill] = useState("");
 
-  const [confirmedScans, setConfirmedScans] = useState([]); // List of verified unit objects
-  const [error, setError] = useState("");
-  const [showRescan, setShowRescan] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const focusNext = (nextRef) => {
+    const element = nextRef.current;
+    if (!element) return;
+    element.focus();
+
+    if (element.tagName === "SELECT" && "showPicker" in element) {
+      try {
+        element.showPicker();
+      } catch (err) {
+        console.warn("Auto-picker blocked or unsupported:", err);
+      }
+    } else if (element.tagName === "INPUT" && element.type === "file") {
+      element.click();
+    }
+  };
 
   useEffect(() => {
     const fetchPageData = async () => {
@@ -75,95 +92,6 @@ export default function Scan() {
     fetchPageData();
   }, []);
 
-  const handleSubmit = () => {
-    setShowModal(true);
-  };
-
-  const handleFinish = () => {
-    setShowModal(false);
-    setSubmitted(true);
-  };
-
-  const handleEnd = () => {
-    setShowModal(false);
-    setSubmitted(false);
-  };
-
-  const handleNext = async () => {
-    setError("");
-
-    if (confirmedScans.includes(scan1)) {
-      setError(`Entry ${scan1} Already Scanned. Please try again.`);
-      setScan1("");
-      setScan2("");
-      return;
-    }
-
-    if (showRescan) {
-      if (scan1 !== scan2) {
-        setError("Mismatched scan values. Please try again.");
-        setScan1("");
-        setScan2("");
-        setShowRescan(false);
-        return;
-      } else {
-        setError("");
-        setScan1("");
-        setScan2("");
-        setConfirmedScans([...confirmedScans, scan1]);
-        return;
-      }
-    }
-
-    try {
-      const unit = await api.findUnitByVin(scan1);
-      if (unit) {
-        if (confirmedScans.includes(unit)) {
-          setError(`Unit ${unit} Already Included. Please try again.`);
-        } else {
-          setConfirmedScans([...confirmedScans, scan1]);
-          setScan1("");
-          setScan2("");
-          setShowRescan(false);
-        }
-      } else if (unit == null) {
-        setError(
-          `Entry ${scan1} not found in database. Please rescan to confirm.`,
-        );
-        setShowRescan(true);
-      }
-    } catch (err) {
-      console.log(err);
-      setError("Database connection error. Try again.");
-    }
-  };
-
-  const handleWaybillSelect = (id) => {
-    const selectedDetails = validWaybills.find((wb) => wb.id === id);
-    if (selectedDetails) {
-      setWaybillID(id);
-      setSelectedWaybill(selectedDetails);
-    }
-  };
-
-  const emptyFunc = () => {};
-
-  const focusNext = (nextRef) => {
-    const element = nextRef.current;
-    if (!element) return;
-    element.focus();
-
-    if (element.tagName === "SELECT" && "showPicker" in element) {
-      try {
-        element.showPicker();
-      } catch (err) {
-        console.warn("Auto-picker blocked or unsupported:", err);
-      }
-    } else if (element.tagName === "INPUT" && element.type === "file") {
-      element.click();
-    }
-  };
-
   if (loading) return <div>Loading Page...</div>;
   return (
     <div className="page-centered page">
@@ -175,7 +103,7 @@ export default function Scan() {
             ref={originRef}
             selected={waybillID}
             setSelected={(val) => {
-              handleWaybillSelect(val);
+              handleWaybillSelect(val, validWaybills);
               focusNext(destRef);
             }}
             title={"Select Waybill"}
@@ -225,8 +153,8 @@ export default function Scan() {
                 preview={preview}
                 setPreview={setPreview}
               />
-              <button className="primary-btn" onClick={handleSubmit}>
-                Proceed
+              <button className="primary-btn" onClick={startScan}>
+                Proceed to Scanning
               </button>
             </div>
           )}
@@ -244,6 +172,7 @@ export default function Scan() {
             quantity={confirmedScans.length}
             photo={preview}
             handleSubmit={handleEnd}
+            handleCancel={handleCancel}
           />
         </>
       )}
@@ -276,7 +205,12 @@ export default function Scan() {
               />
             )}
 
-            <h3 className="scan-counter">{confirmedScans.length}/5</h3>
+            <h3 className="scan-counter">
+              {" "}
+              {confirmedScans.length}{" "}
+              {selectedWaybill?.expected_quantity &&
+                ` / ${selectedWaybill.expected_quantity}`}{" "}
+            </h3>
 
             <div className="warehouse-row">
               <button
@@ -285,6 +219,9 @@ export default function Scan() {
                 disabled={!scan1.trim()}
               >
                 Next Unit
+              </button>
+              <button className="primary-btn cancel-btn" onClick={handleCancel}>
+                Cancel
               </button>
               <button
                 className="primary-btn"

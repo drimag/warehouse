@@ -10,7 +10,8 @@ export default function WaybillResult({
   quantity,
   photo,
   user,
-  handleSubmit
+  handleSubmit,
+  handleCancel,
 }) {
   return (
     <div className="scan-result">
@@ -58,6 +59,9 @@ export default function WaybillResult({
 
       <button className="primary-btn" onClick={handleSubmit}>
         Confirm
+      </button>
+      <button className="primary-btn cancel-btn" onClick={handleCancel}>
+        Cancel
       </button>
     </div>
   );
