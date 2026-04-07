@@ -14,8 +14,11 @@ export const api = {
     fetch(`${BASE_URL}/waybills/scanning`).then(handleResponse),
   getWaybillInfo: (id) =>
     fetch(`${BASE_URL}/waybills/${id}`).then(handleResponse),
-  getUnits: () => fetch(`${BASE_URL}/units`).then(handleResponse),
 
+  startLoading: (id) =>
+    fetch(`${BASE_URL}/waybills/loading/${id}`).then(handleResponse),
+
+  getUnits: () => fetch(`${BASE_URL}/units`).then(handleResponse),
   getUnitHistory: (unitID) =>
     fetch(`${BASE_URL}/units/history/${unitID}`).then(handleResponse),
   findUnitByVin: (scan) =>

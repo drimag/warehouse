@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import { api } from "../services/api";
 
 export const useScan = () => {
@@ -24,13 +24,20 @@ export const useScan = () => {
     }
   };
 
-  const startScan = () => {
-    // TODO: set waybill status to loading in DB via api call
+  const startScan = async () => {
     setError("");
     setConfirmMismatch(false);
     setShowRescan(false);
     setConfirmedScans([]);
     setShowModal(true);
+
+    console.log("called startScan");
+    console.log("waybillid: ", waybillID);
+    try {
+      await api.startLoading(waybillID);
+    } catch (err) {
+      console.error("❌ ERROR SETTING WAYBILL STATUS TO LOADING:", err);
+    }
   };
 
   const handleNext = async () => {
@@ -39,7 +46,6 @@ export const useScan = () => {
 
     const currentScan = scan1.trim();
 
-    // Check if already in our local list
     if (confirmedScans.includes(currentScan)) {
       setError(`Entry ${currentScan} Already Scanned. Please try again.`);
       setScan1("");
@@ -47,7 +53,6 @@ export const useScan = () => {
       return;
     }
 
-    // Logic for Rescan Mode
     if (showRescan) {
       if (scan1 !== scan2) {
         setError("Mismatched scan values. Please try again.");
@@ -55,7 +60,7 @@ export const useScan = () => {
         setScan2("");
         setShowRescan(false);
       } else {
-        setConfirmedScans(prev => [...prev, currentScan]);
+        setConfirmedScans((prev) => [...prev, currentScan]);
         setScan1("");
         setScan2("");
         setShowRescan(false);
@@ -67,12 +72,14 @@ export const useScan = () => {
     try {
       const unit = await api.findUnitByVin(currentScan);
       if (unit) {
-        setConfirmedScans(prev => [...prev, currentScan]);
+        setConfirmedScans((prev) => [...prev, currentScan]);
         setScan1("");
         setScan2("");
         setShowRescan(false);
       } else {
-        setError(`Entry ${currentScan} not found in database. Please rescan to confirm.`);
+        setError(
+          `Entry ${currentScan} not found in database. Please rescan to confirm.`,
+        );
         setShowRescan(true);
       }
     } catch (err) {
@@ -83,9 +90,11 @@ export const useScan = () => {
 
   const handleFinish = () => {
     const expected = selectedWaybill?.expected_quantity;
-    
+
     if (expected && confirmedScans.length !== expected && !confirmMismatch) {
-      setError("Scanned Entries Do Not Match Expected Quantity. If this is correct, click Finish again.");
+      setError(
+        "Scanned Entries Do Not Match Expected Quantity. If this is correct, click Finish again.",
+      );
       setConfirmMismatch(true);
       return;
     }
@@ -117,11 +126,23 @@ export const useScan = () => {
   // Return everything the component needs
   return {
     // State
-    selectedWaybill, waybillID, confirmedScans, 
-    scan1, setScan1, scan2, setScan2,
-    showRescan, showModal, error, submitted,
+    selectedWaybill,
+    waybillID,
+    confirmedScans,
+    scan1,
+    setScan1,
+    scan2,
+    setScan2,
+    showRescan,
+    showModal,
+    error,
+    submitted,
     // Functions
-    handleWaybillSelect, startScan, handleNext, 
-    handleFinish, handleEnd, handleCancel
+    handleWaybillSelect,
+    startScan,
+    handleNext,
+    handleFinish,
+    handleEnd,
+    handleCancel,
   };
 };

@@ -161,6 +161,30 @@ const Waybill = {
     ]);
     return res.rows[0];
   },
+
+  setStatus: async (waybillId, status) => {
+    const validStatuses = ["IN_STORAGE", "LOADING", "IN_TRANSIT", "LOADED"];
+
+    if (!validStatuses.includes(status)) {
+      throw new Error(`Invalid status: ${status}`);
+    }
+
+    const query = `
+      UPDATE waybills 
+      SET 
+        status = $2
+      WHERE id = $1
+      RETURNING *;
+    `;
+
+    try {
+      const res = await db.query(query, [waybillId, status]);
+      return res.rows[0];
+    } catch (err) {
+      console.error("Error updating waybill to LOADING:", err);
+      throw err;
+    }
+  },
 };
 
 module.exports = Waybill;
