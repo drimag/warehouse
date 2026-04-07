@@ -5,6 +5,7 @@ const unitController = require('../controllers/unitController');
 // URL: /api/units
 router.get('/', unitController.getAllUnits);
 router.get('/history/:unitID', unitController.getUnitHistory);
-router.get('/scan/:scan', unitController.findUnitByVin);
+router.get('/scan/:scan', unitController.scanUnitByVin);
+router.get('/new_scan/:scan', unitController.newScannedUnit);
 
 module.exports = router;

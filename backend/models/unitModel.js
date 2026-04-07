@@ -1,8 +1,6 @@
 const db = require("../config/db");
 
 const Unit = {
-  // Page 1: Display all units
-  // Page 1: List all units
   getAll: async () => {
     const query = `
       SELECT 
@@ -16,7 +14,6 @@ const Unit = {
     return res.rows;
   },
 
-  // Page 2: Display particular unit with its location name
   getById: async (id) => {
     const query = `
       SELECT 
@@ -30,7 +27,6 @@ const Unit = {
     return res.rows[0];
   },
 
-  // Page 5: Update Unit during Scan
   updateStatus: async (id, status, locationId, client) => {
     const query = `
       UPDATE units 
@@ -45,14 +41,20 @@ const Unit = {
     return res.rows[0];
   },
 
-  // Page 7: Post new units
-  create: async (engine, frame, status, locationId) => {
+  createNew: async (engine, status) => {
     const query = `
-      INSERT INTO units (engine, frame, status, last_location_id) 
-      VALUES ($1, $2, $3, $4) 
-      RETURNING *
-    `;
-    const res = await db.query(query, [engine, frame, status, locationId]);
+    INSERT INTO units (engine, status)
+    VALUES ($1, $2)
+    RETURNING *;
+  `;
+    const values = [engine, status];
+    const res = await db.query(query, values);
+    return res.rows[0];
+  },
+
+  setStatus: async (id, status) => {
+    const query = `UPDATE units SET status = $2 WHERE id = $1 RETURNING *;`;
+    const res = await db.query(query, [id, status]);
     return res.rows[0];
   },
 

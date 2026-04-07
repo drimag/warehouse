@@ -23,8 +23,10 @@ export const api = {
   getUnits: () => fetch(`${BASE_URL}/units`).then(handleResponse),
   getUnitHistory: (unitID) =>
     fetch(`${BASE_URL}/units/history/${unitID}`).then(handleResponse),
-  findUnitByVin: (scan) =>
+  scanUnitByVin: (scan) =>
     fetch(`${BASE_URL}/units/scan/${scan}`).then(handleResponse),
+  scanNewUnit: (scan) =>
+    fetch(`${BASE_URL}/units/new_scan/${scan}`).then(handleResponse),
 
   getTrucks: () => fetch(`${BASE_URL}/references/trucks`).then(handleResponse),
   getDrivers: () =>

@@ -11,7 +11,7 @@ export const useScan = () => {
   const [showRescan, setShowRescan] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState("");
-  const [confirmMismatch, setConfirmMismatch] = useState(false);
+  const [confirmQtyMismatch, setConfirmQtyMismatch] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   // --- LOGIC HANDLERS ---
@@ -26,7 +26,7 @@ export const useScan = () => {
 
   const startScan = async () => {
     setError("");
-    setConfirmMismatch(false);
+    setConfirmQtyMismatch(false);
     setShowRescan(false);
     setConfirmedScans([]);
     setShowModal(true);
@@ -42,7 +42,7 @@ export const useScan = () => {
 
   const handleNext = async () => {
     setError("");
-    setConfirmMismatch(false);
+    setConfirmQtyMismatch(false);
 
     const currentScan = scan1.trim();
 
@@ -60,22 +60,26 @@ export const useScan = () => {
         setScan2("");
         setShowRescan(false);
       } else {
-        setConfirmedScans((prev) => [...prev, currentScan]);
-        setScan1("");
-        setScan2("");
-        setShowRescan(false);
+        try {
+          const unit = await api.scanNewUnit(currentScan);
+          if (!unit) {
+            setError(`Error inserting new scan ${currentScan} in database.`);
+            setShowRescan(false);
+          }
+        } catch (err) {
+          console.error("❌ ERROR SEARCHING SCAN:", err);
+          setError("Database connection error.");
+          return;
+        }
+        finishScan(currentScan);
       }
       return;
     }
 
-    // Database Lookup
     try {
-      const unit = await api.findUnitByVin(currentScan);
+      const unit = await api.scanUnitByVin(currentScan);
       if (unit) {
-        setConfirmedScans((prev) => [...prev, currentScan]);
-        setScan1("");
-        setScan2("");
-        setShowRescan(false);
+        finishScan(currentScan);
       } else {
         setError(
           `Entry ${currentScan} not found in database. Please rescan to confirm.`,
@@ -91,15 +95,15 @@ export const useScan = () => {
   const handleFinish = () => {
     const expected = selectedWaybill?.expected_quantity;
 
-    if (expected && confirmedScans.length !== expected && !confirmMismatch) {
+    if (expected && confirmedScans.length !== expected && !confirmQtyMismatch) {
       setError(
         "Scanned Entries Do Not Match Expected Quantity. If this is correct, click Finish again.",
       );
-      setConfirmMismatch(true);
+      setConfirmQtyMismatch(true);
       return;
     }
 
-    setConfirmMismatch(false);
+    setConfirmQtyMismatch(false);
     setShowModal(false);
     setSubmitted(true);
   };
@@ -119,12 +123,22 @@ export const useScan = () => {
     } catch (err) {
       console.error("❌ ERROR SETTING WAYBILL STATUS TO LOADING:", err);
     }
+    console.log(confirmedScans);
     setError("");
-    setConfirmMismatch(false);
+    setScan1("");
+    setScan2("");
+    setConfirmQtyMismatch(false);
     setShowRescan(false);
     setConfirmedScans([]);
     setShowModal(false);
     setSubmitted(false);
+  };
+
+  const finishScan = (currentScan) => {
+    setConfirmedScans((prev) => [...prev, currentScan]);
+    setScan1("");
+    setScan2("");
+    setShowRescan(false);
   };
 
   // Return everything the component needs

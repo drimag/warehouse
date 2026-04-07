@@ -35,18 +35,43 @@ exports.getUnitHistory = async (req, res) => {
   }
 };
 
-exports.findUnitByVin = async (req, res) => {
+exports.scanUnitByVin = async (req, res) => {
   try {
     const { scan } = req.params;
-    const unit = await Unit.findByVin(scan);
+    let unit = await Unit.findByVin(scan);
 
     if (!unit) {
       return res.json(null);
+    } else {
+      try {
+        unit = await Unit.setStatus(unit.id, "LOADING");
+        console.log(`✅ Updated existing unit ${scan} to LOADING`);
+        return res.json(unit);
+      } catch (err) {
+        console.error(
+          `❌ ERROR SETTING UNIT STATUS TO LOADING ${req.params.scan}:`,
+          err.message,
+        );
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
     }
-
-    return res.json(unit);
   } catch (err) {
     console.error(`❌ ERROR SEARCHING SCAN ${req.params.scan}:`, err.message);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.newScannedUnit = async (req, res) => {
+  try {
+    const { scan } = req.params;
+    const unit = await Unit.createNew(scan, 'LOADING');
+    console.log(`✨ Created new unit for scan ${scan} with status LOADING`);
+    return res.json(unit);
+  } catch (err) {
+    console.error(
+      `❌ ERROR CREATING NEW UNIT FROM SCAN ${req.params.scan}:`,
+      err.message,
+    );
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
