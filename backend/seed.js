@@ -318,6 +318,10 @@ const seedDatabase = async () => {
       
     `);
 
+    await db.query(
+      `SELECT setval(pg_get_serial_sequence('units', 'id'), (SELECT MAX(id) FROM units));`,
+    );
+
     console.log("✨ Smart Database seeded successfully!");
     process.exit(0);
   } catch (err) {
