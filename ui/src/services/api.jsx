@@ -17,6 +17,8 @@ export const api = {
 
   startLoading: (id) =>
     fetch(`${BASE_URL}/waybills/loading/${id}`).then(handleResponse),
+  inStorage: (id) =>
+    fetch(`${BASE_URL}/waybills/in_storage/${id}`).then(handleResponse),
 
   getUnits: () => fetch(`${BASE_URL}/units`).then(handleResponse),
   getUnitHistory: (unitID) =>

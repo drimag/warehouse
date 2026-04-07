@@ -51,9 +51,21 @@ exports.getWaybillDetails = async (req, res) => {
 };
 
 exports.startLoading = async (req, res) => {
-  console.log("tried loading");
   try {
     const waybill = await Waybill.setStatus(req.params.id, "LOADING");
+    if (!waybill) {
+      return res.status(404).json({ error: "Waybill not found" });
+    }
+    return res.status(200).json(waybill);
+  } catch (err) {
+    console.error("❌ DATABASE ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.inStorage = async (req, res) => {
+  try {
+    const waybill = await Waybill.setStatus(req.params.id, "IN_STORAGE");
     if (!waybill) {
       return res.status(404).json({ error: "Waybill not found" });
     }

@@ -113,8 +113,12 @@ export const useScan = () => {
     setConfirmedScans([]);
   };
 
-  const handleCancel = () => {
-    // TODO: turn waybill back to its previous status in DB
+  const handleCancel = async () => {
+    try {
+      await api.inStorage(waybillID);
+    } catch (err) {
+      console.error("❌ ERROR SETTING WAYBILL STATUS TO LOADING:", err);
+    }
     setError("");
     setConfirmMismatch(false);
     setShowRescan(false);
