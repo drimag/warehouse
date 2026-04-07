@@ -47,7 +47,7 @@ const seedDatabase = async () => {
 
     await db.query(`
       CREATE TABLE IF NOT EXISTS units (
-        id VARCHAR(50) PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         engine VARCHAR(50) UNIQUE,
         frame VARCHAR(50) UNIQUE,
         model VARCHAR(50),
@@ -85,7 +85,7 @@ const seedDatabase = async () => {
       -- Selective SCD2 Implementation
       CREATE TABLE IF NOT EXISTS unit_history (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        unit_id VARCHAR(50) REFERENCES units(id) ON DELETE CASCADE,
+        unit_id INT REFERENCES units(id) ON DELETE CASCADE,
         engine VARCHAR(50),
         frame VARCHAR(50),
         model VARCHAR(50),
@@ -128,7 +128,7 @@ const seedDatabase = async () => {
       CREATE TABLE IF NOT EXISTS waybill_manifest (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         waybill_id VARCHAR(100) REFERENCES waybills(id)  ON DELETE CASCADE,
-        unit_id VARCHAR(50) REFERENCES units(id),
+        unit_id INT REFERENCES units(id),
         manifest_type TEXT NOT NULL, 
         user_id VARCHAR(100), -- subject to change
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
@@ -137,7 +137,7 @@ const seedDatabase = async () => {
       CREATE TABLE IF NOT EXISTS unit_advice (
         id VARCHAR(50) PRIMARY KEY DEFAULT gen_random_uuid(),
         advice_id VARCHAR(100) REFERENCES waybill_advice(id) ON DELETE CASCADE,
-        unit_id VARCHAR(50) REFERENCES units(id),
+        unit_id INT REFERENCES units(id),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
     `);
@@ -268,8 +268,8 @@ const seedDatabase = async () => {
       -- 3. Link them in the Manifest (The "Scan")
       INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type)
       VALUES 
-        ('wb1', '1', 'DEPARTURE'),
-        ('wb1', '2', 'DEPARTURE');
+        ('wb1', 1, 'DEPARTURE'),
+        ('wb1', 2, 'DEPARTURE');
 
       -- 4. TRIGGER ACTION: Move to IN_TRANSIT
       -- This will automatically expire the 'IN_STORAGE' history and create 'IN_TRANSIT' history
@@ -290,9 +290,9 @@ const seedDatabase = async () => {
       -- 3. Create Unit Advice (The Expected List)
       INSERT INTO unit_advice (advice_id, unit_id)
       VALUES 
-        ('adv2', '3'),
-        ('adv2', '4'),
-        ('adv2', '5');
+        ('adv2', 3),
+        ('adv2', 4),
+        ('adv2', 5);
 
       -- 4. Create Waybill and Cycle through Statuses to populate SCD2 History
       INSERT INTO waybills (id, advice_id, status, origin_id, destination_id, client, truck_id, driver_id)
@@ -301,14 +301,14 @@ const seedDatabase = async () => {
       -- Simulating the Physical Movement
       -- Departure Scan
       INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
-      VALUES ('wb2', '3', 'DEPARTURE'), ('wb2', '4', 'DEPARTURE'), ('wb2', '5', 'DEPARTURE');
+      VALUES ('wb2', 3, 'DEPARTURE'), ('wb2', 4, 'DEPARTURE'), ('wb2', 5, 'DEPARTURE');
 
       UPDATE waybills SET status = 'IN_TRANSIT' WHERE id = 'wb2';
       UPDATE units SET status = 'IN_TRANSIT', last_location_id = 2 WHERE id IN ('3', '4', '5');
 
       -- Arrival Scan
       INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
-      VALUES ('wb2', '3', 'ARRIVAL'), ('wb2', '4', 'ARRIVAL'), ('wb2', '5', 'ARRIVAL');
+      VALUES ('wb2', 3, 'ARRIVAL'), ('wb2', 4, 'ARRIVAL'), ('wb2', 5, 'ARRIVAL');
 
       UPDATE waybills SET status = 'ARRIVED' WHERE id = 'wb2';
       UPDATE units SET status = 'IN_STORAGE', last_location_id = 2 WHERE id IN ('3', '4', '5');
