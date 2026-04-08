@@ -130,7 +130,7 @@ const seedDatabase = async () => {
         waybill_id VARCHAR(100) REFERENCES waybills(id)  ON DELETE CASCADE,
         unit_id INT REFERENCES units(id),
         manifest_type TEXT NOT NULL, 
-        user_id VARCHAR(100), -- subject to change
+        user_id VARCHAR(100),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
 
@@ -263,18 +263,7 @@ const seedDatabase = async () => {
 
       -- 2. Create the Waybill (Started as LOADING)
       INSERT INTO waybills (id, advice_id, status, origin_id, destination_id, client, truck_id, driver_id)
-      VALUES ('wb1', 'adv1', 'LOADING', 1, 2, 'Client Alpha', 1, 1);
-
-      -- 3. Link them in the Manifest (The "Scan")
-      INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type)
-      VALUES 
-        ('wb1', 1, 'DEPARTURE'),
-        ('wb1', 2, 'DEPARTURE');
-
-      -- 4. TRIGGER ACTION: Move to IN_TRANSIT
-      -- This will automatically expire the 'IN_STORAGE' history and create 'IN_TRANSIT' history
-      UPDATE units SET status = 'IN_TRANSIT', last_location_id = 2 WHERE id IN ('1', '2');
-      UPDATE waybills SET status = 'IN_TRANSIT' WHERE id = 'wb1';
+      VALUES ('wb1', 'adv1', 'ADVICE', 1, 2, 'Client Alpha', 1, 1);
 
       -- 1. Create the Advice (The Plan)
       INSERT INTO waybill_advice (id, origin_id, destination_id, client, expected_quantity)
