@@ -21,6 +21,7 @@ export const useScan = () => {
     if (selectedDetails) {
       setWaybillID(id);
       setSelectedWaybill(selectedDetails);
+      console.log(selectedWaybill);
     }
   };
 
@@ -51,44 +52,31 @@ export const useScan = () => {
       setScan1("");
       setScan2("");
       return;
-    }
-
-    if (showRescan) {
+    } else if (showRescan) {
       if (scan1 !== scan2) {
         setError("Mismatched scan values. Please try again.");
         setScan1("");
         setScan2("");
         setShowRescan(false);
       } else {
-        try {
-          const unit = await api.scanNewUnit(currentScan);
-          if (!unit) {
-            setError(`Error inserting new scan ${currentScan} in database.`);
-            setShowRescan(false);
-          }
-        } catch (err) {
-          console.error("❌ ERROR SEARCHING SCAN:", err);
-          setError("Database connection error.");
-          return;
-        }
-        finishScan(currentScan);
+        finishScan(currentScan, true);
       }
       return;
-    }
-
-    try {
-      const unit = await api.scanUnitByVin(currentScan);
-      if (unit) {
-        finishScan(currentScan);
-      } else {
-        setError(
-          `Entry ${currentScan} not found in database. Please rescan to confirm.`,
-        );
-        setShowRescan(true);
+    } else {
+      try {
+        const unit = await api.scanUnitByVin(currentScan);
+        if (unit) {
+          finishScan(currentScan, false);
+        } else {
+          setError(
+            `Entry ${currentScan} not found in database. Please rescan to confirm.`,
+          );
+          setShowRescan(true);
+        }
+      } catch (err) {
+        console.error("❌ ERROR SEARCHING SCAN:", err);
+        setError("Database connection error. Try again.");
       }
-    } catch (err) {
-      console.error("❌ ERROR SEARCHING SCAN:", err);
-      setError("Database connection error. Try again.");
     }
   };
 
@@ -108,8 +96,28 @@ export const useScan = () => {
     setSubmitted(true);
   };
 
-  const handleEnd = () => {
-    // TODO: actual uploading of changes to waybill and units via api.updateWaybill(...)
+  const handleEnd = async () => {
+    try {
+      const newUnits = confirmedScans.filter((scan) => !scan.isNew);
+      for (const scan of newUnits) {
+        await api.scanNewUnit(scan.value);
+      }
+      selectedWaybill.status === "ADVICE"
+        ? await api.setInTransit(waybillID)
+        : await api.setArrived(waybillID);
+      for (const scan of confirmedScans) {
+        await api.setUnitInTransit(scan.value);
+        await api.createManifest(
+          waybillID,
+          scan.value,
+          selectedWaybill.status,
+          null,
+        );
+      }
+    } catch (err) {
+      console.log(err);
+    }
+    setError("");
     setShowModal(false);
     setSubmitted(false);
     setSelectedWaybill(null);
@@ -119,7 +127,7 @@ export const useScan = () => {
 
   const handleCancel = async () => {
     try {
-      await api.inStorage(waybillID);
+      await api.setAdvice(waybillID);
     } catch (err) {
       console.error("❌ ERROR SETTING WAYBILL STATUS TO LOADING:", err);
     }
@@ -134,8 +142,14 @@ export const useScan = () => {
     setSubmitted(false);
   };
 
-  const finishScan = (currentScan) => {
-    setConfirmedScans((prev) => [...prev, currentScan]);
+  const finishScan = (currentScan, isNew) => {
+    setConfirmedScans((prev) => [
+      ...prev,
+      {
+        value: currentScan,
+        isNew: isNew,
+      },
+    ]);
     setScan1("");
     setScan2("");
     setShowRescan(false);

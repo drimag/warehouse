@@ -4,8 +4,10 @@ const waybillController = require('../controllers/waybillController');
 
 // URL: /api/waybills
 router.get('/loading/:id', waybillController.startLoading);
-router.get('/in_storage/:id', waybillController.inStorage);
+router.get('/advice/:id', waybillController.setAdvice);
 router.get('/scanning', waybillController.getWaybillForScan);
+router.get('/in_transit/:id', waybillController.setInTransit);
+router.get('/arrived/:id', waybillController.setArrived);
 router.get('/', waybillController.getAllWaybillDisplay);
 router.get('/:id', waybillController.getWaybillDetails);
 

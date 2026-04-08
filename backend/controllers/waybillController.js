@@ -63,9 +63,9 @@ exports.startLoading = async (req, res) => {
   }
 };
 
-exports.inStorage = async (req, res) => {
+exports.setAdvice = async (req, res) => {
   try {
-    const waybill = await Waybill.setStatus(req.params.id, "IN_STORAGE");
+    const waybill = await Waybill.setStatus(req.params.id, "ADVICE");
     if (!waybill) {
       return res.status(404).json({ error: "Waybill not found" });
     }
@@ -75,3 +75,32 @@ exports.inStorage = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.setInTransit = async (req, res) => {
+  console.log("called set In transit");
+  try {
+    const waybill = await Waybill.setStatus(req.params.id, "IN_TRANSIT");
+    if (!waybill) {
+      return res.status(404).json({ error: "Waybill not found" });
+    }
+    return res.status(200).json(waybill);
+  } catch (err) {
+    console.error("❌ DATABASE ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.setArrived = async (req, res) => {
+  console.log("called set arrvied");
+  try {
+    const waybill = await Waybill.setStatus(req.params.id, "ARRIVED");
+    if (!waybill) {
+      return res.status(404).json({ error: "Waybill not found" });
+    }
+    return res.status(200).json(waybill);
+  } catch (err) {
+    console.error("❌ DATABASE ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+

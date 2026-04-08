@@ -17,20 +17,51 @@ export const api = {
 
   startLoading: (id) =>
     fetch(`${BASE_URL}/waybills/loading/${id}`).then(handleResponse),
-  inStorage: (id) =>
-    fetch(`${BASE_URL}/waybills/in_storage/${id}`).then(handleResponse),
+  setAdvice: (id) =>
+    fetch(`${BASE_URL}/waybills/advice/${id}`).then(handleResponse),
+  setInTransit: (id) =>
+    fetch(`${BASE_URL}/waybills/in_transit/${id}`).then(handleResponse),
+  setArrived: (id) =>
+    fetch(`${BASE_URL}/waybills/arrived/${id}`).then(handleResponse),
 
   getUnits: () => fetch(`${BASE_URL}/units`).then(handleResponse),
   getUnitHistory: (unitID) =>
     fetch(`${BASE_URL}/units/history/${unitID}`).then(handleResponse),
   scanUnitByVin: (scan) =>
-    fetch(`${BASE_URL}/units/scan/${scan}`).then(handleResponse),
+    fetch(`${BASE_URL}/units/scan/${scan}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then(handleResponse),
   scanNewUnit: (scan) =>
-    fetch(`${BASE_URL}/units/new_scan/${scan}`).then(handleResponse),
+    fetch(`${BASE_URL}/units/new_scan/${scan}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then(handleResponse),
+  setUnitInTransit: (scan) =>
+    fetch(`${BASE_URL}/units/in_transit/${scan}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then(handleResponse),
 
   getTrucks: () => fetch(`${BASE_URL}/references/trucks`).then(handleResponse),
   getDrivers: () =>
     fetch(`${BASE_URL}/references/drivers`).then(handleResponse),
   getLocations: () =>
     fetch(`${BASE_URL}/references/locations`).then(handleResponse),
+
+  createManifest: (waybillId, unitId, type, userId) =>
+    fetch(
+      `${BASE_URL}/manifest/waybill/${waybillId}/unit/${unitId}/type/${type}/user/${userId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+    ).then(handleResponse),
 };

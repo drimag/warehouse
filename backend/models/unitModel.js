@@ -27,20 +27,6 @@ const Unit = {
     return res.rows[0];
   },
 
-  updateStatus: async (id, status, locationId, client) => {
-    const query = `
-      UPDATE units 
-      SET 
-        status = $2, 
-        last_location_id = $3, 
-        updated_at = now() 
-      WHERE id = $1 
-      RETURNING *`;
-    // We pass the locationId (integer) here
-    const res = await client.query(query, [id, status, locationId]);
-    return res.rows[0];
-  },
-
   createNew: async (engine, status) => {
     const query = `
     INSERT INTO units (engine, status)
@@ -53,7 +39,7 @@ const Unit = {
   },
 
   setStatus: async (id, status) => {
-    const query = `UPDATE units SET status = $2 WHERE id = $1 RETURNING *;`;
+    const query = `UPDATE units SET status = $2, updated_at = NOW() WHERE id = $1 RETURNING *;`;
     const res = await db.query(query, [id, status]);
     return res.rows[0];
   },

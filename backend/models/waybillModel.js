@@ -14,7 +14,7 @@ const Waybill = {
         wa.expected_quantity
       FROM waybills w
       LEFT JOIN waybill_advice wa ON w.advice_id = wa.id
-      WHERE w.status = 'IN_TRANSIT' OR w.status = 'IN_STORAGE'
+      WHERE w.status = 'IN_TRANSIT' OR w.status = 'ADVICE'
     `;
 
     const res = await db.query(query);
@@ -163,7 +163,7 @@ const Waybill = {
   },
 
   setStatus: async (waybillId, status) => {
-    const validStatuses = ["IN_STORAGE", "LOADING", "IN_TRANSIT", "LOADED"];
+    const validStatuses = ["ADVICE", "LOADING", "IN_TRANSIT", "ARRIVED", "CLOSED"];
 
     if (!validStatuses.includes(status)) {
       throw new Error(`Invalid status: ${status}`);
