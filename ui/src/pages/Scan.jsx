@@ -6,17 +6,29 @@ import PhotoUpload from "../components/Scan/PhotoUpload";
 import GenericSelect from "../components/Scan/GenericSelect";
 import "../styles/scan.css";
 import WaybillResult from "../components/Scan/WaybillResult";
-import { useScan} from "../utils/useScan";
+import { useScan } from "../utils/useScan";
 
 export default function Scan() {
   const navigate = useNavigate();
 
   const {
-    selectedWaybill, waybillID, confirmedScans, 
-    scan1, setScan1, scan2, setScan2,
-    showRescan, showModal, error, submitted,
-    handleWaybillSelect, startScan, handleNext, 
-    handleFinish, handleEnd, handleCancel
+    selectedWaybill,
+    waybillID,
+    confirmedScans,
+    scan1,
+    setScan1,
+    scan2,
+    setScan2,
+    showRescan,
+    showModal,
+    error,
+    submitted,
+    handleWaybillSelect,
+    startScan,
+    handleNext,
+    handleFinish,
+    handleEnd,
+    handleCancel,
   } = useScan();
 
   const originRef = useRef(null);
@@ -171,9 +183,13 @@ export default function Scan() {
             destination={"Destination"}
             quantity={confirmedScans.length}
             photo={preview}
-            handleSubmit={handleEnd}
-            handleCancel={handleCancel}
           />
+          <button className="primary-btn" onClick={handleEnd}>
+            Confirm
+          </button>
+          <button className="primary-btn cancel-btn" onClick={handleCancel}>
+            Cancel
+          </button>
         </>
       )}
 

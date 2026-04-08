@@ -2,16 +2,12 @@ export default function WaybillResult({
   waybill,
   driver,
   truck,
-  time,
   status,
   origin,
   destination,
-  inout,
   quantity,
   photo,
-  user,
-  handleSubmit,
-  handleCancel,
+  user
 }) {
   return (
     <div className="scan-result">
@@ -20,25 +16,25 @@ export default function WaybillResult({
         <strong>Waybill:</strong> {waybill ? waybill : "Unknown Waybill"}
       </p>
       <p>
+        <strong>
+          {status === "IN_TRANSIT"
+            ? "For Departure"
+            : status === "ARRIVAL"
+              ? "For Arrival"
+              : ""}
+        </strong>
+      </p>
+      <p>
         <strong>Driver:</strong> {driver ? driver : "Unknown Driver"}
       </p>
       <p>
         <strong>Truck:</strong> {truck ? truck : "Unknown Truck"}
       </p>
       <p>
-        <strong>Time:</strong> {time ? time : "Unknown Time"}
-      </p>
-      <p>
-        <strong>Status:</strong> {status ? status : "Unknown Status"}
-      </p>
-      <p>
         <strong>Origin:</strong> {origin}
       </p>
       <p>
         <strong>Destination:</strong> {destination}
-      </p>
-      <p>
-        <strong>In/Out:</strong> {inout ? inout : "Unknown Movement"}
       </p>
       <p>
         <strong>Quantity:</strong> {quantity ? quantity : "Unknown Quantity"}
@@ -56,13 +52,6 @@ export default function WaybillResult({
       <p>
         <strong>User:</strong> {user ? user : "Unknown User"}
       </p>
-
-      <button className="primary-btn" onClick={handleSubmit}>
-        Confirm
-      </button>
-      <button className="primary-btn cancel-btn" onClick={handleCancel}>
-        Cancel
-      </button>
     </div>
   );
 }
