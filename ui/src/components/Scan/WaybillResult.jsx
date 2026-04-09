@@ -1,42 +1,38 @@
 export default function WaybillResult({
   waybill,
-  driver,
-  truck,
-  status,
-  origin,
-  destination,
   quantity,
   photo,
   user
 }) {
+  console.log("selected waybill", waybill);
   return (
     <div className="scan-result">
       <h1>Confirm Details</h1>
       <p>
-        <strong>Waybill:</strong> {waybill ? waybill : "Unknown Waybill"}
+        <strong>Waybill:</strong> {waybill.id ? waybill.id : "Unknown Waybill"}
       </p>
       <p>
         <strong>
-          {status === "IN_TRANSIT"
+          {waybill.status === "IN_TRANSIT"
             ? "For Departure"
             : status === "ARRIVAL"
               ? "For Arrival"
               : ""}
         </strong>
       </p>
-      <p>
-        <strong>Driver:</strong> {driver ? driver : "Unknown Driver"}
+      {/* <p>
+        <strong>Driver:</strong> {waybill.driver ? waybill.driver : "Unknown Driver"}
       </p>
       <p>
-        <strong>Truck:</strong> {truck ? truck : "Unknown Truck"}
+        <strong>Truck:</strong> {waybill.truck ? waybill.truck : "Unknown Truck"}
       </p>
       <p>
-        <strong>Origin:</strong> {origin}
+        <strong>Origin:</strong> {waybill.origin}
       </p>
       <p>
-        <strong>Destination:</strong> {destination}
-      </p>
-      <p>
+        <strong>Destination:</strong> {waybill.destination}
+      </p>*/}
+      <p> 
         <strong>Quantity:</strong> {quantity ? quantity : "Unknown Quantity"}
       </p>
       <p>

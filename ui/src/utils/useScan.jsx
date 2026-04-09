@@ -21,7 +21,6 @@ export const useScan = () => {
     if (selectedDetails) {
       setWaybillID(id);
       setSelectedWaybill(selectedDetails);
-      console.log(selectedWaybill);
     }
   };
 
@@ -32,8 +31,6 @@ export const useScan = () => {
     setConfirmedScans([]);
     setShowModal(true);
 
-    console.log("called startScan");
-    console.log("waybillid: ", waybillID);
     try {
       await api.startLoading(waybillID);
     } catch (err) {
@@ -131,7 +128,6 @@ export const useScan = () => {
     } catch (err) {
       console.error("❌ ERROR SETTING WAYBILL STATUS TO LOADING:", err);
     }
-    console.log(confirmedScans);
     setError("");
     setScan1("");
     setScan2("");

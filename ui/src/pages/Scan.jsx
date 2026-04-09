@@ -135,30 +135,7 @@ export default function Scan() {
 
           {waybillID && (
             <div>
-              <GenericSelect
-                ref={driverRef}
-                selected={selectedWaybill.driver}
-                setSelected={(val) => {
-                  console.log(selectedWaybill.driver);
-                  setDriver(val);
-                  focusNext(truckRef);
-                }}
-                title={"Driver"}
-                options={driverList}
-                placeholder={"Select Driver"}
-              />
-              <GenericSelect
-                ref={truckRef}
-                selected={truck}
-                setSelected={(val) => {
-                  setTruck(val);
-                  focusNext(qtyRef);
-                }}
-                title={"Truck"}
-                options={truckList}
-                placeholder={"Select Truck"}
-              />
-
+              
               <PhotoUpload
                 ref={photoRef}
                 title={"Photo"}
@@ -173,23 +150,27 @@ export default function Scan() {
         </>
       ) : (
         <>
-          <WaybillResult
-            waybill={selectedWaybill.id}
-            driver={"DriverName"}
-            truck={"TruckID"}
-            time={"currenttime"}
-            status={"Active"}
-            origin={"Warehouse"}
-            destination={"Destination"}
-            quantity={confirmedScans.length}
-            photo={preview}
-          />
-          <button className="primary-btn" onClick={handleEnd}>
-            Confirm
-          </button>
-          <button className="primary-btn cancel-btn" onClick={handleCancel}>
-            Cancel
-          </button>
+          {selectedWaybill && (
+            <WaybillResult
+              waybill={selectedWaybill}
+              quantity={confirmedScans.length}
+              photo={preview}
+            />
+          )}
+          <strong>Scanned Values:</strong>
+          {confirmedScans.map((scan, index) => (
+            <div key={index}>
+              {scan.value} {scan.isNew ? "(New)" : ""}
+            </div>
+          ))}
+          <div style={{ display: "flex", gap: "2rem" }}>
+            <button className="primary-btn" onClick={handleEnd}>
+              Confirm
+            </button>
+            <button className="primary-btn cancel-btn" onClick={handleCancel}>
+              Cancel
+            </button>
+          </div>
         </>
       )}
 
