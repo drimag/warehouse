@@ -8,7 +8,9 @@ router.get('/advice/:id', waybillController.setAdvice);
 router.get('/scanning', waybillController.getWaybillForScan);
 router.get('/in_transit/:id', waybillController.setInTransit);
 router.get('/arrived/:id', waybillController.setArrived);
+router.get('/display/:id', waybillController.getWaybillDisplayById);
 router.get('/', waybillController.getAllWaybillDisplay);
+
 router.get('/:id', waybillController.getWaybillDetails);
 
 module.exports = router;

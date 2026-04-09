@@ -13,6 +13,7 @@ export default function Scan() {
 
   const {
     selectedWaybill,
+    setSelectedWaybill,
     waybillID,
     confirmedScans,
     scan1,
@@ -38,16 +39,7 @@ export default function Scan() {
   const qtyRef = useRef(null);
   const photoRef = useRef(null);
 
-  const [origin, setOrigin] = useState("Warehouse A");
-  const [destination, setDestination] = useState("Warehouse B");
   const [preview, setPreview] = useState(null);
-  const [driver, setDriver] = useState("Driver A");
-  const [truck, setTruck] = useState("Truck A");
-  const [quantity, setQuantity] = useState(5);
-
-  const [driverList, setDriverList] = useState("");
-  const [truckList, setTruckList] = useState("");
-  const [locationsList, setLocationsList] = useState("");
 
   const [waybillList, setWaybillList] = useState("");
   const [validWaybills, setValidWaybills] = useState("");
@@ -84,15 +76,15 @@ export default function Scan() {
           ]);
 
         const idList = waybillData.map((item) => item.id);
-        const truckList = truckData.map((item) => item.plate_number);
-        const driverList = driverData.map((item) => item.full_name);
-        const locationList = locationData.map((item) => item.name);
+        // const truckList = truckData.map((item) => item.plate_number);
+        // const driverList = driverData.map((item) => item.full_name);
+        // const locationList = locationData.map((item) => item.name);
 
         setValidWaybills(waybillData);
         setWaybillList(idList);
-        setTruckList(truckList);
-        setDriverList(driverList);
-        setLocationsList(locationList);
+        // setTruckList(truckList);
+        // setDriverList(driverList);
+        // setLocationsList(locationList);
       } catch (err) {
         console.error(err);
         setLoading(false);
@@ -103,6 +95,22 @@ export default function Scan() {
 
     fetchPageData();
   }, []);
+
+  useEffect(() => {
+    if (!waybillID) return;
+
+    setLoading(true);
+    api
+      .getWaybillInfoById(waybillID)
+      .then((data) => {
+        setSelectedWaybill(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, [waybillID]);
 
   if (loading) return <div>Loading Page...</div>;
   return (
@@ -133,9 +141,23 @@ export default function Scan() {
             </button>
           </div>
 
-          {waybillID && (
+          {selectedWaybill && (
             <div>
-              
+              <p>Waybill ID: {selectedWaybill.id}</p>
+              <p>
+                Driver:{" "}
+                {selectedWaybill.driver
+                  ? selectedWaybill.driver
+                  : "Unknown Driver"}
+              </p>
+              <p>
+                Truck:{" "}
+                {selectedWaybill.truck
+                  ? selectedWaybill.truck
+                  : "Unknown Truck"}
+              </p>
+              <p>Origin: {selectedWaybill.origin}</p>
+              <p style={{ paddingBottom: '1rem' }}>Destination: {selectedWaybill.destination}</p>
               <PhotoUpload
                 ref={photoRef}
                 title={"Photo"}
@@ -175,7 +197,7 @@ export default function Scan() {
       )}
 
       {/* The Popout Overlay */}
-      {showModal && (
+      {showModal && selectedWaybill && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h1 className="page-title">Scan Next Unit</h1>
@@ -205,8 +227,8 @@ export default function Scan() {
             <h3 className="scan-counter">
               {" "}
               {confirmedScans.length}{" "}
-              {selectedWaybill?.expected_quantity &&
-                ` / ${selectedWaybill.expected_quantity}`}{" "}
+              {selectedWaybill?.expected_qty &&
+                ` / ${selectedWaybill.expected_qty}`}{" "}
             </h3>
 
             <div className="warehouse-row">

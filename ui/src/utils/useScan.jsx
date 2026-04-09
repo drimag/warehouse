@@ -20,7 +20,6 @@ export const useScan = () => {
     const selectedDetails = validWaybills.find((wb) => wb.id === id);
     if (selectedDetails) {
       setWaybillID(id);
-      setSelectedWaybill(selectedDetails);
     }
   };
 
@@ -78,7 +77,7 @@ export const useScan = () => {
   };
 
   const handleFinish = () => {
-    const expected = selectedWaybill?.expected_quantity;
+    const expected = selectedWaybill?.expected_qty;
 
     if (expected && confirmedScans.length !== expected && !confirmQtyMismatch) {
       setError(
@@ -155,6 +154,7 @@ export const useScan = () => {
   return {
     // State
     selectedWaybill,
+    setSelectedWaybill,
     waybillID,
     confirmedScans,
     scan1,

@@ -79,7 +79,7 @@ const Waybill = {
           AND (
             (w.status IN ('ARRIVED', 'CLOSED') AND wm.manifest_type = 'ARRIVAL')
             OR 
-            (w.status IN ('LOADING', 'IN_TRANSIT') AND wm.manifest_type = 'DEPARTURE')
+            (w.status IN ('IN_TRANSIT') AND wm.manifest_type = 'DEPARTURE')
           )
         ) AS actual_qty
       FROM waybills w

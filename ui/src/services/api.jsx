@@ -14,6 +14,8 @@ export const api = {
     fetch(`${BASE_URL}/waybills/scanning`).then(handleResponse),
   getWaybillInfo: (id) =>
     fetch(`${BASE_URL}/waybills/${id}`).then(handleResponse),
+  getWaybillInfoById: (id) =>
+    fetch(`${BASE_URL}/waybills/display/${id}`).then(handleResponse),
 
   startLoading: (id) =>
     fetch(`${BASE_URL}/waybills/loading/${id}`).then(handleResponse),
