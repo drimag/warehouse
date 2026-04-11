@@ -55,7 +55,7 @@ const seedDatabase = async () => {
         status VARCHAR(50) DEFAULT 'IN_STORAGE' NOT NULL,
         da VARCHAR(50),  
         last_location_id INT REFERENCES locations(id), 
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
 
       CREATE TABLE IF NOT EXISTS waybill_advice (
@@ -66,6 +66,7 @@ const seedDatabase = async () => {
         truck_id INT REFERENCES trucks(id),
         driver_id INT REFERENCES drivers(id),
         expected_quantity INTEGER,
+        expected_arrival TIMESTAMP WITH TIME ZONE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
 
@@ -79,7 +80,8 @@ const seedDatabase = async () => {
         truck_id INT REFERENCES trucks(id),
         driver_id INT REFERENCES drivers(id),
         departure_photo_url TEXT,
-        arrival_photo_url TEXT
+        arrival_photo_url TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
 
       -- Selective SCD2 Implementation
