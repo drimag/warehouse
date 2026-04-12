@@ -68,7 +68,7 @@ const adviceColumns = [
   {
     label: "Expected Quantity",
     key: "expected_quantity",
-    render: (val) => val ?? "0", // Or "---" if you prefer
+    render: (val) => val ?? "0", 
   },
   { label: "Created At", key: "created_at" },
 ];

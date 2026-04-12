@@ -11,7 +11,7 @@ export const useScan = () => {
   const [showRescan, setShowRescan] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState("");
-  const [confirmMismatch, setConfirmMismatch] = useState(false);
+  const [confirmQtyMismatch, setConfirmQtyMismatch] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   // --- LOGIC HANDLERS ---
@@ -20,19 +20,16 @@ export const useScan = () => {
     const selectedDetails = validWaybills.find((wb) => wb.id === id);
     if (selectedDetails) {
       setWaybillID(id);
-      setSelectedWaybill(selectedDetails);
     }
   };
 
   const startScan = async () => {
     setError("");
-    setConfirmMismatch(false);
+    setConfirmQtyMismatch(false);
     setShowRescan(false);
     setConfirmedScans([]);
     setShowModal(true);
 
-    console.log("called startScan");
-    console.log("waybillid: ", waybillID);
     try {
       await api.startLoading(waybillID);
     } catch (err) {
@@ -42,7 +39,7 @@ export const useScan = () => {
 
   const handleNext = async () => {
     setError("");
-    setConfirmMismatch(false);
+    setConfirmQtyMismatch(false);
 
     const currentScan = scan1.trim();
 
@@ -51,61 +48,72 @@ export const useScan = () => {
       setScan1("");
       setScan2("");
       return;
-    }
-
-    if (showRescan) {
+    } else if (showRescan) {
       if (scan1 !== scan2) {
         setError("Mismatched scan values. Please try again.");
         setScan1("");
         setScan2("");
         setShowRescan(false);
       } else {
-        setConfirmedScans((prev) => [...prev, currentScan]);
-        setScan1("");
-        setScan2("");
-        setShowRescan(false);
+        finishScan(currentScan, true);
       }
       return;
-    }
-
-    // Database Lookup
-    try {
-      const unit = await api.findUnitByVin(currentScan);
-      if (unit) {
-        setConfirmedScans((prev) => [...prev, currentScan]);
-        setScan1("");
-        setScan2("");
-        setShowRescan(false);
-      } else {
-        setError(
-          `Entry ${currentScan} not found in database. Please rescan to confirm.`,
-        );
-        setShowRescan(true);
+    } else {
+      try {
+        const unit = await api.scanUnitByVin(currentScan);
+        if (unit) {
+          finishScan(currentScan, false);
+        } else {
+          setError(
+            `Entry ${currentScan} not found in database. Please rescan to confirm.`,
+          );
+          setShowRescan(true);
+        }
+      } catch (err) {
+        console.error("❌ ERROR SEARCHING SCAN:", err);
+        setError("Database connection error. Try again.");
       }
-    } catch (err) {
-      console.error("❌ ERROR SEARCHING SCAN:", err);
-      setError("Database connection error. Try again.");
     }
   };
 
   const handleFinish = () => {
-    const expected = selectedWaybill?.expected_quantity;
+    const expected = selectedWaybill?.expected_qty;
 
-    if (expected && confirmedScans.length !== expected && !confirmMismatch) {
+    if (expected && confirmedScans.length !== expected && !confirmQtyMismatch) {
       setError(
         "Scanned Entries Do Not Match Expected Quantity. If this is correct, click Finish again.",
       );
-      setConfirmMismatch(true);
+      setConfirmQtyMismatch(true);
       return;
     }
 
-    setConfirmMismatch(false);
+    setConfirmQtyMismatch(false);
     setShowModal(false);
     setSubmitted(true);
   };
 
-  const handleEnd = () => {
-    // TODO: actual uploading of changes to waybill and units via api.updateWaybill(...)
+  const handleEnd = async () => {
+    try {
+      const newUnits = confirmedScans.filter((scan) => !scan.isNew);
+      for (const scan of newUnits) {
+        await api.scanNewUnit(scan.value);
+      }
+      selectedWaybill.status === "ADVICE"
+        ? await api.setInTransit(waybillID)
+        : await api.setArrived(waybillID);
+      for (const scan of confirmedScans) {
+        await api.setUnitInTransit(scan.value);
+        await api.createManifest(
+          waybillID,
+          scan.value,
+          selectedWaybill.status,
+          null,
+        );
+      }
+    } catch (err) {
+      console.log(err);
+    }
+    setError("");
     setShowModal(false);
     setSubmitted(false);
     setSelectedWaybill(null);
@@ -113,20 +121,40 @@ export const useScan = () => {
     setConfirmedScans([]);
   };
 
-  const handleCancel = () => {
-    // TODO: turn waybill back to its previous status in DB
+  const handleCancel = async () => {
+    try {
+      await api.setAdvice(waybillID);
+    } catch (err) {
+      console.error("❌ ERROR SETTING WAYBILL STATUS TO LOADING:", err);
+    }
     setError("");
-    setConfirmMismatch(false);
+    setScan1("");
+    setScan2("");
+    setConfirmQtyMismatch(false);
     setShowRescan(false);
     setConfirmedScans([]);
     setShowModal(false);
     setSubmitted(false);
   };
 
+  const finishScan = (currentScan, isNew) => {
+    setConfirmedScans((prev) => [
+      ...prev,
+      {
+        value: currentScan,
+        isNew: isNew,
+      },
+    ]);
+    setScan1("");
+    setScan2("");
+    setShowRescan(false);
+  };
+
   // Return everything the component needs
   return {
     // State
     selectedWaybill,
+    setSelectedWaybill,
     waybillID,
     confirmedScans,
     scan1,

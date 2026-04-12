@@ -3,6 +3,7 @@ const cors = require('cors');
 const waybillRoutes = require('./routes/waybillRoutes');
 const unitRoutes = require('./routes/unitRoutes');
 const referenceRoutes = require('./routes/referenceRoutes');
+const manifestRoutes = require('./routes/manifestRoutes');
 
 const allowedOrigins = [
   'http://localhost:5173', 
@@ -29,6 +30,7 @@ app.use(express.json());
 app.use('/api/waybills', waybillRoutes);
 app.use('/api/units', unitRoutes);
 app.use('/api/references', referenceRoutes);
+app.use('/api/manifest', manifestRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

@@ -14,7 +14,7 @@ const Waybill = {
         wa.expected_quantity
       FROM waybills w
       LEFT JOIN waybill_advice wa ON w.advice_id = wa.id
-      WHERE w.status = 'IN_TRANSIT' OR w.status = 'IN_STORAGE'
+      WHERE w.status = 'IN_TRANSIT' OR w.status = 'ADVICE'
     `;
 
     const res = await db.query(query);
@@ -79,7 +79,7 @@ const Waybill = {
           AND (
             (w.status IN ('ARRIVED', 'CLOSED') AND wm.manifest_type = 'ARRIVAL')
             OR 
-            (w.status IN ('LOADING', 'IN_TRANSIT') AND wm.manifest_type = 'DEPARTURE')
+            (w.status IN ('IN_TRANSIT') AND wm.manifest_type = 'DEPARTURE')
           )
         ) AS actual_qty
       FROM waybills w
@@ -162,8 +162,43 @@ const Waybill = {
     return res.rows[0];
   },
 
+  getTodayCount: async () => {
+    const query = `
+      SELECT COUNT(*) as total 
+      FROM waybills 
+      WHERE created_at::date = CURRENT_DATE
+    `;
+    const result = await db.query(query);
+    return parseInt(result.rows[0].total);
+  },
+
+  insertFromForm: async (data) => {
+    const { id, origin_id, destination_id, client, driver_id, truck_id } = data;
+
+    const query = `
+      INSERT INTO waybills (id, origin_id, destination_id, client, driver_id, truck_id) 
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *
+    `;
+    const res = await db.query(query, [
+      id,
+      origin_id,
+      destination_id,
+      client,
+      driver_id || null,
+      truck_id || null,
+    ]);
+    return res.rows[0];
+  },
+
   setStatus: async (waybillId, status) => {
-    const validStatuses = ["IN_STORAGE", "LOADING", "IN_TRANSIT", "LOADED"];
+    const validStatuses = [
+      "ADVICE",
+      "LOADING",
+      "IN_TRANSIT",
+      "ARRIVED",
+      "CLOSED",
+    ];
 
     if (!validStatuses.includes(status)) {
       throw new Error(`Invalid status: ${status}`);
@@ -177,13 +212,8 @@ const Waybill = {
       RETURNING *;
     `;
 
-    try {
-      const res = await db.query(query, [waybillId, status]);
-      return res.rows[0];
-    } catch (err) {
-      console.error("Error updating waybill to LOADING:", err);
-      throw err;
-    }
+    const res = await db.query(query, [waybillId, status]);
+    return res.rows[0];
   },
 };
 

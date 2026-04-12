@@ -1,32 +1,24 @@
 export default function WaybillConfirm({
   waybill,
-  status,
-  origin,
-  destination,
-  user,
-  type,
   handleSubmit
 }) {
   return (
     <div className="scan-result">
       <h1>Confirm Details</h1>
       <p>
-        <strong>Waybill Name:</strong> {waybill ? waybill : "Waybill Name"}
+        <strong>Waybill ID:</strong> {waybill.id}
       </p>
       <p>
-        <strong>Waybill Code:</strong> {"WB-001"}
+        <strong>Status:</strong> {waybill.status ? waybill.status : "Unknown Status"}
       </p>
       <p>
-        <strong>Status:</strong> {status ? status : "Unknown Status"}
+        <strong>Origin:</strong> {waybill.origin ? waybill.origin : "Unknown Origin"}
       </p>
       <p>
-        <strong>Origin:</strong> {origin ? origin : "Unknown"}
+        <strong>Destination:</strong> {waybill.destination ? waybill.destination : "Unknown Destination"}
       </p>
       <p>
-        <strong>Destination:</strong> {destination ? destination : "Unknown"}
-      </p>
-      <p>
-        <strong>Client:</strong> {"Client"}
+        <strong>Client:</strong> {waybill.client ? waybill.client : "Unknownd Client"}
       </p>
       <h1>Advice</h1>
       <p>

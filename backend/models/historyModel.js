@@ -31,8 +31,8 @@ const History = {
   // Page 2 & 4: Get Audit Logs (Scans/Actions)
   getAuditLogs: async (entityType, entityId) => {
     const res = await db.query(
-      'SELECT created_at, event_type, metadata, user_id FROM activity_logs WHERE entity_type = $1 AND entity_id = $2 ORDER BY created_at DESC',
-      [entityType, entityId]
+      "SELECT created_at, event_type, metadata, user_id FROM activity_logs WHERE entity_type = $1 AND entity_id = $2 ORDER BY created_at DESC",
+      [entityType, entityId],
     );
     return res.rows;
   },
@@ -47,6 +47,16 @@ const History = {
       ORDER BY m.created_at ASC`;
     const res = await db.query(query, [waybillId]);
     return res.rows;
+  },
+
+  createManifest: async (waybillId, unitId, type, userId) => {
+    const query = `
+      INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type, user_id)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *;
+    `;
+    const res = await db.query(query, [waybillId, unitId, type, userId]);
+    return res.rows[0];
   },
 
   getWaybillStateHistory: async (waybillId) => {
@@ -77,7 +87,7 @@ const History = {
 
     const res = await db.query(query, [waybillId]);
     return res.rows;
-  }
+  },
 };
 
 module.exports = History;
