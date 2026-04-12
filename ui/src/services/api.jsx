@@ -16,6 +16,14 @@ export const api = {
     fetch(`${BASE_URL}/waybills/${id}`).then(handleResponse),
   getWaybillInfoById: (id) =>
     fetch(`${BASE_URL}/waybills/display/${id}`).then(handleResponse),
+  saveWaybillForm: async (details) => {
+    const response = await fetch(`${BASE_URL}/waybills/save_form`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(details),
+    });
+    return handleResponse(response);
+  },
 
   startLoading: (id) =>
     fetch(`${BASE_URL}/waybills/loading/${id}`).then(handleResponse),
@@ -59,11 +67,12 @@ export const api = {
 
   createManifest: (waybillId, unitId, type, userId) =>
     fetch(
-      `${BASE_URL}/manifest/waybill/${waybillId}/unit/${unitId}/type/${type}/user/${userId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+      `${BASE_URL}/manifest/waybill/${waybillId}/unit/${unitId}/type/${type}/user/${userId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    }
     ).then(handleResponse),
 };
