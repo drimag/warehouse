@@ -55,11 +55,12 @@ const seedDatabase = async () => {
         status VARCHAR(50) DEFAULT 'IN_STORAGE' NOT NULL,
         da VARCHAR(50),  
         last_location_id INT REFERENCES locations(id), 
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
 
-      CREATE TABLE IF NOT EXISTS waybill_advice (
-        id VARCHAR(100) PRIMARY KEY, -- Smart ID: adv-ORIG-DEST-YYYYMMDD
+      CREATE TABLE IF NOT EXISTS waybills (
+        id VARCHAR(100) PRIMARY KEY, -- Smart ID: YYYYMMDD-CLIE-XXXX
+        status VARCHAR(50),
         origin_id INT REFERENCES locations(id),
         destination_id INT REFERENCES locations(id),
         client VARCHAR(100),
@@ -67,21 +68,9 @@ const seedDatabase = async () => {
         driver_id INT REFERENCES drivers(id),
         expected_quantity INTEGER,
         expected_arrival TIMESTAMP WITH TIME ZONE,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-      );
-
-      CREATE TABLE IF NOT EXISTS waybills (
-        id VARCHAR(100) PRIMARY KEY, -- Smart ID: ORIG-DEST-YYYYMMDD
-        advice_id VARCHAR(100), -- Smart ID: adv-ORIG-DEST-YYYYMMDD
-        status VARCHAR(50),
-        origin_id INT REFERENCES locations(id),
-        destination_id INT REFERENCES locations(id),
-        client VARCHAR(100),
-        truck_id INT REFERENCES trucks(id),
-        driver_id INT REFERENCES drivers(id),
         departure_photo_url TEXT,
         arrival_photo_url TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
 
       -- Selective SCD2 Implementation
@@ -106,8 +95,11 @@ const seedDatabase = async () => {
         status VARCHAR(50),
         origin_id INT REFERENCES locations(id),
         destination_id INT REFERENCES locations(id),
+        client VARCHAR(100),
         truck_id INT REFERENCES trucks(id),
         driver_id INT REFERENCES drivers(id),
+        expected_quantity INTEGER,
+        expected_arrival TIMESTAMP WITH TIME ZONE,
         departure_photo_url TEXT,
         arrival_photo_url TEXT,
         eff_start TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -123,29 +115,22 @@ const seedDatabase = async () => {
         entity_type VARCHAR(100) NOT NULL,
         entity_id UUID NOT NULL,
         event_type TEXT NOT NULL,
-        metadata JSONB DEFAULT '{}'::jsonb
+        metadata JSONB DEFAULT '{}'::jsonb,
+        description TEXT
       );
 
       -- Join Tables
       CREATE TABLE IF NOT EXISTS waybill_manifest (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        waybill_id VARCHAR(100) REFERENCES waybills(id)  ON DELETE CASCADE,
-        unit_id INT REFERENCES units(id),
-        manifest_type TEXT NOT NULL, 
+        waybill_id VARCHAR(100) REFERENCES waybills(id) ON DELETE CASCADE,
+        unit_id INT REFERENCES units(id) ON DELETE CASCADE,
+        manifest_type VARCHAR(50) NOT NULL, 
         user_id VARCHAR(100),
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-      );
-
-      CREATE TABLE IF NOT EXISTS unit_advice (
-        id VARCHAR(50) PRIMARY KEY DEFAULT gen_random_uuid(),
-        advice_id VARCHAR(100) REFERENCES waybill_advice(id) ON DELETE CASCADE,
-        unit_id INT REFERENCES units(id),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
     `);
 
-    await db.query(
-      `
+    await db.query(`
       -- 1. Create the Function
       CREATE OR REPLACE FUNCTION handle_unit_scd2()
       RETURNS TRIGGER AS $$
@@ -172,8 +157,57 @@ const seedDatabase = async () => {
       CREATE TRIGGER on_unit_update
       AFTER INSERT OR UPDATE ON units
       FOR EACH ROW EXECUTE FUNCTION handle_unit_scd2();
-      `,
-    );
+      `);
+
+    await db.query(`
+      CREATE OR REPLACE FUNCTION handle_waybill_scd2()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        UPDATE waybill_history
+        SET eff_end = now(),
+            is_current = FALSE
+        WHERE waybill_id = NEW.id AND is_current = TRUE;
+
+        INSERT INTO waybill_history (
+          waybill_id, 
+          status, 
+          origin_id, 
+          destination_id, 
+          client,
+          truck_id, 
+          driver_id, 
+          expected_quantity,
+          expected_arrival,
+          departure_photo_url,
+          arrival_photo_url,
+          eff_start, 
+          is_current
+        )
+        VALUES (
+          NEW.id, 
+          NEW.status, 
+          NEW.origin_id, 
+          NEW.destination_id, 
+          NEW.client,
+          NEW.truck_id, 
+          NEW.driver_id, 
+          NEW.expected_quantity,
+          NEW.expected_arrival,
+          NEW.departure_photo_url, 
+          NEW.arrival_photo_url,
+          now(), 
+          TRUE
+        );
+
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+
+      -- 2. Create the Trigger on the Waybills table
+      CREATE TRIGGER on_waybill_update
+      AFTER INSERT OR UPDATE ON waybills
+      FOR EACH ROW EXECUTE FUNCTION handle_waybill_scd2();
+    `);
 
     await db.query(`
       INSERT INTO locations (id, name, type) 
@@ -206,107 +240,60 @@ const seedDatabase = async () => {
       `);
 
     await db.query(`
-      -- 1. Create the Function for Waybills
-      CREATE OR REPLACE FUNCTION handle_waybill_scd2()
-      RETURNS TRIGGER AS $$
-      BEGIN
-        -- 1. 'Expire' the previous current version
-        UPDATE waybill_history
-        SET eff_end = now(),
-            is_current = FALSE
-        WHERE waybill_id = NEW.id AND is_current = TRUE;
-
-        -- 2. Insert the new version with updated details
-        INSERT INTO waybill_history (
-          waybill_id, 
-          status, 
-          origin_id, 
-          destination_id, 
-          truck_id, 
-          driver_id, 
-          departure_photo_url,
-          arrival_photo_url,
-          eff_start, 
-          is_current
-        )
-        VALUES (
-          NEW.id, 
-          NEW.status, 
-          NEW.origin_id, 
-          NEW.destination_id, 
-          NEW.truck_id, 
-          NEW.driver_id, 
-          NEW.departure_photo_url, 
-          NEW.arrival_photo_url,
-          now(), 
-          TRUE
-        );
-
-        RETURN NEW;
-      END;
-      $$ LANGUAGE plpgsql;
-
-      -- 2. Create the Trigger on the Waybills table
-      CREATE TRIGGER on_waybill_update
-      AFTER INSERT OR UPDATE ON waybills
-      FOR EACH ROW EXECUTE FUNCTION handle_waybill_scd2();
-    `);
-
-    await db.query(`
       -- 1. Create 2 Units (Started as IN_STORAGE)
       INSERT INTO units (id, engine, frame, model, color, status, last_location_id)
       VALUES 
-        ('1', 'ENG-P1-001', 'FRM-P1-001', 'Model1', 'RD', 'IN_STORAGE', 1),
-        ('2', 'ENG-P1-002', 'FRM-P1-002', 'Model1', 'RD', 'IN_STORAGE', 1);
+        (1, 'ENG-P1-001', 'FRM-P1-001', 'Model1', 'RD', 'IN_STORAGE', 1),
+        (2, 'ENG-P1-002', 'FRM-P1-002', 'Model1', 'RD', 'IN_STORAGE', 1);
 
-      -- 1.5. Create the Advice (The Plan)
-      INSERT INTO waybill_advice (id, origin_id, destination_id, client, expected_quantity)
-      VALUES ('adv1', 1, 2, 'Client Beta', 2);
+      -- 2. Create the "Advice" record directly in the Waybills table
+      INSERT INTO waybills (id, status, origin_id, destination_id, client, truck_id, driver_id)
+      VALUES ('wb1', 'ADVICE', 1, 2, 'Client Alpha', 1, 1);
 
-      -- 2. Create the Waybill (Started as LOADING)
-      INSERT INTO waybills (id, advice_id, status, origin_id, destination_id, client, truck_id, driver_id)
-      VALUES ('wb1', 'adv1', 'ADVICE', 1, 2, 'Client Alpha', 1, 1);
-
-      -- 1. Create the Advice (The Plan)
-      INSERT INTO waybill_advice (id, origin_id, destination_id, client, expected_quantity)
-      VALUES ('adv2', 2, 3, 'Client Beta', 3);
-
-      -- 2. Create 3 Units
+      -- 3. expected units
+      INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
+      VALUES 
+        ('wb1', 1, 'ADVICE'), 
+        ('wb1', 2, 'ADVICE');
+      
+      -- ========================================================================
+      -- next batch
       INSERT INTO units (id, engine, frame, model, color, status, last_location_id)
       VALUES 
-        ('3', 'ENG-P2-003', 'FRM-P2-003', 'Model2', 'BL', 'IN_STORAGE', 2),
-        ('4', 'ENG-P2-004', 'FRM-P2-004', 'Model2', 'BL', 'IN_STORAGE', 2),
-        ('5', 'ENG-P2-005', 'FRM-P2-005', 'Model2', 'BL', 'IN_STORAGE', 2);
+        (3, 'ENG-P2-003', 'FRM-P2-003', 'Model2', 'BL', 'IN_STORAGE', 2),
+        (4, 'ENG-P2-004', 'FRM-P2-004', 'Model2', 'BL', 'IN_STORAGE', 2),
+        (5, 'ENG-P2-005', 'FRM-P2-005', 'Model2', 'BL', 'IN_STORAGE', 2);
 
-      -- 3. Create Unit Advice (The Expected List)
-      INSERT INTO unit_advice (advice_id, unit_id)
-      VALUES 
-        ('adv2', 3),
-        ('adv2', 4),
-        ('adv2', 5);
+      INSERT INTO waybills (id, status, origin_id, destination_id, client, truck_id, driver_id)
+      VALUES ('wb2', 'ADVICE', 2, 3, 'Client Beta', 2, 2);
 
-      -- 4. Create Waybill and Cycle through Statuses to populate SCD2 History
-      INSERT INTO waybills (id, advice_id, status, origin_id, destination_id, client, truck_id, driver_id)
-      VALUES ('wb2', 'adv2', 'LOADING', 2, 3, 'Client Beta', 2, 2);
-
-      -- Simulating the Physical Movement
-      -- Departure Scan
       INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
-      VALUES ('wb2', 3, 'DEPARTURE'), ('wb2', 4, 'DEPARTURE'), ('wb2', 5, 'DEPARTURE');
+      VALUES 
+        ('wb2', 3, 'ADVICE'), 
+        ('wb2', 4, 'ADVICE'), 
+        ('wb2', 5, 'ADVICE');
+
+      UPDATE waybills SET status = 'LOADING' WHERE id = 'wb2';
 
       UPDATE waybills SET status = 'IN_TRANSIT' WHERE id = 'wb2';
-      UPDATE units SET status = 'IN_TRANSIT', last_location_id = 2 WHERE id IN ('3', '4', '5');
+      UPDATE units SET status = 'IN_TRANSIT' WHERE id IN (3, 4, 5);
 
-      -- Arrival Scan
       INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
-      VALUES ('wb2', 3, 'ARRIVAL'), ('wb2', 4, 'ARRIVAL'), ('wb2', 5, 'ARRIVAL');
+      VALUES 
+        ('wb2', 3, 'DEPARTURE'), 
+        ('wb2', 4, 'DEPARTURE'), 
+        ('wb2', 5, 'DEPARTURE');
 
       UPDATE waybills SET status = 'ARRIVED' WHERE id = 'wb2';
-      UPDATE units SET status = 'IN_STORAGE', last_location_id = 2 WHERE id IN ('3', '4', '5');
+      UPDATE units SET status = 'IN_STORAGE', last_location_id = 3 WHERE id IN (3, 4, 5);
 
-      -- Final Closure
+      INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
+      VALUES 
+        ('wb2', 3, 'ARRIVAL'), 
+        ('wb2', 4, 'ARRIVAL'), 
+        ('wb2', 5, 'ARRIVAL');
+
       UPDATE waybills SET status = 'CLOSED' WHERE id = 'wb2';
-      
     `);
 
     await db.query(

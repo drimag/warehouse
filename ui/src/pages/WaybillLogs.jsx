@@ -42,37 +42,6 @@ const logColumns = [
   },
 ];
 
-const adviceColumns = [
-  { label: "Advice ID", key: "id" },
-  { label: "Client", key: "client" },
-  {
-    label: "Route",
-    render: (_, row) => (
-      <div style={{ fontSize: "0.85rem" }}>
-        <strong>{row.origin}</strong>
-        <span style={{ margin: "0 5px", color: "#666" }}>→</span>
-        {row.destination}
-      </div>
-    ),
-  },
-  {
-    label: "Driver",
-    key: "driver",
-    render: (val) => val ?? "---",
-  },
-  {
-    label: "Truck",
-    key: "truck",
-    render: (val) => val ?? "---",
-  },
-  {
-    label: "Expected Quantity",
-    key: "expected_quantity",
-    render: (val) => val ?? "0", 
-  },
-  { label: "Created At", key: "created_at" },
-];
-
 const scanColumns = [
   { label: "Manifest ID", key: "id" },
   { label: "Unit ID", key: "unit_id" },
@@ -121,6 +90,10 @@ export default function WaybillLogs() {
     waybillData.manifest?.filter((item) => item.manifest_type === "ARRIVAL") ||
     [];
 
+  const adviceManifest =
+    waybillData.manifest?.filter((item) => item.manifest_type === "ADVICE") ||
+    [];
+
   return (
     <div className="page">
       <WaybillHeader waybill={waybillData.details} />
@@ -156,23 +129,18 @@ export default function WaybillLogs() {
         </>
       )}
 
-      <hr className="divider" />
+      {adviceManifest.length > 0 && (
+        <>
+          <hr className="divider" />
 
-      <h1 className="page-title">Waybill Advice</h1>
-      <GenericTable
-        columns={adviceColumns}
-        data={waybillData.advice ? [waybillData.advice] : []}
-        emptyMessage="No advice logged"
-      />
-
-      <hr className="divider" />
-
-      <h1 className="page-title">Unit Advice</h1>
-      <GenericTable
-        columns={unitAdviceColumns}
-        data={waybillData.unitAdvice}
-        emptyMessage="No advice logged"
-      />
+          <h1 className="page-title">Unit Advice</h1>
+          <GenericTable
+            columns={scanColumns}
+            data={adviceManifest}
+            emptyMessage="No advice logged"
+          />
+        </>
+      )}
     </div>
   );
 }

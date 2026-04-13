@@ -24,7 +24,7 @@ const columns = [
   {
     label: "Qty (Act/Exp)",
     render: (_, row) => {
-      const isMismatch = (Number(row.actual_qty) !== row.expected_qty) && (row.expected_qty);
+      const isMismatch = (Number(row.actual_qty) !== Number(row.expected_qty)) && (row.expected_qty);
       return (
         <span
           style={{

@@ -8,7 +8,7 @@ const Unit = {
         l.name AS last_known_location
       FROM units u
       LEFT JOIN locations l ON u.last_location_id = l.id
-      ORDER BY u.created_at DESC
+      ORDER BY u.updated_at DESC
     `;
     const res = await db.query(query);
     return res.rows;

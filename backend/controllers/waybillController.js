@@ -1,6 +1,5 @@
 const Waybill = require("../models/waybillModel");
 const History = require("../models/historyModel");
-const Advice = require("../models/adviceModel");
 
 exports.getAllWaybillDisplay = async (req, res) => {
   try {
@@ -37,11 +36,9 @@ exports.getWaybillDetails = async (req, res) => {
   try {
     const { id } = req.params;
     const details = await Waybill.getWaybillDisplayById(id);
-    const [stateHistory, advice, manifest, unitAdvice] = await Promise.all([
+    const [stateHistory, manifest] = await Promise.all([
       History.getWaybillStateHistory(id),
-      Advice.getWaybillAdviceById(details.advice_id),
       Waybill.getWaybillManifestByWBID(id),
-      Advice.getUnitAdviceByWbAdviceId(details.advice_id),
     ]);
 
     if (!details) {
@@ -51,9 +48,7 @@ exports.getWaybillDetails = async (req, res) => {
     res.json({
       details,
       stateHistory,
-      advice,
       manifest,
-      unitAdvice,
     });
   } catch (err) {
     console.error("❌ DATABASE ERROR:", err);
