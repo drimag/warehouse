@@ -16,27 +16,26 @@ export default function WaybillForm() {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
-  const [withAdvice, setWithAdvice] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [waybillError, setWaybillError] = useState("");
-  const [adviceError, setAdviceError] = useState("");
+  const [error, setError] = useState("");
 
   const [waybill, setWaybill] = useState(null);
+  const [status, setStatus] = useState("");
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [driver, setDriver] = useState("");
   const [truck, setTruck] = useState("");
-
-  const [advice, setAdvice] = useState(null);
   const [expectedQty, setExpectedQty] = useState(0);
   const [expectedDate, setExpectedDate] = useState("");
   const [client, setClient] = useState("");
 
+  const clientRef = useRef(null);
   const originRef = useRef(null);
   const destRef = useRef(null);
   const driverRef = useRef(null);
   const truckRef = useRef(null);
 
+  const statusList = ["ADVICE", "IN_TRANSIT"];
   const [locationList, setLocationsList] = useState([]);
   const [truckList, setTruckList] = useState([]);
   const [driverList, setDriverList] = useState([]);
@@ -78,30 +77,20 @@ export default function WaybillForm() {
     fetchPageData();
   }, []);
 
-  const handleConfirmWaybill = () => {
-    setWaybillError("");
-    setAdviceError("");
-    if (!origin.trim() || !destination.trim() || !client.trim()) {
-      setWaybillError(
-        "Origin, Destination, and Client are required to save the Waybill.",
-      );
-      return;
-    }
-    setSubmitted(true);
-    setWithAdvice(false);
+  const resetDetails = () => {
+    setWaybill(null);
+    setStatus("");
+    setOrigin("");
+    setDestination("");
+    setDriver("");
+    setTruck("");
+    setExpectedQty(0);
+    setExpectedDate("");
+    setClient("");
   };
 
-  const handleConfirmAdvice = () => {
-    setWaybillError("");
-    setAdviceError("");
-    if (!origin.trim() || !destination.trim() || !client.trim() || !expectedDate.trim() || expectedQty===0) {
-      setAdviceError(
-        "Origin, Destination, Client, and Advice Details are required.",
-      );
-      return;
-    }
-    setSubmitted(true);
-    setWithAdvice(true);
+  const handleCancelSubmit = () => {
+    resetPage();
   };
 
   const handleSubmit = async () => {
@@ -118,6 +107,7 @@ export default function WaybillForm() {
       );
 
       const details = {
+        status: status,
         origin_id: selectedOrig?.id,
         destination_id: selectedDest?.id,
         client: client,
@@ -126,13 +116,26 @@ export default function WaybillForm() {
       };
 
       const response = await api.saveWaybillForm(details);
-      setWaybill(response);
+      console.log("response: ", response);
 
-      //TODO insert into advice with the same shit
+      const displayDetails = {
+        id: response.id,
+        origin: origin,
+        destination: destination,
+        truck: truck,
+        driver: driver,
+        client: client,
+        expectedQty: expectedQty,
+        expectedDate: expectedDate,
+      };
+      setWaybill(displayDetails);
+      console.log("display details: ", displayDetails);
+      console.log("waybill withinhandlesubmit: ", waybill);
+      setSubmitted(true);
       return response;
     } catch (err) {
       console.error("Save failed:", err);
-      setWaybillError("Failed to save Waybill. Please check your connection.");
+      setError("Failed to save Waybill. Please check your connection.");
     }
   };
 
@@ -186,7 +189,20 @@ export default function WaybillForm() {
         <>
           <h1 className="page-title"> Waybills </h1>
 
+          <GenericSelect
+            ref={originRef}
+            selected={status}
+            setSelected={(val) => {
+              setStatus(val);
+              focusNext(clientRef);
+            }}
+            title={"WB Status"}
+            options={statusList}
+            placeholder={"Choose WB Type"}
+          />
+
           <GenericInput
+            ref={clientRef}
             val={client}
             setVal={setClient}
             title={"Client"}
@@ -243,67 +259,45 @@ export default function WaybillForm() {
             />
           </div>
 
-          <button className="primary-btn" onClick={handleConfirmWaybill}>
+          {status === "ADVICE" && (
+            <div>
+              <DatePicker
+                selected={expectedDate}
+                setSelected={(val) => {
+                  setExpectedDate(val);
+                  focusNext(truckRef);
+                }}
+                title={"Expected Date of Arrival"}
+              />
+
+              <ScanInput
+                vin={expectedQty}
+                setVin={setExpectedQty}
+                title={"Expected Quantity"}
+                placeholder={"Enter Expected Quantity"}
+              />
+            </div>
+          )}
+
+          {error && (
+            <div
+              style={{ color: "red", marginBottom: "10px", fontWeight: "bold" }}
+            >
+              ⚠️ {error}
+            </div>
+          )}
+
+          <button className="primary-btn" onClick={handleSubmit}>
             Create New Waybill
           </button>
-
-          {waybillError && (
-            <div
-              style={{ color: "red", marginBottom: "10px", fontWeight: "bold" }}
-            >
-              ⚠️ {waybillError}
-            </div>
-          )}
-
-          <hr className="divider" />
-          <h1 className="page-title"> Advice </h1>
-          <div>
-            {/* <SearchableSelect
-              selected={driver}
-              setSelected={(val) => {
-                setDriver(val);
-                focusNext(truckRef);
-              }}
-              title={"Type"}
-              options={waybillType}
-              placeholder={"Select Waybill Type"}
-            /> */}
-
-            <DatePicker
-              selected={expectedDate}
-              setSelected={(val) => {
-                setExpectedDate(val);
-                focusNext(truckRef);
-              }}
-              title={"Expected Date of Arrival"}
-            />
-
-            <ScanInput
-              vin={expectedQty}
-              setVin={setExpectedQty}
-              title={"Expected Quantity"}
-              placeholder={"Enter Expected Quantity"}
-            />
-          </div>
-
-          <button className="primary-btn" onClick={handleConfirmAdvice}>
-            Create Waybill with Advice
-          </button>
-
-          {adviceError && (
-            <div
-              style={{ color: "red", marginBottom: "10px", fontWeight: "bold" }}
-            >
-              ⚠️ {adviceError}
-            </div>
-          )}
         </>
       ) : (
         <>
-          <WaybillConfirm
-            waybill={waybill}
-            handleSubmit={handleSubmit}
-          />
+          {waybill ? (
+            <WaybillConfirm waybill={waybill} setSubmitted={setSubmitted} />
+          ) : (
+            <div>Loading waybill details...</div>
+          )}
         </>
       )}
     </div>

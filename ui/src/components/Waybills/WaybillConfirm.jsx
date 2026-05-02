@@ -1,7 +1,8 @@
 export default function WaybillConfirm({
   waybill,
-  handleSubmit
+  setSubmitted,
 }) {
+  console.log("waybill: ", waybill);
   return (
     <div className="scan-result">
       <h1>Confirm Details</h1>
@@ -9,36 +10,47 @@ export default function WaybillConfirm({
         <strong>Waybill ID:</strong> {waybill.id}
       </p>
       <p>
-        <strong>Status:</strong> {waybill.status ? waybill.status : "Unknown Status"}
+        <strong>Status:</strong>{" "}
+        {waybill.status ? waybill.status : "Unknown Status"}
       </p>
       <p>
-        <strong>Origin:</strong> {waybill.origin ? waybill.origin : "Unknown Origin"}
+        <strong>Origin:</strong>{" "}
+        {waybill.origin ? waybill.origin : "Unknown Origin"}
       </p>
       <p>
-        <strong>Destination:</strong> {waybill.destination ? waybill.destination : "Unknown Destination"}
+        <strong>Destination:</strong>{" "}
+        {waybill.destination ? waybill.destination : "Unknown Destination"}
       </p>
       <p>
-        <strong>Client:</strong> {waybill.client ? waybill.client : "Unknownd Client"}
-      </p>
-      <h1>Advice</h1>
-      <p>
-        <strong>Type:</strong> {type ? type : "Unknown Type"}
+        <strong>Client:</strong>{" "}
+        {waybill.client ? waybill.client : "Unknownd Client"}
       </p>
       <p>
-        <strong>Expected Time:</strong> {type ? type : "Unknown Time"}
+        <strong>Driver:</strong>{" "}
+        {waybill.driver ? waybill.driver : "Unknownd Driver"}
       </p>
       <p>
-        <strong>Expected Quantity:</strong> {type ? type : "Unknown"}
+        <strong>Truck:</strong>{" "}
+        {waybill.truck ? waybill.truck : "Unknownd Truck"}
       </p>
-      <p>
-        <strong>Timestamp:</strong> {type ? type : "Unknown"}
-      </p>
-      <p>
-        <strong>User:</strong> {user ? user : "Unknown User"}
-      </p>
-      <button className="primary-btn" onClick={handleSubmit}>
-        Confirm
-      </button>
+      {waybill.status === "ADVICE" && (
+        <>
+          <h1>Advice</h1>
+          <p>
+            <strong>Expected Date of Arrival:</strong>{" "}
+            {waybill.expectedDate ? waybill.expectedDate : "Unknown Time"}
+          </p>
+          <p>
+            <strong>Expected Quantity:</strong>{" "}
+            {waybill.expectedQty ? waybill.expectedQty : "Unknown"}
+          </p>
+        </>
+      )}
+      <div className="warehouse-row">
+        <button className="primary-btn" onClick={() => setSubmitted(false)}>
+          Ok
+        </button>
+      </div>
     </div>
   );
 }

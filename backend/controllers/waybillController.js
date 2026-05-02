@@ -112,7 +112,7 @@ exports.setArrived = async (req, res) => {
 
 exports.saveWaybillForm = async (req, res) => {
   try {
-    const { origin_id, destination_id, client, driver_id, truck_id } = req.body;
+    const { status, origin_id, destination_id, client, driver_id, truck_id } = req.body;
 
     if (!origin_id || !destination_id || !client) {
       return res
@@ -132,6 +132,7 @@ exports.saveWaybillForm = async (req, res) => {
 
     const result = await Waybill.insertFromForm({
       id,
+      status,
       origin_id,
       destination_id,
       client,

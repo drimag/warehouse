@@ -145,15 +145,16 @@ const Waybill = {
   },
 
   insertFromForm: async (data) => {
-    const { id, origin_id, destination_id, client, driver_id, truck_id } = data;
+    const { id, status, origin_id, destination_id, client, driver_id, truck_id } = data;
 
     const query = `
-      INSERT INTO waybills (id, origin_id, destination_id, client, driver_id, truck_id) 
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO waybills (id, status, origin_id, destination_id, client, driver_id, truck_id) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `;
     const res = await db.query(query, [
       id,
+      status,
       origin_id,
       destination_id,
       client,
