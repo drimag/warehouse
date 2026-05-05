@@ -151,12 +151,12 @@ export default function WaybillForm() {
     setColor("");
   };
 
+  //TODO: put this into a common file
   const focusNext = (nextRef) => {
     const element = nextRef.current;
     if (!element) return;
     element.focus();
 
-    // Highlight text for standard inputs
     if (
       element.tagName === "INPUT" &&
       ["text", "number", "tel"].includes(element.type)

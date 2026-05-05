@@ -64,7 +64,7 @@ exports.scanUnitByVin = async (req, res) => {
 exports.newScannedUnit = async (req, res) => {
   try {
     const { scan } = req.params;
-    const unit = await Unit.createNew(scan, 'LOADING');
+    const unit = await Unit.createNew(scan, "LOADING");
     console.log(`✨ Created new unit for scan ${scan} with status LOADING`);
     return res.json(unit);
   } catch (err) {
@@ -102,3 +102,36 @@ exports.setUnitInTransit = async (req, res) => {
   }
 };
 
+exports.insertNewUnit = async (req, res) => {
+  try {
+    const { engine, frame, model, color, status, da, last_location_id } =
+      req.body;
+
+    if (!engine) {
+      return res.status(400).json({ error: "Engine number is required" });
+    }
+
+    const newUnit = await Unit.createNew({
+      engine,
+      frame,
+      model,
+      color,
+      status,
+      da,
+      last_location_id,
+    });
+
+    console.log(`✅ Unit Inserted: ${newUnit.engine}`);
+    return res.status(201).json(newUnit);
+  } catch (err) {
+    if (err.code === "23505") {
+      console.error(`❌ Duplicate Entry: ${err.detail}`);
+      return res.status(409).json({
+        error: err.detail,
+      });
+    }
+
+    console.error(`❌ ERROR INSERTING UNIT:`, err.message);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};

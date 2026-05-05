@@ -8,5 +8,6 @@ router.get('/history/:unitID', unitController.getUnitHistory);
 router.post('/scan/:scan', unitController.scanUnitByVin);
 router.post('/new_scan/:scan', unitController.newScannedUnit);
 router.post('/in_transit/:scan', unitController.setUnitInTransit);
+router.post('/new_unit', unitController.insertNewUnit);
 
 module.exports = router;

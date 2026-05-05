@@ -27,13 +27,33 @@ const Unit = {
     return res.rows[0];
   },
 
-  createNew: async (engine, status) => {
+  createNew: async (unitData) => {
+    const {
+      engine,
+      frame,
+      model,
+      color,
+      status = "IN_STORAGE",
+      da,
+      last_location_id,
+    } = unitData;
+
     const query = `
-    INSERT INTO units (engine, status)
-    VALUES ($1, $2)
-    RETURNING *;
-  `;
-    const values = [engine, status];
+      INSERT INTO units (
+        engine, 
+        frame, 
+        model, 
+        color, 
+        status, 
+        da, 
+        last_location_id
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *;
+    `;
+
+    const values = [engine, frame, model, color, status, da, last_location_id];
+
     const res = await db.query(query, values);
     return res.rows[0];
   },
