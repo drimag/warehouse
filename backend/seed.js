@@ -52,7 +52,7 @@ const seedDatabase = async () => {
 
     await db.query(`
       CREATE TABLE IF NOT EXISTS units (
-        id SERIAL PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         engine VARCHAR(50) UNIQUE,
         frame VARCHAR(50) UNIQUE,
         model VARCHAR(50),
@@ -81,7 +81,7 @@ const seedDatabase = async () => {
       -- Selective SCD2 Implementation
       CREATE TABLE IF NOT EXISTS unit_history (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        unit_id INT REFERENCES units(id) ON DELETE CASCADE,
+        unit_id UUID REFERENCES units(id) ON DELETE CASCADE,
         engine VARCHAR(50),
         frame VARCHAR(50),
         model VARCHAR(50),
@@ -128,7 +128,7 @@ const seedDatabase = async () => {
       CREATE TABLE IF NOT EXISTS waybill_manifest (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         waybill_id VARCHAR(100) REFERENCES waybills(id) ON DELETE CASCADE,
-        unit_id INT REFERENCES units(id) ON DELETE CASCADE,
+        unit_id UUID REFERENCES units(id) ON DELETE CASCADE,
         manifest_type VARCHAR(50) NOT NULL, 
         user_id VARCHAR(100),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
@@ -246,11 +246,12 @@ const seedDatabase = async () => {
 
     await db.query(`
       -- 1. Create 2 Units (Started as IN_STORAGE)
-      INSERT INTO units (id, engine, frame, model, color, status, last_location_id)
+      INSERT INTO units (engine, frame, model, color, status, last_location_id)
       VALUES 
-        (1, 'ENG-P1-001', 'FRM-P1-001', 'Model1', 'RD', 'IN_STORAGE', 1),
-        (2, 'ENG-P1-002', 'FRM-P1-002', 'Model1', 'RD', 'IN_STORAGE', 1);
-
+        ('ENG-P1-001', 'FRM-P1-001', 'Model1', 'RD', 'IN_STORAGE', 1),
+        ('ENG-P1-002', 'FRM-P1-002', 'Model1', 'RD', 'IN_STORAGE', 1);
+    `);
+    await db.query(`
       -- 2. Create the "Advice" record directly in the Waybills table
       INSERT INTO waybills (id, status, origin_id, destination_id, client, truck_id, driver_id)
       VALUES ('wb1', 'ADVICE', 1, 2, 'Client Alpha', 1, 1);
@@ -258,52 +259,96 @@ const seedDatabase = async () => {
       -- 3. expected units
       INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
       VALUES 
-        ('wb1', 1, 'ADVICE'), 
-        ('wb1', 2, 'ADVICE');
-      
-      -- ========================================================================
-      -- next batch
-      INSERT INTO units (id, engine, frame, model, color, status, last_location_id)
-      VALUES 
-        (3, 'ENG-P2-003', 'FRM-P2-003', 'Model2', 'BL', 'IN_STORAGE', 2),
-        (4, 'ENG-P2-004', 'FRM-P2-004', 'Model2', 'BL', 'IN_STORAGE', 2),
-        (5, 'ENG-P2-005', 'FRM-P2-005', 'Model2', 'BL', 'IN_STORAGE', 2);
+        (
+          'wb1', 
+          (SELECT id FROM units WHERE engine = 'ENG-P1-001' LIMIT 1), 
+          'ADVICE'
+        ),
+        (
+          'wb1', 
+          (SELECT id FROM units WHERE engine = 'ENG-P1-002' LIMIT 1), 
+          'ADVICE'
+        );
+      `);
 
+    await db.query(`
+      INSERT INTO units (engine, frame, model, color, status, last_location_id)
+      VALUES 
+        ('ENG-P2-003', 'FRM-P2-003', 'Model2', 'BL', 'IN_STORAGE', 2),
+        ('ENG-P2-004', 'FRM-P2-004', 'Model2', 'BL', 'IN_STORAGE', 2),
+        ('ENG-P2-005', 'FRM-P2-005', 'Model2', 'BL', 'IN_STORAGE', 2);
+        `);
+    await db.query(`
       INSERT INTO waybills (id, status, origin_id, destination_id, client, truck_id, driver_id)
       VALUES ('wb2', 'ADVICE', 2, 3, 'Client Beta', 2, 2);
-
       INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
       VALUES 
-        ('wb2', 3, 'ADVICE'), 
-        ('wb2', 4, 'ADVICE'), 
-        ('wb2', 5, 'ADVICE');
+        (
+          'wb2', 
+          (SELECT id FROM units WHERE engine = 'ENG-P2-003' LIMIT 1), 
+          'ADVICE'
+        ), 
+        (
+          'wb2', 
+          (SELECT id FROM units WHERE engine = 'ENG-P2-004' LIMIT 1), 
+          'ADVICE'
+        ), 
+        (
+          'wb2', 
+          (SELECT id FROM units WHERE engine = 'ENG-P2-003' LIMIT 1), 
+          'ADVICE'
+        );
 
       UPDATE waybills SET status = 'LOADING' WHERE id = 'wb2';
 
       UPDATE waybills SET status = 'IN_TRANSIT' WHERE id = 'wb2';
-      UPDATE units SET status = 'IN_TRANSIT' WHERE id IN (3, 4, 5);
+      UPDATE units 
+      SET status = 'IN_TRANSIT' 
+      WHERE engine IN ('ENG-P2-003', 'ENG-P2-004', 'ENG-P2-005');
 
       INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
       VALUES 
-        ('wb2', 3, 'DEPARTURE'), 
-        ('wb2', 4, 'DEPARTURE'), 
-        ('wb2', 5, 'DEPARTURE');
+        (
+          'wb2', 
+          (SELECT id FROM units WHERE engine = 'ENG-P2-003' LIMIT 1), 
+          'DEPARTURE'
+        ), 
+        (
+          'wb2', 
+          (SELECT id FROM units WHERE engine = 'ENG-P2-004' LIMIT 1), 
+          'DEPARTURE'
+        ), 
+        (
+          'wb2', 
+          (SELECT id FROM units WHERE engine = 'ENG-P2-003' LIMIT 1), 
+          'DEPARTURE'
+        );
 
+      `);
+    await db.query(`
       UPDATE waybills SET status = 'ARRIVED' WHERE id = 'wb2';
-      UPDATE units SET status = 'IN_STORAGE', last_location_id = 3 WHERE id IN (3, 4, 5);
+      UPDATE units SET status = 'IN_STORAGE', last_location_id = 3 WHERE engine IN ('ENG-P2-003', 'ENG-P2-004', 'ENG-P2-005');
 
       INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
       VALUES 
-        ('wb2', 3, 'ARRIVAL'), 
-        ('wb2', 4, 'ARRIVAL'), 
-        ('wb2', 5, 'ARRIVAL');
+        (
+          'wb2', 
+          (SELECT id FROM units WHERE engine = 'ENG-P2-003' LIMIT 1), 
+          'ARRIVAL'
+        ), 
+        (
+          'wb2', 
+          (SELECT id FROM units WHERE engine = 'ENG-P2-004' LIMIT 1), 
+          'ARRIVAL'
+        ), 
+        (
+          'wb2', 
+          (SELECT id FROM units WHERE engine = 'ENG-P2-003' LIMIT 1), 
+          'ARRIVAL'
+        );
 
       UPDATE waybills SET status = 'CLOSED' WHERE id = 'wb2';
     `);
-
-    await db.query(
-      `SELECT setval(pg_get_serial_sequence('units', 'id'), (SELECT MAX(id) FROM units));`,
-    );
 
     console.log("✨ Smart Database seeded successfully!");
     process.exit(0);

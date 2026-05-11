@@ -15,7 +15,6 @@ const REQUIRED_WAYBILL_HEADERS = [
 ];
 
 const REQUIRED_UNIT_HEADERS = [
-  "id",
   "engine",
   "frame",
   "model",
@@ -50,7 +49,7 @@ const processWaybills = async (data) => {
 
 const processUnits = async (data) => {
   const formattedData = data.map((row) => ({
-    engine: row.Engine,
+    engine: row.engine,
     frame: row.Frame,
     model: row.Model,
     color: row.Color,
