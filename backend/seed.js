@@ -24,8 +24,13 @@ const seedDatabase = async () => {
       DROP TABLE IF EXISTS trucks CASCADE;
       DROP TABLE IF EXISTS locations CASCADE;
       DROP TABLE IF EXISTS drivers CASCADE;
+      DROP SEQUENCE IF EXISTS waybill_code_seq CASCADE;
     `);
     console.log("🗑️  Old tables dropped.");
+
+    await db.query(`
+      CREATE SEQUENCE waybill_code_seq;  
+    `);
 
     await db.query(`
       CREATE TABLE IF NOT EXISTS locations (

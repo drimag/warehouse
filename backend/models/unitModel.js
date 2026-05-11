@@ -74,6 +74,18 @@ const Unit = {
     console.log("vin, unit ", vin, res.rows[0]);
     return res.rows[0] || null;
   },
+
+  insertBulk: async (engines, frames, models, colors) => {
+    const query = `
+      INSERT INTO units (engine, frame, model, color)
+      SELECT * FROM UNNEST($1::text[], $2::text[], $3::text[], $4::text[])
+      ON CONFLICT (engine) DO NOTHING
+      RETURNING *;
+    `;
+    
+    const result = await db.query(query, [engines, frames, models, colors]);
+    return result.rows;
+  },
 };
 
 module.exports = Unit;

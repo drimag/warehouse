@@ -4,7 +4,7 @@ const handleResponse = async (response) => {
   if (!response.ok) {
     const errorData = await response.json();
     const error = new Error(errorData.error || "Network response was not ok");
-    error.status = response.status; 
+    error.status = response.status;
     throw error;
   }
   return response.json();
@@ -85,4 +85,9 @@ export const api = {
         },
       },
     ).then(handleResponse),
+
+  uploadSheet: (formData) => fetch(`${BASE_URL}/bulkUpload/generic_sheet`, {
+    method: "POST",
+    body: formData, 
+}).then(handleResponse)
 };

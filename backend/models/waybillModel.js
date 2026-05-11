@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const { checkAndResetSequence } = require("../utils/waybillUtils");
 
 const Waybill = {
   // Page 3: Display all waybills
@@ -145,7 +146,15 @@ const Waybill = {
   },
 
   insertFromForm: async (data) => {
-    const { id, status, origin_id, destination_id, client, driver_id, truck_id } = data;
+    const {
+      id,
+      status,
+      origin_id,
+      destination_id,
+      client,
+      driver_id,
+      truck_id,
+    } = data;
 
     const query = `
       INSERT INTO waybills (id, status, origin_id, destination_id, client, driver_id, truck_id) 
@@ -187,6 +196,44 @@ const Waybill = {
 
     const res = await db.query(query, [waybillId, status]);
     return res.rows[0];
+  },
+
+  insertBulkWaybills: async (data) => {
+    await checkAndResetSequence();
+    const query = `
+      INSERT INTO waybills (
+        id, status, origin_id, destination_id, 
+        client, truck_id, driver_id, expected_quantity, expected_arrival
+      )
+      SELECT 
+        d.id || '-' || TO_CHAR(CURRENT_DATE, 'YYMMDD') || '-' || LPAD(nextval('waybill_code_seq')::text, 4, '0'),
+        d.status, 
+        d.origin_id, 
+        d.destination_id, 
+        d.client, 
+        d.truck_id, 
+        d.driver_id, 
+        d.expected_quantity, 
+        d.expected_arrival
+      FROM UNNEST($1::text[], $2::text[], $3::int[], $4::int[], $5::text[], $6::int[], $7::int[], $8::int[], $9::timestamp[]) 
+      AS d(id, status, origin_id, destination_id, client, truck_id, driver_id, expected_quantity, expected_arrival)
+      RETURNING id;
+    `;
+
+    const values = [
+      data.map((d) => d.id),
+      data.map((d) => d.status),
+      data.map((d) => d.origin_id),
+      data.map((d) => d.destination_id),
+      data.map((d) => d.client),
+      data.map((d) => d.truck_id),
+      data.map((d) => d.driver_id),
+      data.map((d) => d.expected_quantity),
+      data.map((d) => d.expected_arrival),
+    ];
+
+    const result = await db.query(query, values);
+    return result.rows;
   },
 };
 

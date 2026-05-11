@@ -135,3 +135,32 @@ exports.insertNewUnit = async (req, res) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+exports.insertBulkUnits = async (data) => {
+  const query = `
+    INSERT INTO units (
+      engine, frame, model, color, status, da, last_location_id
+    )
+    SELECT 
+      d.engine, d.frame, d.model, d.color, d.status, d.da, d.loc_id
+    FROM UNNEST($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::text[], $7::int[], $8::text[]) 
+      AS d(engine, frame, model, color, status, da, loc_id)
+    ON CONFLICT (engine) DO UPDATE SET
+      status = EXCLUDED.status,
+      last_location_id = EXCLUDED.last_location_id
+    RETURNING engine;
+  `;
+
+  const values = [
+    data.map(d => d.engine),
+    data.map(d => d.frame),
+    data.map(d => d.model),
+    data.map(d => d.color),
+    data.map(d => d.status),
+    data.map(d => d.da),
+    data.map(d => d.last_location_id)
+  ];
+
+  const result = await db.query(query, values);
+  return result.rows;
+};

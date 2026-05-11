@@ -16,7 +16,7 @@ const BulkUpload = () => {
 
     setUploading(true);
     try {
-      const response = await api.uploadBulkUnits(formData);
+      const response = await api.uploadSheet(formData);
       setResults(response);
       alert("Bulk upload completed!");
     } catch (err) {
