@@ -22,7 +22,7 @@ const REQUIRED_UNIT_HEADERS = [
   "status",
   "da",
   "last_location_id",
-  "wb_id",
+  "waybill_code",
 ];
 
 const processWaybills = async (data) => {
@@ -50,21 +50,19 @@ const processWaybills = async (data) => {
 const processUnits = async (data) => {
   const formattedData = data.map((row) => ({
     engine: row.engine,
-    frame: row.Frame,
-    model: row.Model,
-    color: row.Color,
-    status: row.Status || "In Transit",
-    da: row.DA || row.da,
-    last_location_id: parseInt(row.LocationID),
-    waybill_no: row.WaybillNo, // Mapping column to link to parent
+    frame: row.frame,
+    model: row.model,
+    color: row.color,
+    status: row.status || 'IN_STORAGE', // TODO: clarify if default should be disallowed
+    da: row.da,
+    last_location_id: parseInt(row.last_location_id),
+    waybill_no: row.waybill_code, 
   }));
 
-  return await units.insertBulkUnits(formattedData);
+  return await Unit.insertBulkUnits(formattedData);
 };
 
 exports.bulkUploadSheet = async (req, res) => {
-  console.log('File:', req.file); 
-  console.log('Body:', req.body);
   if (!req.file) {
     return res.status(400).json({ error: "No file uploaded. Check the field name." });
   }
@@ -78,6 +76,8 @@ exports.bulkUploadSheet = async (req, res) => {
     const headers = worksheet
       .getRow(1)
       .values.map((v) => v?.toString().toLowerCase().trim());
+
+    console.log("headers: ",headers);
 
     worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
       if (rowNumber === 1) return; // skip header
