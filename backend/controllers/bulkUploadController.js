@@ -56,7 +56,7 @@ const processUnits = async (data) => {
     status: row.status || 'IN_STORAGE', // TODO: clarify if default should be disallowed
     da: row.da,
     last_location_id: parseInt(row.last_location_id),
-    waybill_no: row.waybill_code, 
+    waybill_code: row.waybill_code, 
   }));
 
   return await Unit.insertBulkUnits(formattedData);
