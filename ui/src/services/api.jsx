@@ -2,8 +2,11 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const handleResponse = async (response) => {
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.details || "Network response was not ok");
+    const errorData = await response.json();
+    const error = new Error(errorData.error || "Network response was not ok");
+    error.status = response.status;
+    error.response = { data: errorData };
+    throw error;
   }
   return response.json();
 };
@@ -58,6 +61,14 @@ export const api = {
         "Content-Type": "application/json",
       },
     }).then(handleResponse),
+  insertNewUnit: (details) =>
+    fetch(`${BASE_URL}/units/new_unit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(details),
+    }).then(handleResponse),
 
   getTrucks: () => fetch(`${BASE_URL}/references/trucks`).then(handleResponse),
   getDrivers: () =>
@@ -75,4 +86,10 @@ export const api = {
         },
       },
     ).then(handleResponse),
+
+  uploadSheet: (formData) =>
+    fetch(`${BASE_URL}/bulkUpload/generic_sheet`, {
+      method: "POST",
+      body: formData,
+    }).then(handleResponse),
 };

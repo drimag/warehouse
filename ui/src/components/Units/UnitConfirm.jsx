@@ -1,46 +1,37 @@
 import { useNavigate } from "react-router-dom";
-export default function UnitConfirm({ unit, onConfirm, onCancel }) {
+export default function UnitConfirm({ unit, onConfirm }) {
   const navigate = useNavigate();
   return (
     <div className="scan-result confirm-card">
-      <h1>Confirm Unit Details</h1>
+      <h1>Unit Successfully Uploaded</h1>
 
-      <section className="confirm-section">
-        <h3>Identity & Specs</h3>
         <p>
-          <strong>Engine No:</strong> {unit?.engine || "N/A"}
+          <strong>Engine No:</strong> {unit?.engine || "Unknown"}
         </p>
         <p>
-          <strong>Frame No:</strong> {unit?.frame || "N/A"}
+          <strong>Frame No:</strong> {unit?.frame || "Unknown"}
         </p>
         <p>
-          <strong>Model:</strong> {unit?.model || "Unknown Model"}
+          <strong>Model:</strong> {unit?.model || "Unknown"}
         </p>
         <p>
-          <strong>Color:</strong> {unit?.color || "Not Specified"}
+          <strong>Color:</strong> {unit?.color || "Unknown"}
         </p>
-      </section>
 
-      <section className="confirm-section">
-        <h3>Logistics Info</h3>
-        <p>
-          <strong>DA Number:</strong> {unit?.da || "No DA Assigned"}
-        </p>
-        <p>
-          <strong>Current Warehouse:</strong>{" "}
-          {unit?.current_warehouse || "Unknown Location"}
-        </p>
-        <p>
-          <strong>Status:</strong> {unit?.status || "PENDING"}
-        </p>
-      </section>
+      <p>
+        <strong>DA Number:</strong> {unit?.da || "Unknown"}
+      </p>
+      <p>
+        <strong>Last Known Location:</strong>{" "}
+        {unit?.lastLocation || "Unknown"}
+      </p>
+      <p>
+        <strong>Status:</strong> {unit?.status || "Unknown"}
+      </p>
 
       <div className="warehouse-row">
-        <button className="primary-btn" onClick={onCancel}>
-          Edit
-        </button>
         <button className="primary-btn" onClick={onConfirm}>
-          Confirm & Save
+          Ok
         </button>
       </div>
     </div>

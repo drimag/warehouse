@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const { checkAndResetSequence } = require("../utils/waybillUtils");
 
 const Waybill = {
   // Page 3: Display all waybills
@@ -9,11 +10,8 @@ const Waybill = {
 
   getWaybillsForScan: async () => {
     const query = `
-      SELECT 
-        w.*,
-        wa.expected_quantity
+      SELECT w.*
       FROM waybills w
-      LEFT JOIN waybill_advice wa ON w.advice_id = wa.id
       WHERE w.status = 'IN_TRANSIT' OR w.status = 'ADVICE'
     `;
 
@@ -31,9 +29,16 @@ const Waybill = {
         -- Truck and Driver Names
         t.plate_number AS truck,
         dr.full_name AS driver,
-        -- Advice details
-        wa.expected_quantity AS expected_qty,
-        -- Subquery for Actual Quantity based on Status
+        
+        -- Subquery for Expected Quantity (from the ADVICE manifest)
+        (
+          SELECT COUNT(*) 
+          FROM waybill_manifest wm 
+          WHERE wm.waybill_id = w.id 
+          AND wm.manifest_type = 'ADVICE'
+        ) AS expected_qty,
+
+        -- Subquery for Actual Quantity based on the Waybill's current status
         (
           SELECT COUNT(*) 
           FROM waybill_manifest wm 
@@ -45,14 +50,12 @@ const Waybill = {
           )
         ) AS actual_qty
       FROM waybills w
-      -- Join Locations twice (once for origin, once for destination)
+      -- Join Locations
       LEFT JOIN locations o ON w.origin_id = o.id
       LEFT JOIN locations d ON w.destination_id = d.id
       -- Join Trucks and Drivers
       LEFT JOIN trucks t ON w.truck_id = t.id
       LEFT JOIN drivers dr ON w.driver_id = dr.id
-      -- Join Advice
-      LEFT JOIN waybill_advice wa ON w.advice_id = wa.id
     `;
 
     const res = await db.query(query);
@@ -62,37 +65,40 @@ const Waybill = {
   getWaybillDisplayById: async (id) => {
     const query = `
       SELECT 
-        w.*, 
-        -- Location Names
-        o.name AS origin,
-        d.name AS destination,
-        -- Truck and Driver Names
-        t.plate_number AS truck,
-        dr.full_name AS driver,
-        -- Advice details
-        wa.expected_quantity AS expected_qty,
-        -- Subquery for Actual Quantity based on Status
-        (
-          SELECT COUNT(*)::INT 
-          FROM waybill_manifest wm 
-          WHERE wm.waybill_id = w.id 
-          AND (
-            (w.status IN ('ARRIVED', 'CLOSED') AND wm.manifest_type = 'ARRIVAL')
-            OR 
-            (w.status IN ('IN_TRANSIT') AND wm.manifest_type = 'DEPARTURE')
-          )
-        ) AS actual_qty
-      FROM waybills w
-      -- Join Locations twice
-      LEFT JOIN locations o ON w.origin_id = o.id
-      LEFT JOIN locations d ON w.destination_id = d.id
-      -- Join Trucks and Drivers
-      LEFT JOIN trucks t ON w.truck_id = t.id
-      LEFT JOIN drivers dr ON w.driver_id = dr.id
-      -- Join Advice
-      LEFT JOIN waybill_advice wa ON w.advice_id = wa.id
-      WHERE w.id = $1;
-    `;
+          w.*, 
+          -- Location Names
+          o.name AS origin,
+          d.name AS destination,
+          -- Truck and Driver Names
+          t.plate_number AS truck,
+          dr.full_name AS driver,
+          -- Subquery for Expected Quantity (Unified from Manifest)
+          (
+            SELECT COUNT(*)::INT 
+            FROM waybill_manifest wm 
+            WHERE wm.waybill_id = w.id 
+            AND wm.manifest_type = 'ADVICE'
+          ) AS expected_qty,
+          -- Subquery for Actual Quantity based on Status
+          (
+            SELECT COUNT(*)::INT 
+            FROM waybill_manifest wm 
+            WHERE wm.waybill_id = w.id 
+            AND (
+              (w.status IN ('ARRIVED', 'CLOSED') AND wm.manifest_type = 'ARRIVAL')
+              OR 
+              (w.status IN ('IN_TRANSIT', 'LOADING') AND wm.manifest_type = 'DEPARTURE')
+            )
+          ) AS actual_qty
+        FROM waybills w
+        -- Join Locations
+        LEFT JOIN locations o ON w.origin_id = o.id
+        LEFT JOIN locations d ON w.destination_id = d.id
+        -- Join Trucks and Drivers
+        LEFT JOIN trucks t ON w.truck_id = t.id
+        LEFT JOIN drivers dr ON w.driver_id = dr.id
+        WHERE w.id = $1;
+      `;
 
     const res = await db.query(query, [id]);
 
@@ -103,9 +109,8 @@ const Waybill = {
   // Page 4: Display particular waybill + Advice info
   getWaybillInfo: async (id) => {
     const query = `
-      SELECT w.*, wa.expected_quantity, wa.status as advice_status
+      SELECT w.*
       FROM waybills w
-      LEFT JOIN waybill_advice wa ON w.advice_id = wa.id
       WHERE w.id = $1`;
     const res = await db.query(query, [id]);
     return res.rows[0];
@@ -129,59 +134,36 @@ const Waybill = {
     return res.rows || null;
   },
 
-  // Page 5/6: Create or Update Waybill
-  upsert: async (data) => {
-    const {
-      id,
-      advice_id,
-      status,
-      origin,
-      destination,
-      client,
-      truck,
-      driver,
-    } = data;
-    const query = `
-      INSERT INTO waybills (id, advice_id, status, origin, destination, client, truck_plate, driver_name)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      ON CONFLICT (id) DO UPDATE SET
-        status = EXCLUDED.status,
-        truck_plate = EXCLUDED.truck_plate,
-        driver_name = EXCLUDED.driver_name
-      RETURNING *`;
-    const res = await db.query(query, [
-      id,
-      advice_id,
-      status,
-      origin,
-      destination,
-      client,
-      truck,
-      driver,
-    ]);
-    return res.rows[0];
-  },
-
+  //TODO: confirm if correct
   getTodayCount: async () => {
     const query = `
       SELECT COUNT(*) as total 
       FROM waybills 
-      WHERE created_at::date = CURRENT_DATE
+      WHERE updated_at::date = CURRENT_DATE
     `;
     const result = await db.query(query);
     return parseInt(result.rows[0].total);
   },
 
   insertFromForm: async (data) => {
-    const { id, origin_id, destination_id, client, driver_id, truck_id } = data;
+    const {
+      id,
+      status,
+      origin_id,
+      destination_id,
+      client,
+      driver_id,
+      truck_id,
+    } = data;
 
     const query = `
-      INSERT INTO waybills (id, origin_id, destination_id, client, driver_id, truck_id) 
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO waybills (id, status, origin_id, destination_id, client, driver_id, truck_id) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `;
     const res = await db.query(query, [
       id,
+      status,
       origin_id,
       destination_id,
       client,
@@ -214,6 +196,44 @@ const Waybill = {
 
     const res = await db.query(query, [waybillId, status]);
     return res.rows[0];
+  },
+
+  insertBulkWaybills: async (data) => {
+    await checkAndResetSequence();
+    const query = `
+      INSERT INTO waybills (
+        id, status, origin_id, destination_id, 
+        client, truck_id, driver_id, expected_quantity, expected_arrival
+      )
+      SELECT 
+        d.id || '-' || TO_CHAR(CURRENT_DATE, 'YYMMDD') || '-' || LPAD(nextval('waybill_code_seq')::text, 4, '0'),
+        d.status, 
+        d.origin_id, 
+        d.destination_id, 
+        d.client, 
+        d.truck_id, 
+        d.driver_id, 
+        d.expected_quantity, 
+        d.expected_arrival
+      FROM UNNEST($1::text[], $2::text[], $3::int[], $4::int[], $5::text[], $6::int[], $7::int[], $8::int[], $9::timestamp[]) 
+      AS d(id, status, origin_id, destination_id, client, truck_id, driver_id, expected_quantity, expected_arrival)
+      RETURNING id;
+    `;
+
+    const values = [
+      data.map((d) => d.id),
+      data.map((d) => d.status),
+      data.map((d) => d.origin_id),
+      data.map((d) => d.destination_id),
+      data.map((d) => d.client),
+      data.map((d) => d.truck_id),
+      data.map((d) => d.driver_id),
+      data.map((d) => d.expected_quantity),
+      data.map((d) => d.expected_arrival),
+    ];
+
+    const result = await db.query(query, values);
+    return result.rows;
   },
 };
 

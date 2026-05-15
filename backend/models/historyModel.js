@@ -37,7 +37,6 @@ const History = {
     return res.rows;
   },
 
-  // Page 4 & 5: Get Scans via the Manifest
   getManifest: async (waybillId) => {
     const query = `
       SELECT u.engine, u.frame, m.manifest_type, m.created_at

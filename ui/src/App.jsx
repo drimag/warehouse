@@ -8,6 +8,7 @@ import Scan from "./pages/Scan";
 import Waybills from "./pages/Waybills";
 import WaybillForm from "./pages/WaybillForm";
 import WaybillLogs from "./pages/WaybillLogs";
+import BulkUpload from "./pages/BulkUpload";
 import "./styles/layout.css";
 import "./styles/tables.css";
 import "./styles/scan.css";
@@ -29,6 +30,7 @@ function App() {
           <Route path="/waybill_form" element={<WaybillForm />} />
           <Route path="/waybill_logs/:id" element={<WaybillLogs />} />
           <Route path="/scan" element={<Scan />} />
+          <Route path="/bulk_upload" element={<BulkUpload />} />
         </Routes>
       </div>
     </div>

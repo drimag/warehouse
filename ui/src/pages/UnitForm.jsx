@@ -1,101 +1,228 @@
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import UnitUpload from "../components/Units/UnitUpload";
 import GenericInput from "../components/GenericInput";
 import GenericSelect from "../components/Scan/GenericSelect";
 import UnitConfirm from "../components/Units/UnitConfirm";
 
-export default function UnitForm() {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [currentWarehouse, setCurrentWarehouse] = useState("Warehouse A");
-  const [currentStatus, setCurrentStatus] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+import { api } from "../services/api";
 
-  const warehouseList = ["N/A", "Warehouse A", "Warehouse B", "Warehouse C"];
+export default function UnitForm() {
+  const [engine, setEngine] = useState("");
+  const [frame, setFrame] = useState("");
+  const [model, setModel] = useState("");
+  const [color, setColor] = useState("");
+  const [lastLocation, setLastLocation] = useState("");
+  const [currentStatus, setCurrentStatus] = useState("");
+
+  const [unit, setUnit] = useState(null);
+
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const [locationsList, setLocationsList] = useState([]);
+  const [locationData, setLocationData] = useState([]);
   const statusList = ["IN_TRANSIT", "IN_STORAGE", "CLOSED"];
 
-  const mockUnit = {
-    engine: "ENG-2026-X",
-    frame: "FRM-9900",
-    model: "Toyota Hilux",
-    color: "Nebula Blue",
-    da: "DA-1002",
-    current_warehouse: "Manila Port",
-    status: "IN STOCK",
-  };
+  const frameRef = useRef(null);
+  const modelRef = useRef(null);
+  const colorRef = useRef(null);
+  const statusRef = useRef(null);
+  const locationRef = useRef(null);
+  const submitRef = useRef(null);
 
-  const handleSubmit = () => {
-    setSubmitted(true);
+  useEffect(() => {
+    const fetchPageData = async () => {
+      try {
+        setLoading(true);
+        const locations = await api.getLocations();
+        setLocationData(locations);
+        const locationList = locations.map((item) => item.name);
+        setLocationsList(locationList);
+      } catch (err) {
+        console.error(err);
+        setLoading(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPageData();
+  }, []);
+
+  const handleSubmit = async () => {
+    try {
+      const selectedLocation = locationData.find(
+        (item) => item.name === lastLocation,
+      );
+console.log("0");
+      if(!engine || !frame || !currentStatus || !lastLocation){
+        console.log("2");
+        setError("Engine, Frame, Status, and Location are Required")
+        return;
+      }
+
+      console.log("1");
+
+      const unit = {
+        engine: engine,
+        frame: frame,
+        model: model,
+        color: color,
+        da: "test",
+        status: currentStatus,
+        last_location_id: selectedLocation?.id,
+      };
+
+      const response = await api.insertNewUnit(unit);
+
+      console.log("response: ", response);
+
+      setUnit({
+        ...unit,
+        lastLocation: lastLocation,
+      });
+
+      setSubmitted(true);
+      return response;
+    } catch (err) {
+      if(err.status === 409) {
+        setError(err.message);
+        return;
+      }
+      console.error("Save failed:", err);
+      setError("Failed to save Unit. Please check your connection.");
+    }
   };
 
   const handleConfirm = () => {
+    setUnit(null);
+    setEngine("");
+    setFrame("");
+    setModel("");
+    setColor("");
+    setLastLocation("");
+    setCurrentStatus("");
+    setError("");
     setSubmitted(false);
   };
 
-  const handleUpload = (file) => {
-    setIsProcessing(true);
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: "array" });
-
-      // Get the first sheet
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-
-      // Convert to JSON (This matches your table data!)
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-      console.log("Parsed Data:", jsonData);
-      setIsProcessing(false);
-      alert(`${jsonData.length} rows found! Check console.`);
-    };
-    reader.readAsArrayBuffer(file);
+  const handleGenericEnter = (e, nextRef, currentValue) => {
+    if (e.key === "Enter" && currentValue && currentValue.trim() !== "") {
+      focusNext(nextRef);
+    }
   };
+
+  //TODO: put this into a common file
+  const focusNext = (nextRef) => {
+    const element = nextRef.current;
+    if (!element) return;
+    element.focus();
+
+    if (
+      element.tagName === "INPUT" &&
+      ["text", "number", "tel"].includes(element.type)
+    ) {
+      element.select();
+    }
+
+    if (element.tagName === "SELECT" && "showPicker" in element) {
+      try {
+        element.showPicker();
+      } catch (err) {
+        console.warn("Auto-picker blocked or unsupported:", err);
+      }
+    } else if (element.tagName === "INPUT" && element.type === "file") {
+      element.click();
+    }
+  };
+
+  if (loading) return <div>Loading</div>;
+
   return (
     <div className="page-centered page">
       {!submitted ? (
         <>
-          <h1 className="page-title">Insert Units</h1>
-          <UnitUpload onFileSelect={handleUpload} isLoading={isProcessing} />
-
-          <hr className="divider" />
-
-          <h1 className="page-title">Manual Insert</h1>
-          <GenericInput title="Engine" placeholder="Enter Engine Code" />
-          <GenericInput title="Frame" placeholder="Enter Frame Code" />
-          <GenericInput title="Model" placeholder="Enter Model Code" />
-          <GenericInput title="Color" placeholder="Enter Color" />
-          <GenericSelect
-            selected={currentWarehouse}
-            setSelected={(val) => {
-              setCurrentWarehouse(val);
-            }}
-            title={"Current Warehouse"}
-            options={warehouseList}
-            placeholder={"Select Current Warehouse"}
+          <h1 className="page-title">Insert Unit</h1>
+          <GenericInput
+            // ref={}
+            val={engine}
+            setVal={setEngine}
+            title={"Engine"}
+            onKeyDown={(e) => handleGenericEnter(e, frameRef, engine)}
+            placeholder={"Enter Engine Code"}
           />
+          <GenericInput
+            ref={frameRef}
+            val={frame}
+            setVal={setFrame}
+            title={"Frame"}
+            onKeyDown={(e) => handleGenericEnter(e, modelRef, frame)}
+            placeholder={"Enter Frame Code"}
+          />
+          <GenericInput
+            ref={modelRef}
+            val={model}
+            setVal={setModel}
+            title={"Model"}
+            onKeyDown={(e) => handleGenericEnter(e, colorRef, model)}
+            placeholder={"Enter Model"}
+          />
+          <GenericInput
+            ref={colorRef}
+            val={color}
+            setVal={setColor}
+            title={"Color"}
+            onKeyDown={(e) => handleGenericEnter(e, statusRef, color)}
+            placeholder={"Enter Color"}
+          />
+
           <GenericSelect
+            ref={statusRef}
             selected={currentStatus}
             setSelected={(val) => {
               setCurrentStatus(val);
+              focusNext(locationRef);
             }}
             title={"Current Status"}
             options={statusList}
-            placeholder={"Select Current Status"}
+            placeholder={"Select Unit's Status"}
           />
-          <button className="primary-btn" onClick={handleSubmit}>
+
+          <GenericSelect
+            ref={locationRef}
+            selected={lastLocation}
+            setSelected={(val) => {
+              setLastLocation(val);
+              focusNext(submitRef);
+            }}
+            title={"Last Known Location"}
+            options={locationsList}
+            placeholder={"Select Last Known Location"}
+          />
+
+          {error && (
+            <div
+              style={{ color: "red", marginBottom: "10px", fontWeight: "bold" }}
+            >
+              ⚠️ {error}
+            </div>
+          )}
+
+          <button
+            ref={submitRef}
+            className="primary-btn"
+            onClick={handleSubmit}
+          >
             Insert Unit/s
           </button>
         </>
       ) : (
-        <>
-          <UnitConfirm
-            unit={mockUnit}
-            onCancel={handleConfirm}
-            onConfirm={handleConfirm}
-          />
-        </>
+        unit && (
+          <>
+            <UnitConfirm unit={unit} onConfirm={handleConfirm} />
+          </>
+        )
       )}
     </div>
   );

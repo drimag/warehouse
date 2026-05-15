@@ -64,7 +64,7 @@ exports.scanUnitByVin = async (req, res) => {
 exports.newScannedUnit = async (req, res) => {
   try {
     const { scan } = req.params;
-    const unit = await Unit.createNew(scan, 'LOADING');
+    const unit = await Unit.createNew(scan, "LOADING");
     console.log(`✨ Created new unit for scan ${scan} with status LOADING`);
     return res.json(unit);
   } catch (err) {
@@ -102,3 +102,65 @@ exports.setUnitInTransit = async (req, res) => {
   }
 };
 
+exports.insertNewUnit = async (req, res) => {
+  try {
+    const { engine, frame, model, color, status, da, last_location_id } =
+      req.body;
+
+    if (!engine) {
+      return res.status(400).json({ error: "Engine number is required" });
+    }
+
+    const newUnit = await Unit.createNew({
+      engine,
+      frame,
+      model,
+      color,
+      status,
+      da,
+      last_location_id,
+    });
+
+    console.log(`✅ Unit Inserted: ${newUnit.engine}`);
+    return res.status(201).json(newUnit);
+  } catch (err) {
+    if (err.code === "23505") {
+      console.error(`❌ Duplicate Entry: ${err.detail}`);
+      return res.status(409).json({
+        error: err.detail,
+      });
+    }
+
+    console.error(`❌ ERROR INSERTING UNIT:`, err.message);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.insertBulkUnits = async (data) => {
+  const query = `
+    INSERT INTO units (
+      engine, frame, model, color, status, da, last_location_id
+    )
+    SELECT 
+      d.engine, d.frame, d.model, d.color, d.status, d.da, d.loc_id
+    FROM UNNEST($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::text[], $7::int[], $8::text[]) 
+      AS d(engine, frame, model, color, status, da, loc_id)
+    ON CONFLICT (engine) DO UPDATE SET
+      status = EXCLUDED.status,
+      last_location_id = EXCLUDED.last_location_id
+    RETURNING engine;
+  `;
+
+  const values = [
+    data.map(d => d.engine),
+    data.map(d => d.frame),
+    data.map(d => d.model),
+    data.map(d => d.color),
+    data.map(d => d.status),
+    data.map(d => d.da),
+    data.map(d => d.last_location_id)
+  ];
+
+  const result = await db.query(query, values);
+  return result.rows;
+};
