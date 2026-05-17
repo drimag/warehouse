@@ -24,7 +24,6 @@ const BulkUpload = () => {
       alert("Bulk upload completed!");
     } catch (err) {
       console.error("The actual crash reason:", err);
-      // Now err.response exists!
       if (err.status === 422 && err.response?.data?.errors) {
         console.log("1 - Success! Errors found:", err.response.data.errors);
         setUploadErrors(err.response.data.errors);
@@ -35,6 +34,26 @@ const BulkUpload = () => {
     } finally {
       setUploading(false);
     }
+  };
+
+  const DownloadTemplate = () => {
+    return (
+      <a
+        href="../public/Templates.zip"
+        download="Inventory_Templates.zip"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          padding: ".6rem",
+          borderRadius: "6px",
+          backgroundColor: "#4B5563",
+          color: "white",
+          fontSize: "0.875rem",
+        }}
+      >
+        📥 Download xlsx Templates (.zip)
+      </a>
+    );
   };
 
   const UploadFeedback = ({ errors }) => {
@@ -58,8 +77,8 @@ const BulkUpload = () => {
         <ul style={{ paddingLeft: "1.25rem", margin: 0 }}>
           {errors.map((err, i) => (
             <li key={i} style={{ marginBottom: "0.25rem" }}>
-              <strong>Row {err.row}</strong> (Engine: {err.engine}):{" "}
-              {err.details.join(", ")}
+              <strong>Row {err.row}</strong> ({err.id}
+              {err.engine}): {err.details.join(", ")}
             </li>
           ))}
         </ul>
@@ -70,12 +89,13 @@ const BulkUpload = () => {
   return (
     <div className="page">
       <h1 className="page-title">Import Units & Waybills</h1>
-      <div className="border-2 border-dashed border-gray-300 p-10 text-center">
+      <div className="border-2 border-dashed border-gray-300 p-6 flex flex-row items-center justify-center gap-8">
+        <DownloadTemplate />
         <input type="file" onChange={handleFileChange} accept=".xlsx, .xls" />
         <button
           onClick={handleUpload}
           disabled={uploading}
-          className="bg-blue-600 text-white px-4 py-2 mt-4 rounded"
+          className="bg-blue-600 text-white px-4 py-2 rounded"
         >
           {uploading ? "Processing..." : "Upload Spreadsheet"}
         </button>

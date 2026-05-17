@@ -8,6 +8,12 @@ const Waybill = {
     return res.rows;
   },
 
+  getAllWaybillCodes: async () => {
+    const query = "SELECT id FROM waybills";
+    const { rows } = await db.query(query);
+    return rows.map((row) => row.id);
+  },
+
   getWaybillsForScan: async () => {
     const query = `
       SELECT w.*
