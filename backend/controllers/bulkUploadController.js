@@ -103,7 +103,6 @@ const processUnits = async (data, validMetadata) => {
     const rowNumber = index + 1;
     const rowErrors = [];
 
-    // 1. Engine & Frame Null Check
     if (!row.engine || row.engine.toString().trim() === "") {
       rowErrors.push("Engine number is required");
     }
@@ -111,7 +110,6 @@ const processUnits = async (data, validMetadata) => {
       rowErrors.push("Frame number is required");
     }
 
-    // 2. Status Validation
     const currentStatus = row.status?.toString().trim().toUpperCase();
     if (!VALID_STATUSES.includes(currentStatus)) {
       rowErrors.push(
@@ -119,7 +117,6 @@ const processUnits = async (data, validMetadata) => {
       );
     }
 
-    // 3. Location ID Validation (Check if it's a number AND exists in DB)
     const locId = parseInt(row.last_location_id);
     if (isNaN(locId)) {
       rowErrors.push(
@@ -132,7 +129,6 @@ const processUnits = async (data, validMetadata) => {
       rowErrors.push(`Location ID ${locId} does not exist in the database`);
     }
 
-    // 4. Waybill Code Existence Check
     if (row.waybill_code && validMetadata.waybillCodes) {
       if (
         !validMetadata.waybillCodes.includes(row.waybill_code.toString().trim())
