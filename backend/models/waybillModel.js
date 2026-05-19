@@ -254,45 +254,57 @@ const Waybill = {
   },
 
   updateBulkWaybills: async (data) => {
-    const query = `
-      WITH raw_data AS (
-        SELECT * FROM UNNEST(
-          $1::text[],      -- id (The Waybill Code to find)
+    const client = await db.connect();
+    await checkAndResetSequence();
+    try {
+      const query = `
+        UPDATE waybills AS w
+        SET 
+          status = COALESCE(d.status, w.status),
+          origin_id = COALESCE(d.origin_id, w.origin_id),
+          destination_id = COALESCE(d.destination_id, w.destination_id),
+          client = COALESCE(d.client, w.client),
+          truck_id = COALESCE(d.truck_id, w.truck_id),
+          driver_id = COALESCE(d.driver_id, w.driver_id),
+          expected_quantity = COALESCE(d.expected_quantity, w.expected_quantity),
+          expected_arrival = COALESCE(d.expected_arrival, w.expected_arrival)
+        FROM UNNEST(
+          $1::text[],      -- id (The key tracking constraint to find the row)
           $2::text[],      -- status
-          $3::int[],       -- destination_id
-          $4::text[],      -- client
-          $5::int[],       -- truck_id
-          $6::int[],       -- driver_id
-          $7::int[],       -- expected_quantity
-          $8::timestamp[]  -- expected_arrival
-        ) AS d(id, status, destination_id, client, truck_id, driver_id, expected_quantity, expected_arrival)
-      )
-      INSERT INTO waybills (
-        id, status, destination_id, client, truck_id, driver_id, expected_quantity, expected_arrival
-      )
-      SELECT * FROM raw_data
-      ON CONFLICT (id) DO UPDATE SET
-        status = COALESCE(EXCLUDED.status, waybills.status),
-        destination_id = COALESCE(EXCLUDED.destination_id, waybills.destination_id),
-        client = COALESCE(EXCLUDED.client, waybills.client),
-        truck_id = COALESCE(EXCLUDED.truck_id, waybills.truck_id),
-        driver_id = COALESCE(EXCLUDED.driver_id, waybills.driver_id),
-        expected_quantity = COALESCE(EXCLUDED.expected_quantity, waybills.expected_quantity),
-        expected_arrival = COALESCE(EXCLUDED.expected_arrival, waybills.expected_arrival)
-      RETURNING id;
-    `;
+          $3::int[],       -- origin_id
+          $4::int[],       -- destination_id
+          $5::text[],      -- client
+          $6::int[],       -- truck_id
+          $7::int[],       -- driver_id
+          $8::int[],       -- expected_quantity
+          $9::timestamp[]  -- expected_arrival
+        ) AS d(id, status, origin_id, destination_id, client, truck_id, driver_id, expected_quantity, expected_arrival)
+        WHERE w.id = d.id
+        RETURNING w.id;
+      `;
 
-    const values = [
-      data.map((d) => d.id),
-      data.map((d) => d.status),
-      data.map((d) => d.origin_id),
-      data.map((d) => d.destination_id),
-      data.map((d) => d.client),
-      data.map((d) => d.truck_id),
-      data.map((d) => d.driver_id),
-      data.map((d) => d.expected_quantity),
-      data.map((d) => d.expected_arrival),
-    ];
+      const values = [
+        data.map((d) => d.id),
+        data.map((d) => d.status),
+        data.map((d) => d.origin_id),
+        data.map((d) => d.destination_id),
+        data.map((d) => d.client),
+        data.map((d) => d.truck_id),
+        data.map((d) => d.driver_id),
+        data.map((d) => d.expected_quantity),
+        data.map((d) => d.expected_arrival),
+      ];
+
+      const result = await client.query(query, values);
+      await client.query("COMMIT");
+      return { success: true, count: data.length };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error("UNNEST Bulk Update Failed:", error);
+      throw error;
+    } finally {
+      client.release();
+    }
   },
 };
 

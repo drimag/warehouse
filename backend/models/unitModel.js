@@ -134,6 +134,87 @@ const Unit = {
       client.release();
     }
   },
+
+  updateBulkUnits: async (unitsData, userId) => {
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+
+      const engines = unitsData.map((u) => u.engine);
+      const frames = unitsData.map((u) => u.frame);
+      const models = unitsData.map((u) => u.model);
+      const colors = unitsData.map((u) => u.color);
+      const statuses = unitsData.map((u) => u.status);
+      const das = unitsData.map((u) => u.da);
+      const locIds = unitsData.map((u) => u.last_location_id);
+      const waybillNos = unitsData.map((u) => u.waybill_code);
+
+      const query = `
+        WITH updated_units AS (
+          UPDATE units AS u
+          SET 
+            engine = COALESCE(d.new_engine, u.engine),
+            frame = COALESCE(d.new_frame, u.frame),
+            model = COALESCE(d.model, u.model),
+            color = COALESCE(d.color, u.color),
+            status = COALESCE(d.status, u.status),
+            da = COALESCE(d.da, u.da),
+            last_location_id = COALESCE(d.last_location_id, u.last_location_id)
+          FROM UNNEST(
+            $1::text[],      -- current_engine 
+            $2::text[],      -- new_engine
+            $3::text[],      -- new_frame
+            $4::text[],      -- model
+            $5::text[],      -- color
+            $6::text[],      -- status
+            $7::text[],      -- da
+            $8::int[]        -- last_location_id
+          ) AS d(curr_eng, new_engine, new_frame, model, color, status, da, last_location_id)
+          WHERE u.engine = d.curr_eng
+          RETURNING u.id, u.engine
+        ),
+        input_waybills AS (
+          -- Maps the current engine to the waybill ID provided in the sheet
+          SELECT 
+            UNNEST($1::text[]) as curr_eng, 
+            UNNEST($9::text[]) as waybill_no
+        )
+        INSERT INTO waybill_manifest (unit_id, waybill_id, manifest_type, user_id)
+        SELECT 
+          uu.id, 
+          iw.waybill_no, 
+          wb.status,
+          $10 
+        FROM updated_units uu
+        JOIN input_waybills iw ON uu.engine = iw.curr_eng
+        JOIN waybills wb ON iw.waybill_no = wb.id
+        ON CONFLICT (unit_id, waybill_id) DO NOTHING; 
+      `;
+
+      const values = [
+        engines, // $1
+        frames, // $2
+        models, // $3
+        colors, // $4
+        statuses, // $5
+        das, // $6
+        locIds, // $7
+        waybillNos, // $8
+        userId, // $9
+      ];
+
+      const result = await client.query(query, values);
+
+      await client.query("COMMIT");
+      return { success: true, count: unitsData.length };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error("UNNEST Bulk Insert Failed:", error);
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
 };
 
 module.exports = Unit;
