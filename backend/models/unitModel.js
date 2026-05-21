@@ -15,6 +15,16 @@ const Unit = {
     return res.rows;
   },
 
+  getAllEngines: async () => {
+    const query = `
+      SELECT engine
+      FROM units 
+      ORDER BY updated_at DESC
+    `;
+    const res = await db.query(query);
+    return res.rows;
+  },
+
   getById: async (id) => {
     const query = `
       SELECT 
