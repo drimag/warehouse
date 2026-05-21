@@ -172,90 +172,140 @@ const processUpdateWaybills = async (data) => {
   return { totalProcessed: data.length, successCount: result.length, type: "Waybill Update" };
 };
 
-const processUnits = async (data, validMetadata, isUpdate) => {
+const validateNewUnitRow = (row, index, validMetadata) => {
   const VALID_STATUSES = ["IN_TRANSIT", "IN_STORAGE"];
-  const errors = [];
-  const formattedData = [];
+  const rowErrors = [];
+  const rowNum = index + 1;
 
-  data.forEach((row, index) => {
-    const rowNumber = index + 1;
-    const rowErrors = [];
+  const hasValue = (val) => val !== undefined && val !== null && val.toString().trim() !== "";
 
-    if (!row.engine || row.engine.toString().trim() === "") {
-      rowErrors.push("Engine number is required");
+  // 1. Strict required presence checks
+  if (!hasValue(row.engine)) rowErrors.push("Engine number is required");
+  if (!hasValue(row.frame)) rowErrors.push("Frame number is required");
+  if (!hasValue(row.model)) rowErrors.push("Missing required field: 'model'");
+  if (!hasValue(row.color)) rowErrors.push("Missing required field: 'color'");
+
+  // 2. Status check
+  const currentStatus = row.status?.toString().trim().toUpperCase();
+  if (!VALID_STATUSES.includes(currentStatus)) {
+    rowErrors.push(`Invalid status: "${row.status}". Must be ${VALID_STATUSES.join(", ")}`);
+  }
+
+  // 3. Location verification using database metadata
+  const locId = parseInt(row.last_location_id);
+  if (isNaN(locId)) {
+    rowErrors.push(`Location ID must be a number (got: "${row.last_location_id}")`);
+  } else if (validMetadata?.locationIds && !validMetadata.locationIds.includes(locId)) {
+    rowErrors.push(`Location ID ${locId} does not exist in the database`);
+  }
+
+  // 4. Waybill verification using database metadata
+  if (!hasValue(row.waybill_code)) {
+    rowErrors.push("Missing required field: 'waybill_code'");
+  } else if (validMetadata?.waybillCodes) {
+    const cleanCode = row.waybill_code.toString().trim();
+    if (!validMetadata.waybillCodes.includes(cleanCode)) {
+      rowErrors.push(`Waybill Code "${row.waybill_code}" not found in database`);
     }
-    if (!row.frame || row.frame.toString().trim() === "") {
-      rowErrors.push("Frame number is required");
-    }
+  }
 
-    const currentStatus = row.status?.toString().trim().toUpperCase();
-    if (!VALID_STATUSES.includes(currentStatus)) {
-      rowErrors.push(
-        `Invalid status: "${row.status}". Must be ${VALID_STATUSES.join(", ")}`,
-      );
-    }
-
-    const locId = parseInt(row.last_location_id);
-    if (isNaN(locId)) {
-      rowErrors.push(
-        `Location ID must be a number (got: "${row.last_location_id}")`,
-      );
-    } else if (
-      validMetadata.locationIds &&
-      !validMetadata.locationIds.includes(locId)
-    ) {
-      rowErrors.push(`Location ID ${locId} does not exist in the database`);
-    }
-
-    if (row.waybill_code && validMetadata.waybillCodes) {
-      if (
-        !validMetadata.waybillCodes.includes(row.waybill_code.toString().trim())
-      ) {
-        rowErrors.push(
-          `Waybill Code "${row.waybill_code}" not found in database`,
-        );
-      }
-    }
-
-    if (rowErrors.length > 0) {
-      errors.push({
-        row: rowNumber,
-        engine: row.engine || "N/A",
-        details: rowErrors,
-      });
-    } else {
-      formattedData.push({
-        engine: row.engine.toString().trim(),
-        frame: row.frame.toString().trim(),
-        model: row.model,
-        color: row.color,
-        status: currentStatus,
-        da: row.da,
-        last_location_id: locId,
-        waybill_code: row.waybill_code?.toString().trim(),
-      });
-    }
-  });
-
+  return rowErrors.length > 0 
+    ? { row: rowNum, engine: row.engine || "N/A", details: rowErrors } 
+    : null;
+};
+const processNewUnits = async (data, validMetadata, userId) => {
+  const errors = data.map((row, idx) => validateNewUnitRow(row, idx, validMetadata)).filter(Boolean);
   if (errors.length > 0) {
     const errorBody = new Error("Validation Failed");
     errorBody.validationErrors = errors;
     throw errorBody;
   }
 
-  let result;
-  if (!isUpdate) {
-    result = await Unit.insertBulkUnits(formattedData);
-  } else {
-    result = await Unit.updateBulkUnits(formattedData);
+  const formattedData = data.map((row) => ({
+    engine: row.engine.toString().trim(),
+    frame: row.frame.toString().trim(),
+    model: row.model ? row.model.toString().trim() : null,
+    color: row.color ? row.color.toString().trim() : null,
+    status: row.status.toString().trim().toUpperCase(),
+    da: row.da ? row.da.toString().trim() : null,
+    last_location_id: parseInt(row.last_location_id),
+    waybill_code: row.waybill_code.toString().trim(),
+  }));
+
+  const result = await Unit.insertBulkUnits(formattedData, userId);
+  return { totalProcessed: data.length, successCount: result.length, type: "Unit Creation" };
+};
+
+const validateUpdateUnitRow = (row, index, validMetadata) => {
+  const VALID_STATUSES = ["IN_TRANSIT", "IN_STORAGE"];
+  const rowErrors = [];
+  const rowNum = index + 1;
+
+  const hasValue = (val) => val !== undefined && val !== null && val.toString().trim() !== "";
+
+  // 1. Core tracking constraint check
+  if (!hasValue(row.old_engine)) {
+    rowErrors.push("Missing key tracking constraint: 'old_engine' column must contain data");
   }
 
-  return {
-    totalProcessed: data.length,
-    successCount: result.length,
-    failedOrDuplicate: data.length - result.length,
-    type: "Unit",
+  // 2. Optional status check
+  if (hasValue(row.new_status)) {
+    const currentStatus = row.new_status.toString().trim().toUpperCase();
+    if (!VALID_STATUSES.includes(currentStatus)) {
+      rowErrors.push(`Invalid status: "${row.new_status}". Must be ${VALID_STATUSES.join(", ")}`);
+    }
+  }
+
+  // 3. Optional location metadata check
+  if (hasValue(row.new_last_location_id)) {
+    const locId = parseInt(row.new_last_location_id);
+    if (isNaN(locId)) {
+      rowErrors.push(`Location ID must be a number (got: "${row.new_last_location_id}")`);
+    } else if (validMetadata?.locationIds && !validMetadata.locationIds.includes(locId)) {
+      rowErrors.push(`Location ID ${locId} does not exist in the database`);
+    }
+  }
+
+  // 4. Optional waybill metadata check
+  if (hasValue(row.new_waybill_code) && validMetadata?.waybillCodes) {
+    const cleanCode = row.new_waybill_code.toString().trim();
+    if (!validMetadata.waybillCodes.includes(cleanCode)) {
+      rowErrors.push(`Waybill Code "${row.new_waybill_code}" not found in database`);
+    }
+  }
+
+  return rowErrors.length > 0 
+    ? { row: rowNum, engine: row.old_engine || "N/A", details: rowErrors } 
+    : null;
+};
+
+const processUpdateUnits = async (data, validMetadata, userId) => {
+  const errors = data.map((row, idx) => validateUpdateUnitRow(row, idx, validMetadata)).filter(Boolean);
+  if (errors.length > 0) {
+    const errorBody = new Error("Validation Failed");
+    errorBody.validationErrors = errors;
+    throw errorBody;
+  }
+
+  const safeField = (val, formatter = (v) => v) => {
+    if (val === undefined || val === null || val.toString().trim() === "") return null;
+    return formatter(val);
   };
+
+  const formattedData = data.map((row) => ({
+    old_engine: row.old_engine.toString().trim(),
+    new_engine: safeField(row.new_engine),
+    new_frame: safeField(row.new_frame),
+    new_model: safeField(row.new_model),
+    new_color: safeField(row.new_color),
+    new_status: safeField(row.new_status, (v) => v.toString().toUpperCase()),
+    new_da: safeField(row.new_da),
+    new_last_location_id: safeField(row.new_last_location_id, parseInt),
+    new_waybill_code: safeField(row.new_waybill_code),
+  }));
+
+  const result = await Unit.updateBulkUnits(formattedData, userId);
+  return { totalProcessed: data.length, successCount: result.length, type: "Unit Update" };
 };
 
 exports.bulkUploadSheet = async (req, res) => {
@@ -321,12 +371,12 @@ exports.bulkUploadSheet = async (req, res) => {
     }
 
     if (isUnitSheet) {
-      const result = await processUnits(data, validMetadata, false);
+      const result = await processNewUnits(data, validMetadata);
       return res.status(200).json({ type: "UNITS", ...result });
     }
 
     if (isUnitUpdateSheet) {
-      const result = await processUnits(data, validMetadata, true);
+      const result = await processUpdateUnits(data, validMetadata);
       return res.status(200).json({ type: "UNITS", ...result });
     }
 

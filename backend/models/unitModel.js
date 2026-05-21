@@ -140,14 +140,15 @@ const Unit = {
     try {
       await client.query("BEGIN");
 
-      const engines = unitsData.map((u) => u.engine);
-      const frames = unitsData.map((u) => u.frame);
-      const models = unitsData.map((u) => u.model);
-      const colors = unitsData.map((u) => u.color);
-      const statuses = unitsData.map((u) => u.status);
-      const das = unitsData.map((u) => u.da);
-      const locIds = unitsData.map((u) => u.last_location_id);
-      const waybillNos = unitsData.map((u) => u.waybill_code);
+      const old_engines = unitsData.map((u) => u.old_engine);
+      const new_engines = unitsData.map((u) => u.new_engine);
+      const frames = unitsData.map((u) => u.new_frame);
+      const models = unitsData.map((u) => u.new_model);
+      const colors = unitsData.map((u) => u.new_color);
+      const statuses = unitsData.map((u) => u.new_status);
+      const das = unitsData.map((u) => u.new_da);
+      const locIds = unitsData.map((u) => u.new_last_location_id);
+      const waybillNos = unitsData.map((u) => u.new_waybill_code);
 
       const query = `
         WITH updated_units AS (
@@ -187,20 +188,20 @@ const Unit = {
           $10 
         FROM updated_units uu
         JOIN input_waybills iw ON uu.engine = iw.curr_eng
-        JOIN waybills wb ON iw.waybill_no = wb.id
-        ON CONFLICT (unit_id, waybill_id) DO NOTHING; 
+        JOIN waybills wb ON iw.waybill_no = wb.id; 
       `;
 
       const values = [
-        engines, // $1
-        frames, // $2
-        models, // $3
-        colors, // $4
-        statuses, // $5
-        das, // $6
-        locIds, // $7
-        waybillNos, // $8
-        userId, // $9
+        old_engines, // $1
+        new_engines, // $2
+        frames, // $3
+        models, // $4
+        colors, // $5
+        statuses, // $6
+        das, // $7
+        locIds, // $8
+        waybillNos, // $9
+        userId, // $10
       ];
 
       const result = await client.query(query, values);
@@ -209,7 +210,7 @@ const Unit = {
       return { success: true, count: unitsData.length };
     } catch (error) {
       await client.query("ROLLBACK");
-      console.error("UNNEST Bulk Insert Failed:", error);
+      console.error("UNNEST Bulk Update Failed:", error);
       throw error;
     } finally {
       client.release();
