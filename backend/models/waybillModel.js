@@ -297,6 +297,7 @@ const Waybill = {
 
       const result = await client.query(query, values);
       await client.query("COMMIT");
+      console.log("result.rows: ", result.rows);
       return { success: true, count: data.length };
     } catch (error) {
       await client.query("ROLLBACK");

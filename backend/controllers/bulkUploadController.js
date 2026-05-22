@@ -119,13 +119,13 @@ const processNewWaybills = async (data) => {
   const result = await Waybill.insertBulkWaybills(formattedData);
 
   return {
-    totalProcessed: data.length,
-    successCount: result.length,
+    isSuccess: result.success,
+    count: result.count,
     type: "Waybill Creation",
   };
 };
 
-const validateUpdateWaybillRow = (row, index) => {
+const validateUpdateWaybillRow = (row, index, validMetadata) => {
   const VALID_STATUSES = ["ADVICE", "IN_TRANSIT", "ARRIVED", "CLOSED"];
   const rowErrors = [];
   const rowNum = index + 1;
@@ -133,11 +133,20 @@ const validateUpdateWaybillRow = (row, index) => {
   const hasValue = (val) =>
     val !== undefined && val !== null && val.toString().trim() !== "";
 
-  // The critical constraint check: must know who to update
   if (!hasValue(row.current_id)) {
     rowErrors.push(
       "Missing key tracking constraint: 'current_id' column must contain data",
     );
+  } else {
+    const currentWBID = row.current_id.toString().trim();
+    if (
+      validMetadata?.waybillCodes &&
+      !validMetadata.waybillCodes.includes(currentWBID)
+    ) {
+      rowErrors.push(
+        `WB with code: "${currentWBID}" does not exist in the database`,
+      );
+    }
   }
 
   if (
@@ -187,9 +196,9 @@ const validateUpdateWaybillRow = (row, index) => {
     : null;
 };
 
-const processUpdateWaybills = async (data) => {
+const processUpdateWaybills = async (data, validMetadata) => {
   const errors = data
-    .map((row, idx) => validateUpdateWaybillRow(row, idx))
+    .map((row, idx) => validateUpdateWaybillRow(row, idx, validMetadata))
     .filter(Boolean);
   if (errors.length > 0) {
     const errorBody = new Error("Validation Failed");
@@ -220,8 +229,8 @@ const processUpdateWaybills = async (data) => {
   const result = await Waybill.updateBulkWaybills(formattedData);
 
   return {
-    totalProcessed: data.length,
-    successCount: result.length,
+    isSuccess: result.success,
+    count: result.count,
     type: "Waybill Update",
   };
 };
@@ -304,9 +313,10 @@ const processNewUnits = async (data, validMetadata, userId) => {
   }));
 
   const result = await Unit.insertBulkUnits(formattedData, userId);
+
   return {
-    totalProcessed: data.length,
-    successCount: result.length,
+    isSuccess: result.success,
+    count: result.count,
     type: "Unit Creation",
   };
 };
@@ -326,7 +336,10 @@ const validateUpdateUnitRow = (row, index, validMetadata) => {
     );
   } else {
     const cleanEngine = row.old_engine.toString().trim();
-    if (validMetadata?.engines && !(validMetadata.engines.includes(cleanEngine))) {
+    if (
+      validMetadata?.engines &&
+      !validMetadata.engines.includes(cleanEngine)
+    ) {
       rowErrors.push(
         `Old Engine number "${cleanEngine}" does not exist in database`,
       );
@@ -415,9 +428,10 @@ const processUpdateUnits = async (data, validMetadata, userId) => {
   }));
 
   const result = await Unit.updateBulkUnits(formattedData, userId);
+
   return {
-    totalProcessed: data.length,
-    successCount: result.length,
+    isSuccess: result.success,
+    count: result.count,
     type: "Unit Update",
   };
 };
@@ -431,9 +445,9 @@ exports.bulkUploadSheet = async (req, res) => {
   try {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(req.file.buffer);
-    const worksheet = workbook.getWorksheet(1); // Get first sheet
+    const worksheet = workbook.getWorksheet(1);
 
-    const [locationIds, waybillCodes, engines] = await Promise.all([
+    const [locationIds, waybillCodes, engines, waybills] = await Promise.all([
       ReferenceModel.getAllLocationIds(),
       Waybill.getAllWaybillCodes(),
       Unit.getAllEngines(),
@@ -476,12 +490,12 @@ exports.bulkUploadSheet = async (req, res) => {
     );
 
     if (isWaybillSheet) {
-      const result = await processNewWaybills(data);
+      const result = await processNewWaybills(data, validMetadata);
       return res.status(200).json({ type: "WAYBILLS", ...result });
     }
 
     if (isWaybillUpdateSheet) {
-      const result = await processUpdateWaybills(data);
+      const result = await processUpdateWaybills(data, validMetadata);
       return res.status(200).json({ type: "WAYBILLS", ...result });
     }
 

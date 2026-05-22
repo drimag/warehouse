@@ -149,8 +149,7 @@ const BulkUpload = () => {
       {results && (
         <div className="mt-6 p-4 bg-gray-100 rounded">
           <h3 className="font-bold">Results:</h3>
-          <p>Success: {results.successCount}</p>
-          <p>Errors: {results.errorCount}</p>
+          <p>Successful Updates/Uploads: {results.count}</p>
         </div>
       )}
 
