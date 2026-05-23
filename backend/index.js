@@ -1,10 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const waybillRoutes = require('./routes/waybillRoutes');
-const unitRoutes = require('./routes/unitRoutes');
-const referenceRoutes = require('./routes/referenceRoutes');
-const manifestRoutes = require('./routes/manifestRoutes');
-const bulkUploadRoutes = require('./routes/bulkUploadRoutes');
+const apiRouter = require('./routes/api');
 
 const allowedOrigins = [
   'http://localhost:5173', 
@@ -28,11 +24,7 @@ app.use(cors({
 }));// Critical: Allows React (port 3000) to talk to Node (port 5000)
 app.use(express.json());
 
-app.use('/api/waybills', waybillRoutes);
-app.use('/api/units', unitRoutes);
-app.use('/api/references', referenceRoutes);
-app.use('/api/manifest', manifestRoutes);
-app.use('/api/bulkUpload', bulkUploadRoutes);
+app.use('/api', apiRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

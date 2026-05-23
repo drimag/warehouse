@@ -1,18 +1,68 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const waybillController = require('../controllers/waybillController');
+const waybillController = require("../controllers/waybillController");
+const { authenticateToken, restrictToRoles } = require("../middleware/auth");
 
-// URL: /api/waybills
-// TODO: change method
-router.get('/loading/:id', waybillController.startLoading);
-router.get('/advice/:id', waybillController.setAdvice);
-router.get('/scanning', waybillController.getWaybillForScan);
-router.get('/in_transit/:id', waybillController.setInTransit);
-router.get('/arrived/:id', waybillController.setArrived);
-router.get('/display/:id', waybillController.getWaybillDisplayById);
-router.post('/save_form', waybillController.saveWaybillForm);
-router.get('/', waybillController.getAllWaybillDisplay);
+// TODO: Change to router.post
+router.get(
+  "/loading/:id",
+  authenticateToken,
+  restrictToRoles("ADMIN", "SCANNER"),
+  waybillController.startLoading,
+);
+// TODO: Change to router.post
+router.get(
+  "/advice/:id",
+  authenticateToken,
+  restrictToRoles("ADMIN", "SCANNER"),
+  waybillController.setAdvice,
+);
+// TODO: Change to router.post
+router.get(
+  "/scanning",
+  authenticateToken,
+  restrictToRoles("ADMIN", "SCANNER"),
+  waybillController.getWaybillForScan,
+);
+// TODO: Change to router.post
+router.get(
+  "/in_transit/:id",
+  authenticateToken,
+  restrictToRoles("ADMIN", "SCANNER"),
+  waybillController.setInTransit,
+);
+// TODO: Change to router.post
+router.get(
+  "/arrived/:id",
+  authenticateToken,
+  restrictToRoles("ADMIN", "SCANNER"),
+  waybillController.setArrived,
+);
+router.get(
+  "/display/:id",
+  authenticateToken,
+  restrictToRoles("ADMIN", "SCANNER", "VIEWER"),
+  waybillController.getWaybillDisplayById,
+);
+router.post(
+  "/save_form",
+  authenticateToken,
+  restrictToRoles("ADMIN", "SCANNER"),
+  waybillController.saveWaybillForm,
+);
+//TODO: set route to something specific
+router.get(
+  "/",
+  authenticateToken,
+  restrictToRoles("ADMIN", "SCANNER", "VIEWER"),
+  waybillController.getAllWaybillDisplay,
+);
 
-router.get('/:id', waybillController.getWaybillDetails);
+router.get(
+  "/:id",
+  authenticateToken,
+  restrictToRoles("ADMIN", "SCANNER", "VIEWER"),
+  waybillController.getWaybillDetails,
+);
 
 module.exports = router;

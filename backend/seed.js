@@ -24,6 +24,7 @@ const seedDatabase = async () => {
       DROP TABLE IF EXISTS trucks CASCADE;
       DROP TABLE IF EXISTS locations CASCADE;
       DROP TABLE IF EXISTS drivers CASCADE;
+      DROP TABLE IF EXISTS users CASCADE;
       DROP SEQUENCE IF EXISTS waybill_code_seq CASCADE;
     `);
     console.log("🗑️  Old tables dropped.");
@@ -51,6 +52,18 @@ const seedDatabase = async () => {
     `);
 
     await db.query(`
+      CREATE TYPE user_role AS ENUM ('ADMIN', 'SCANNER', 'VIEWER');
+
+      CREATE TABLE IF NOT EXISTS users (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) NOT NULL,
+          email VARCHAR(255) UNIQUE NOT NULL,
+          password_hash VARCHAR(255), -- Nullable if authenticating via Google OAuth integration
+          role user_role DEFAULT 'VIEWER',
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
       CREATE TABLE IF NOT EXISTS units (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         engine VARCHAR(50) UNIQUE,
@@ -242,6 +255,15 @@ const seedDatabase = async () => {
         (3, 'Maria Clara')
       ON CONFLICT (id) DO UPDATE SET 
         full_name = EXCLUDED.full_name;
+
+      -- (Password: AdminSecret123!)
+      INSERT INTO users (name, email, password_hash, role) 
+      VALUES (
+        'System Admin', 
+        'admin@company.com', 
+        '$2a$10$7Z2v8EwZ0Oym7p/M6eWqHeL431A7.OEqy82aH59j9oWk769bWlZ6i', 
+        'ADMIN'
+      );
       `);
 
     await db.query(`
