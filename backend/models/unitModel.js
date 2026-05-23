@@ -22,7 +22,8 @@ Unit.getAllEngines = async () => {
       ORDER BY updated_at DESC
     `;
   const res = await db.query(query);
-  return res.rows;
+  
+  return res.rows.map(row => row.engine ? row.engine.toString() : "");
 };
 
 Unit.getById = async (id) => {

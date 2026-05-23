@@ -255,10 +255,9 @@ const validateNewUnitRow = (row, index, validMetadata) => {
     );
   }
 
-  const cleanEngine = row.engine.toString().trim();
-  if (validMetadata?.engines && validMetadata.engines.includes(cleanEngine)) {
+  if (validMetadata?.engines && validMetadata.engines.includes(row.engine.toString().trim())) {
     rowErrors.push(
-      `Engine number "${cleanEngine}" already exists in the database`,
+      `Engine number "${row.engine}" already exists in the database`,
     );
   }
 
@@ -447,10 +446,10 @@ exports.bulkUploadSheet = async (req, res) => {
     await workbook.xlsx.load(req.file.buffer);
     const worksheet = workbook.getWorksheet(1);
 
-    const [locationIds, waybillCodes, engines, waybills] = await Promise.all([
+    const [locationIds, waybillCodes, engines] = await Promise.all([
       ReferenceModel.getAllLocationIds(),
       Waybill.getAllWaybillCodes(),
-      Unit.getAllEngines(),
+      Unit.getAllEngines(),      
     ]);
 
     const validMetadata = { locationIds, waybillCodes, engines };
