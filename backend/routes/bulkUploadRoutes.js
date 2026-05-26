@@ -8,7 +8,7 @@ const { authenticateToken, restrictToRoles } = require('../middleware/auth');
 router.post(
   "/generic_sheet",
   authenticateToken,
-  restrictTo("ADMIN"),
+  restrictToRoles("ADMIN"),
   upload.single("excelFile"),
   bulkUploadController.bulkUploadSheet,
 );

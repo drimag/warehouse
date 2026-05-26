@@ -8,14 +8,14 @@ const authenticateToken = (req, res, next) => {
   // ⚡ SEAMLESS TESTING BYPASS
   // If the incoming token matches our local React mock token string,
   // immediately log them in as an Admin—no cross-env setup needed!
-  if (token === "dev_testing_mock_jwt_token_payload") {
-    req.user = {
-      userId: 1, // Matches your database seeded Admin ID
-      email: "admin@company.com",
-      role: "ADMIN",
-    };
-    return next();
-  }
+  // if (token === "dev_testing_mock_jwt_token_payload") {
+  //   req.user = {
+  //     userId: 1, // Matches your database seeded Admin ID
+  //     email: "admin@company.com",
+  //     role: "ADMIN",
+  //   };
+  //   return next();
+  // }
 
   if (!token) {
     return res
