@@ -1,7 +1,9 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 import "./App.css";
 import Sidebar from "./components/Sidebar";
-import ProtectedRoute from "./components/ProtectedRoute";
+import { LoginPage } from "./pages/LoginPage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import Units from "./pages/Units";
 import UnitForm from "./pages/UnitForm";
 import UnitLogs from "./pages/UnitLogs";
@@ -16,19 +18,28 @@ import "./styles/scan.css";
 import "./styles/sidebar.css";
 import "./styles/unit.css";
 
-// View Components
-// import LoginView from "./views/LoginView";
-// import PermissionDeniedView from "./views/PermissionDeniedView"
-
 function App() {
+  const { user } = useAuth();
+
   return (
     <div className="app-layout">
       <Sidebar />
       <div className="main-content">
         <Routes>
-          {/* Public Authentication Path
-          <Route path="/login" element={<LoginView />} />
-          <Route path="/unauthorized" element={<PermissionDeniedView />} /> */}
+          {/* 2. Public Pathways */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/unauthorized"
+            element={
+              <div style={{ padding: "40px", textAlign: "center" }}>
+                <h2>🛑 403 - Permission Denied</h2>
+                <p>
+                  Your security clearance level does not allow access to this
+                  module.
+                </p>
+              </div>
+            }
+          />
 
           <Route
             element={
@@ -53,6 +64,12 @@ function App() {
           <Route element={<ProtectedRoute permittedRoles={["ADMIN"]} />}>
             <Route path="/bulk_upload" element={<BulkUpload />} />
           </Route>
+
+          {/* Wildcard Catch-all safety net routing */}
+          <Route
+            path="*"
+            element={<Navigate to={user ? "/units" : "/login"} replace />}
+          />
         </Routes>
       </div>
     </div>

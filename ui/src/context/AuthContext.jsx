@@ -1,53 +1,70 @@
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from "react";
+import axios from "axios";
 
-// 1. Create and export the raw context object itself
-export const AuthContext = createContext(null);
+const AuthContext = createContext(null);
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Starts true to prevent premature redirects
 
   useEffect(() => {
-    if (import.meta.env.DEV) { 
-      const mockAdminUser = {
-        name: "Test Admin Account",
-        email: "admin@company.com",
-        role: "ADMIN"
-      };
-      localStorage.setItem('token', 'dev_testing_mock_jwt_token_payload');
-      localStorage.setItem('user', JSON.stringify(mockAdminUser));
-      setUser(mockAdminUser);
-      setLoading(false);
-      return;
-    }
+    // Check if a session already exists on application boot
+    const savedToken = localStorage.getItem("token");
+    const savedUser = localStorage.getItem("user");
 
-    const savedToken = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    
     if (savedToken && savedUser) {
       try {
         setUser(JSON.parse(savedUser));
       } catch (e) {
-        localStorage.clear();
+        console.error("Corrupted auth data, clearing session.");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
       }
     }
-    setLoading(false);
+    setLoading(false); // Auth status is now verified!
   }, []);
 
-  const login = (token, userData) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
+  const login = async (email, password) => {
+    setLoading(true);
+    try {
+      // 1. Hit your backend login endpoint
+      const response = await axios.post(`${BASE_URL}/auth/login`, { email, password });
+      const { token, user: userData } = response.data;
+
+      // 2. Save tokens securely to localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      // 3. Update global React state
+      setUser(userData);
+      return { success: true };
+    } catch (error) {
+      setUser(null);
+      return { 
+        success: false, 
+        message: error.response?.data?.error || "Login failed. Check your network or credentials." 
+      };
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = () => {
-    localStorage.clear();
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
+      {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error("useAuth must be used inside an AuthProvider");
+  return context;
 };
