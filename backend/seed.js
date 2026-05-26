@@ -26,6 +26,7 @@ const seedDatabase = async () => {
       DROP TABLE IF EXISTS drivers CASCADE;
       DROP TABLE IF EXISTS users CASCADE;
       DROP SEQUENCE IF EXISTS waybill_code_seq CASCADE;
+      DROP TYPE IF EXISTS user_role CASCADE;
     `);
     console.log("🗑️  Old tables dropped.");
 
@@ -261,7 +262,7 @@ const seedDatabase = async () => {
       VALUES (
         'System Admin', 
         'admin@company.com', 
-        '$2a$10$7Z2v8EwZ0Oym7p/M6eWqHeL431A7.OEqy82aH59j9oWk769bWlZ6i', 
+        '$2b$10$RuO9.TMUxYOoppLVCLm3ZeYXN7OeRxq7NCLFDef9K.tudwhAUURg2',
         'ADMIN'
       );
       `);
