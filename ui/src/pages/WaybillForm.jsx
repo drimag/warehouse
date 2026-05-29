@@ -48,35 +48,40 @@ export default function WaybillForm() {
   const [locationData, setLocationData] = useState([]);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) return;
-    try {
-      setLoading(true);
-      setNetworkError(null);
+    const fetchPageData = async () => {
+      if (authLoading) return;
+      if (!user) return;
 
-      const [trucks, drivers, locations] = await Promise.all([
-        api.getTrucks(),
-        api.getDrivers(),
-        api.getLocations(),
-      ]);
+      try {
+        setLoading(true);
+        setNetworkError(null);
 
-      setTruckData(trucks);
-      setDriverData(drivers);
-      setLocationData(locations);
+        const [trucks, drivers, locations] = await Promise.all([
+          api.getTrucks(),
+          api.getDrivers(),
+          api.getLocations(),
+        ]);
 
-      const truckList = trucks.map((item) => item.plate_number);
-      const driverList = drivers.map((item) => item.full_name);
-      const locationList = locations.map((item) => item.name);
+        setTruckData(trucks);
+        setDriverData(drivers);
+        setLocationData(locations);
 
-      setTruckList(truckList);
-      setDriverList(driverList);
-      setLocationsList(locationList);
-    } catch (err) {
-      console.error(err);
-      setNetworkError("Failed to load logistics form data. Please refresh.");
-    } finally {
-      setLoading(false);
-    }
+        const truckList = trucks.map((item) => item.plate_number);
+        const driverList = drivers.map((item) => item.full_name);
+        const locationList = locations.map((item) => item.name);
+
+        setTruckList(truckList);
+        setDriverList(driverList);
+        setLocationsList(locationList);
+      } catch (err) {
+        console.error(err);
+        setNetworkError("Failed to load logistics form data. Please refresh.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPageData();
   }, [user, authLoading]);
 
   const resetDetails = () => {
@@ -182,7 +187,7 @@ export default function WaybillForm() {
       focusNext(nextRef);
     }
   };
-  
+
   if (authLoading || loading) return <div>Loading Page...</div>;
   if (networkError) return <div style={{ color: "red" }}>{networkError}</div>;
   if (!user) return null;

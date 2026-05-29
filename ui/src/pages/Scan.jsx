@@ -66,30 +66,34 @@ export default function Scan() {
   };
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) return;
-    try {
-      setLoading(true);
-      setNetworkError(null);
+    const fetchPageData = async () => {
+      if (authLoading) return;
+      if (!user) return;
+      try {
+        setLoading(true);
+        setNetworkError(null);
 
-      const [waybillData, truckData, driverData, locationData] =
-        await Promise.all([
-          api.getWaybillsForScan(),
-          api.getTrucks(),
-          api.getDrivers(),
-          api.getLocations(),
-        ]);
+        const [waybillData, truckData, driverData, locationData] =
+          await Promise.all([
+            api.getWaybillsForScan(),
+            api.getTrucks(),
+            api.getDrivers(),
+            api.getLocations(),
+          ]);
 
-      const idList = waybillData.map((item) => item.id);
+        const idList = waybillData.map((item) => item.id);
 
-      setValidWaybills(waybillData);
-      setWaybillList(idList);
-    } catch (err) {
-      console.error(err);
-      setNetworkError("Failed to load logistics form data. Please refresh.");
-    } finally {
-      setLoading(false);
-    }
+        setValidWaybills(waybillData);
+        setWaybillList(idList);
+      } catch (err) {
+        console.error(err);
+        setNetworkError("Failed to load logistics form data. Please refresh.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPageData();
   }, [user, authLoading]);
 
   useEffect(() => {
