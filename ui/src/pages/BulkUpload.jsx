@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
 import GenericTable from "../components/GenericTable";
 
 const BulkUpload = () => {
   const [file, setFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
   const [results, setResults] = useState(null);
-  const [uploadErrors, setUploadErrors] = useState([]);
+
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [networkError, setNetworkError] = useState(null);
+  const [uploadErrors, setUploadErrors] = useState([]);
+  const [uploading, setUploading] = useState(false);
+
   const [locations, setLocations] = useState([]);
   const [trucks, setTrucks] = useState([]);
   const [drivers, setDrivers] = useState([]);
@@ -108,8 +113,11 @@ const BulkUpload = () => {
 
   useEffect(() => {
     const fetchPageData = async () => {
+      if (authLoading) return;
+      if (!user) return;
       try {
         setLoading(true);
+        setNetworkError(null);
         const [locs, drvs, trks] = await Promise.all([
           api.getLocations(),
           api.getDrivers(),
@@ -120,16 +128,18 @@ const BulkUpload = () => {
         setTrucks(trks);
       } catch (err) {
         console.error(err);
-        setLoading(false);
+        setNetworkError("Failed to load logistics form data. Please refresh.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchPageData();
-  }, []);
+  }, [user, authLoading]);
 
-  if (loading) return <div>Loading Page...</div>;
+  if (authLoading || loading) return <div>Loading Page...</div>;
+  if (networkError) return <div style={{ color: "red" }}>{networkError}</div>;
+  if (!user) return null;
 
   return (
     <div className="page">
@@ -154,7 +164,9 @@ const BulkUpload = () => {
       )}
 
       <UploadFeedback errors={uploadErrors} />
-      <h1 className="page-title" style={{marginTop: "2rem"}}>ID References</h1>
+      <h1 className="page-title" style={{ marginTop: "2rem" }}>
+        ID References
+      </h1>
       <div className="table-row-container">
         <GenericTable columns={locationColumns} data={locations} />
         <GenericTable columns={driverColumns} data={drivers} />

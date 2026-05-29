@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import ScanInput from "../components/Scan/ScanInput";
 import GenericSelect from "../components/Scan/GenericSelect";
@@ -15,7 +16,9 @@ import GenericInput from "../components/GenericInput";
 export default function WaybillForm() {
   const navigate = useNavigate();
 
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [networkError, setNetworkError] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
@@ -45,37 +48,36 @@ export default function WaybillForm() {
   const [locationData, setLocationData] = useState([]);
 
   useEffect(() => {
-    const fetchPageData = async () => {
-      try {
-        setLoading(true);
+    if (authLoading) return;
+    if (!user) return;
+    try {
+      setLoading(true);
+      setNetworkError(null);
 
-        const [trucks, drivers, locations] = await Promise.all([
-          api.getTrucks(),
-          api.getDrivers(),
-          api.getLocations(),
-        ]);
+      const [trucks, drivers, locations] = await Promise.all([
+        api.getTrucks(),
+        api.getDrivers(),
+        api.getLocations(),
+      ]);
 
-        setTruckData(trucks);
-        setDriverData(drivers);
-        setLocationData(locations);
+      setTruckData(trucks);
+      setDriverData(drivers);
+      setLocationData(locations);
 
-        const truckList = trucks.map((item) => item.plate_number);
-        const driverList = drivers.map((item) => item.full_name);
-        const locationList = locations.map((item) => item.name);
+      const truckList = trucks.map((item) => item.plate_number);
+      const driverList = drivers.map((item) => item.full_name);
+      const locationList = locations.map((item) => item.name);
 
-        setTruckList(truckList);
-        setDriverList(driverList);
-        setLocationsList(locationList);
-      } catch (err) {
-        console.error(err);
-        setLoading(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPageData();
-  }, []);
+      setTruckList(truckList);
+      setDriverList(driverList);
+      setLocationsList(locationList);
+    } catch (err) {
+      console.error(err);
+      setNetworkError("Failed to load logistics form data. Please refresh.");
+    } finally {
+      setLoading(false);
+    }
+  }, [user, authLoading]);
 
   const resetDetails = () => {
     setWaybill(null);
@@ -180,8 +182,10 @@ export default function WaybillForm() {
       focusNext(nextRef);
     }
   };
-
-  if (loading) return <div>Loading</div>;
+  
+  if (authLoading || loading) return <div>Loading Page...</div>;
+  if (networkError) return <div style={{ color: "red" }}>{networkError}</div>;
+  if (!user) return null;
 
   return (
     <div className="page-centered page">

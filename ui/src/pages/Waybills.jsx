@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import GenericTable from "../components/GenericTable.jsx";
@@ -43,28 +44,32 @@ const columns = [
 export default function Waybills() {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [networkError, setNetworkError] = useState(null);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [destFilter, setDestFilter] = useState("");
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user) return;
+    setNetworkError(null);
     api
       .getWaybills()
       .then((json) => {
         setData(json);
-        setLoading(false);
       })
       .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
+        setNetworkError("Failed to load logistics form data. Please refresh.");
+      })
+      .finally(setLoading(false));
+  }, [user, authLoading]);
 
-  if (loading)
-    return <div className="p-10 text-center">🚚 Loading Shipments...</div>;
-  if (error) return <div className="p-10 text-red-500">❌ Error: {error}</div>;
+  if (authLoading || loading) return <div>Loading Page...</div>;
+  if (networkError) return <div style={{ color: "red" }}>{networkError}</div>;
+  if (!user) return null;
 
   const filteredWaybills = data.filter((wb) => {
     const matchesSearch =
