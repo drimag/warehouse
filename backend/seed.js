@@ -265,6 +265,24 @@ const seedDatabase = async () => {
         '$2b$10$RuO9.TMUxYOoppLVCLm3ZeYXN7OeRxq7NCLFDef9K.tudwhAUURg2',
         'ADMIN'
       );
+
+      -- Hash for 'password123'
+      INSERT INTO users (name, email, password_hash, role) 
+      VALUES (
+        'Sam Scanner', 
+        'scanner@company.com', 
+        '$2b$10$ecvCQyPLB5BPUHYXPQKO0e5od6BAhv3.e8zbLqs.qzMvs4Y2cv2LW', 
+        'SCANNER'
+      );
+
+      -- Hash for 'password123'
+      INSERT INTO users (name, email, password_hash, role) 
+      VALUES (
+        'Valerie Viewer', 
+        'viewer@company.com', 
+        '$2b$10$ecvCQyPLB5BPUHYXPQKO0e5od6BAhv3.e8zbLqs.qzMvs4Y2cv2LW',
+        'VIEWER'
+      );
       `);
 
     await db.query(`
