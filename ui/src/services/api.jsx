@@ -17,6 +17,21 @@ apiInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+apiInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      console.warn("Session expired or invalid token detected. Force logging out.");
+      
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      window.location.href = '/login'; 
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const api = {
   // --- Waybills ---
   getWaybills: () => 
