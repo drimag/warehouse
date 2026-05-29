@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import ScanInput from "../components/Scan/ScanInput";
 import GenericSelect from "../components/Scan/GenericSelect";
@@ -15,7 +16,9 @@ import GenericInput from "../components/GenericInput";
 export default function WaybillForm() {
   const navigate = useNavigate();
 
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [networkError, setNetworkError] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
@@ -46,8 +49,12 @@ export default function WaybillForm() {
 
   useEffect(() => {
     const fetchPageData = async () => {
+      if (authLoading) return;
+      if (!user) return;
+
       try {
         setLoading(true);
+        setNetworkError(null);
 
         const [trucks, drivers, locations] = await Promise.all([
           api.getTrucks(),
@@ -68,14 +75,14 @@ export default function WaybillForm() {
         setLocationsList(locationList);
       } catch (err) {
         console.error(err);
-        setLoading(false);
+        setNetworkError("Failed to load logistics form data. Please refresh.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchPageData();
-  }, []);
+  }, [user, authLoading]);
 
   const resetDetails = () => {
     setWaybill(null);
@@ -181,7 +188,9 @@ export default function WaybillForm() {
     }
   };
 
-  if (loading) return <div>Loading</div>;
+  if (authLoading || loading) return <div>Loading Page...</div>;
+  if (networkError) return <div style={{ color: "red" }}>{networkError}</div>;
+  if (!user) return null;
 
   return (
     <div className="page-centered page">

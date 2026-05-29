@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import ScanInput from "../components/Scan/ScanInput";
@@ -44,7 +45,9 @@ export default function Scan() {
   const [waybillList, setWaybillList] = useState("");
   const [validWaybills, setValidWaybills] = useState("");
 
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [networkError, setNetworkError] = useState(null);
 
   const focusNext = (nextRef) => {
     const element = nextRef.current;
@@ -64,8 +67,11 @@ export default function Scan() {
 
   useEffect(() => {
     const fetchPageData = async () => {
+      if (authLoading) return;
+      if (!user) return;
       try {
         setLoading(true);
+        setNetworkError(null);
 
         const [waybillData, truckData, driverData, locationData] =
           await Promise.all([
@@ -76,30 +82,27 @@ export default function Scan() {
           ]);
 
         const idList = waybillData.map((item) => item.id);
-        // const truckList = truckData.map((item) => item.plate_number);
-        // const driverList = driverData.map((item) => item.full_name);
-        // const locationList = locationData.map((item) => item.name);
 
         setValidWaybills(waybillData);
         setWaybillList(idList);
-        // setTruckList(truckList);
-        // setDriverList(driverList);
-        // setLocationsList(locationList);
       } catch (err) {
         console.error(err);
-        setLoading(false);
+        setNetworkError("Failed to load logistics form data. Please refresh.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchPageData();
-  }, []);
+  }, [user, authLoading]);
 
   useEffect(() => {
     if (!waybillID) return;
+    if (authLoading) return;
+    if (!user) return;
 
     setLoading(true);
+    setNetworkError(null);
     api
       .getWaybillInfoById(waybillID)
       .then((data) => {
@@ -109,10 +112,14 @@ export default function Scan() {
       .catch((err) => {
         console.error(err);
         setLoading(false);
+        setNetworkError("Failed to load logistics form data. Please refresh.");
       });
   }, [waybillID]);
 
-  if (loading) return <div>Loading Page...</div>;
+  if (authLoading || loading) return <div>Loading Page...</div>;
+  if (networkError) return <div style={{ color: "red" }}>{networkError}</div>;
+  if (!user) return null;
+
   return (
     <div className="page-centered page">
       {!submitted ? (
@@ -157,7 +164,9 @@ export default function Scan() {
                   : "Unknown Truck"}
               </p>
               <p>Origin: {selectedWaybill.origin}</p>
-              <p style={{ paddingBottom: '1rem' }}>Destination: {selectedWaybill.destination}</p>
+              <p style={{ paddingBottom: "1rem" }}>
+                Destination: {selectedWaybill.destination}
+              </p>
               <PhotoUpload
                 ref={photoRef}
                 title={"Photo"}

@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 import UnitFilters from "../components/Units/UnitFilters";
 import GenericTable from "../components/GenericTable";
 import { api } from "../services/api";
@@ -17,13 +18,18 @@ const unitColumns = [
 export default function Units() {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
+
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [networkError, setNetworkError] = useState(null);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user) return;
     api
       .getUnits()
       .then((json) => {
@@ -31,14 +37,14 @@ export default function Units() {
         setLoading(false);
       })
       .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
+        setNetworkError("Failed to load logistics form data. Please refresh.");
+      })
+      .then(setLoading(false));
+  }, [user, authLoading]);
 
-  if (loading)
-    return <div className="p-10 text-center">🚚 Loading Shipments...</div>;
-  if (error) return <div className="p-10 text-red-500">❌ Error: {error}</div>;
+  if (authLoading || loading) return <div>Loading Page...</div>;
+  if (networkError) return <div style={{ color: "red" }}>{networkError}</div>;
+  if (!user) return null;
 
   const filteredData = data.filter((item) => {
     // Search Bar: Match engine OR frame

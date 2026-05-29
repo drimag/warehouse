@@ -205,8 +205,11 @@ const Waybill = {
   },
 
   insertBulkWaybills: async (data) => {
+    const client = await db.connect();
     await checkAndResetSequence();
-    const query = `
+    try {
+      await client.query("BEGIN");
+      const query = `
       INSERT INTO waybills (
         id, status, origin_id, destination_id, 
         client, truck_id, driver_id, expected_quantity, expected_arrival
@@ -226,20 +229,83 @@ const Waybill = {
       RETURNING id;
     `;
 
-    const values = [
-      data.map((d) => d.id),
-      data.map((d) => d.status),
-      data.map((d) => d.origin_id),
-      data.map((d) => d.destination_id),
-      data.map((d) => d.client),
-      data.map((d) => d.truck_id),
-      data.map((d) => d.driver_id),
-      data.map((d) => d.expected_quantity),
-      data.map((d) => d.expected_arrival),
-    ];
+      const values = [
+        data.map((d) => d.id),
+        data.map((d) => d.status),
+        data.map((d) => d.origin_id),
+        data.map((d) => d.destination_id),
+        data.map((d) => d.client),
+        data.map((d) => d.truck_id),
+        data.map((d) => d.driver_id),
+        data.map((d) => d.expected_quantity),
+        data.map((d) => d.expected_arrival),
+      ];
 
-    const result = await db.query(query, values);
-    return result.rows;
+      const result = await client.query(query, values);
+      await client.query("COMMIT");
+      return { success: true, count: data.length };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error("UNNEST Bulk Insert Failed:", error);
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
+
+  updateBulkWaybills: async (data) => {
+    const client = await db.connect();
+    await checkAndResetSequence();
+    try {
+      const query = `
+        UPDATE waybills AS w
+        SET 
+          status = COALESCE(d.status, w.status),
+          origin_id = COALESCE(d.origin_id, w.origin_id),
+          destination_id = COALESCE(d.destination_id, w.destination_id),
+          client = COALESCE(d.client, w.client),
+          truck_id = COALESCE(d.truck_id, w.truck_id),
+          driver_id = COALESCE(d.driver_id, w.driver_id),
+          expected_quantity = COALESCE(d.expected_quantity, w.expected_quantity),
+          expected_arrival = COALESCE(d.expected_arrival, w.expected_arrival)
+        FROM UNNEST(
+          $1::text[],      -- id (The key tracking constraint to find the row)
+          $2::text[],      -- status
+          $3::int[],       -- origin_id
+          $4::int[],       -- destination_id
+          $5::text[],      -- client
+          $6::int[],       -- truck_id
+          $7::int[],       -- driver_id
+          $8::int[],       -- expected_quantity
+          $9::timestamp[]  -- expected_arrival
+        ) AS d(id, status, origin_id, destination_id, client, truck_id, driver_id, expected_quantity, expected_arrival)
+        WHERE w.id = d.id
+        RETURNING w.id;
+      `;
+
+      const values = [
+        data.map((d) => d.id),
+        data.map((d) => d.status),
+        data.map((d) => d.origin_id),
+        data.map((d) => d.destination_id),
+        data.map((d) => d.client),
+        data.map((d) => d.truck_id),
+        data.map((d) => d.driver_id),
+        data.map((d) => d.expected_quantity),
+        data.map((d) => d.expected_arrival),
+      ];
+
+      const result = await client.query(query, values);
+      await client.query("COMMIT");
+      console.log("result.rows: ", result.rows);
+      return { success: true, count: data.length };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error("UNNEST Bulk Update Failed:", error);
+      throw error;
+    } finally {
+      client.release();
+    }
   },
 };
 

@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 import UnitUpload from "../components/Units/UnitUpload";
 import GenericInput from "../components/GenericInput";
 import GenericSelect from "../components/Scan/GenericSelect";
@@ -16,8 +17,10 @@ export default function UnitForm() {
 
   const [unit, setUnit] = useState(null);
 
+  const { user, loading: authLoading } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [networkError, setNetworkError] = useState(null);
   const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const [locationsList, setLocationsList] = useState([]);
@@ -33,8 +36,11 @@ export default function UnitForm() {
 
   useEffect(() => {
     const fetchPageData = async () => {
+      if (authLoading) return;
+      if (!user) return;
       try {
         setLoading(true);
+        setNetworkError(null);
         const locations = await api.getLocations();
         setLocationData(locations);
         const locationList = locations.map((item) => item.name);
@@ -48,17 +54,17 @@ export default function UnitForm() {
     };
 
     fetchPageData();
-  }, []);
+  }, [user, authLoading]);
 
   const handleSubmit = async () => {
     try {
       const selectedLocation = locationData.find(
         (item) => item.name === lastLocation,
       );
-console.log("0");
-      if(!engine || !frame || !currentStatus || !lastLocation){
+      console.log("0");
+      if (!engine || !frame || !currentStatus || !lastLocation) {
         console.log("2");
-        setError("Engine, Frame, Status, and Location are Required")
+        setError("Engine, Frame, Status, and Location are Required");
         return;
       }
 
@@ -86,7 +92,7 @@ console.log("0");
       setSubmitted(true);
       return response;
     } catch (err) {
-      if(err.status === 409) {
+      if (err.status === 409) {
         setError(err.message);
         return;
       }
@@ -137,7 +143,9 @@ console.log("0");
     }
   };
 
-  if (loading) return <div>Loading</div>;
+  if (authLoading || loading) return <div>Loading Page...</div>;
+  if (networkError) return <div style={{ color: "red" }}>{networkError}</div>;
+  if (!user) return null;
 
   return (
     <div className="page-centered page">

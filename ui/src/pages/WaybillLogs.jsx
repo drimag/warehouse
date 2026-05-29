@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 import { api } from "../services/api";
 import WaybillHeader from "../components/Waybills/WaybillHeader";
@@ -61,24 +62,29 @@ const unitAdviceColumns = [
 export default function WaybillLogs() {
   const { id } = useParams();
   const [waybillData, setWaybillData] = useState(null);
+
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [networkError, setNetworkError] = useState(null);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user) return;
+    setNetworkError(null);
     api
       .getWaybillInfo(id)
       .then((data) => {
         setWaybillData(data);
-        setLoading(false);
       })
       .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
-  }, [id]);
+        setNetworkError("Failed to load logistics form data. Please refresh.");
+      })
+      .finally(setLoading(false));
+  }, [id, user, authLoading]);
 
-  if (loading) return <div>Loading Waybill {id}...</div>;
-  if (!waybillData) return <div>Waybill not found.</div>;
-
+  if (authLoading || loading) return <div>Loading Page...</div>;
+  if (networkError) return <div style={{ color: "red" }}>{networkError}</div>;
+  if (!user) return null;
   if (!waybillData) return <div>⚠️ Waybill not found.</div>;
 
   const departureManifest =

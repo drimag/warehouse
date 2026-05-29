@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 import UnitHeader from "../components/Units/UnitHeader";
 import GenericTable from "../components/GenericTable";
@@ -16,28 +17,42 @@ const unitLogColumns = [
   { label: "Status", key: "status" },
   { label: "Start", key: "eff_start" },
   { label: "End", key: "eff_end" },
-  { label: "isCurrent?", key: "is_current", render: (val) => (val ? "Yes" : "No") }
+  {
+    label: "isCurrent?",
+    key: "is_current",
+    render: (val) => (val ? "Yes" : "No"),
+  },
 ];
 
 export default function UnitLogs() {
   const { unitID } = useParams();
   const [unitData, setUnitData] = useState(null);
+
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [networkError, setNetworkError] = useState(null);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user) return;
+
+    setNetworkError(null);
+
     api
       .getUnitHistory(unitID)
       .then((data) => {
         setUnitData(data);
-        setLoading(false);
       })
       .catch((err) => {
         console.error(err);
-        setLoading(false);
-      });
-  }, [unitID]);
+        setNetworkError("Failed to load logistics form data. Please refresh.");
+      })
+      .finally(setLoading(false));
+  }, [unitID, user, authLoading]);
 
-  if (loading) return <div>Loading Unit {unitID}...</div>;
+  if (authLoading || loading) return <div>Loading Page...</div>;
+  if (networkError) return <div style={{ color: "red" }}>{networkError}</div>;
+  if (!user) return null;
   if (!unitData) return <div>Unit not found.</div>;
 
   return (

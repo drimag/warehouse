@@ -1,95 +1,101 @@
+import axios from 'axios';
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const handleResponse = async (response) => {
-  if (!response.ok) {
-    const errorData = await response.json();
-    const error = new Error(errorData.error || "Network response was not ok");
-    error.status = response.status;
-    error.response = { data: errorData };
-    throw error;
+const apiInstance = axios.create({
+  baseURL: BASE_URL,
+});
+
+apiInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+apiInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      console.warn("Session expired or invalid token detected. Force logging out.");
+      
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      window.location.href = '/login'; 
+    }
+    return Promise.reject(error);
   }
-  return response.json();
-};
+);
 
 export const api = {
-  getWaybills: () => fetch(`${BASE_URL}/waybills`).then(handleResponse),
+  // --- Waybills ---
+  getWaybills: () => 
+    apiInstance.get('/waybills').then(res => res.data),
+    
   getWaybillsForScan: () =>
-    fetch(`${BASE_URL}/waybills/scanning`).then(handleResponse),
+    apiInstance.get('/waybills/scanning').then(res => res.data),
+    
   getWaybillInfo: (id) =>
-    fetch(`${BASE_URL}/waybills/${id}`).then(handleResponse),
+    apiInstance.get(`/waybills/${id}`).then(res => res.data),
+    
   getWaybillInfoById: (id) =>
-    fetch(`${BASE_URL}/waybills/display/${id}`).then(handleResponse),
-  saveWaybillForm: async (details) => {
-    const response = await fetch(`${BASE_URL}/waybills/save_form`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(details),
-    });
-    return handleResponse(response);
-  },
+    apiInstance.get(`/waybills/display/${id}`).then(res => res.data),
+    
+  saveWaybillForm: (details) => 
+    apiInstance.post('/waybills/save_form', details).then(res => res.data),
 
   startLoading: (id) =>
-    fetch(`${BASE_URL}/waybills/loading/${id}`).then(handleResponse),
+    apiInstance.get(`/waybills/loading/${id}`).then(res => res.data),
+    
   setAdvice: (id) =>
-    fetch(`${BASE_URL}/waybills/advice/${id}`).then(handleResponse),
+    apiInstance.get(`/waybills/advice/${id}`).then(res => res.data),
+    
   setInTransit: (id) =>
-    fetch(`${BASE_URL}/waybills/in_transit/${id}`).then(handleResponse),
+    apiInstance.get(`/waybills/in_transit/${id}`).then(res => res.data),
+    
   setArrived: (id) =>
-    fetch(`${BASE_URL}/waybills/arrived/${id}`).then(handleResponse),
+    apiInstance.get(`/waybills/arrived/${id}`).then(res => res.data),
 
-  getUnits: () => fetch(`${BASE_URL}/units`).then(handleResponse),
+  // --- Units ---
+  getUnits: () => 
+    apiInstance.get('/units').then(res => res.data),
+    
   getUnitHistory: (unitID) =>
-    fetch(`${BASE_URL}/units/history/${unitID}`).then(handleResponse),
+    apiInstance.get(`/units/history/${unitID}`).then(res => res.data),
+    
   scanUnitByVin: (scan) =>
-    fetch(`${BASE_URL}/units/scan/${scan}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).then(handleResponse),
+    apiInstance.post(`/units/scan/${scan}`).then(res => res.data),
+    
   scanNewUnit: (scan) =>
-    fetch(`${BASE_URL}/units/new_scan/${scan}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).then(handleResponse),
+    apiInstance.post(`/units/new_scan/${scan}`).then(res => res.data),
+    
   setUnitInTransit: (scan) =>
-    fetch(`${BASE_URL}/units/in_transit/${scan}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).then(handleResponse),
+    apiInstance.post(`/units/in_transit/${scan}`).then(res => res.data),
+    
   insertNewUnit: (details) =>
-    fetch(`${BASE_URL}/units/new_unit`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(details),
-    }).then(handleResponse),
+    apiInstance.post('/units/new_unit', details).then(res => res.data),
 
-  getTrucks: () => fetch(`${BASE_URL}/references/trucks`).then(handleResponse),
+  // --- References ---
+  getTrucks: () => 
+    apiInstance.get('/references/trucks').then(res => res.data),
+    
   getDrivers: () =>
-    fetch(`${BASE_URL}/references/drivers`).then(handleResponse),
+    apiInstance.get('/references/drivers').then(res => res.data),
+    
   getLocations: () =>
-    fetch(`${BASE_URL}/references/locations`).then(handleResponse),
+    apiInstance.get('/references/locations').then(res => res.data),
 
+  // --- Manifests ---
   createManifest: (waybillId, unitId, type, userId) =>
-    fetch(
-      `${BASE_URL}/manifest/waybill/${waybillId}/unit/${unitId}/type/${type}/user/${userId}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      },
-    ).then(handleResponse),
+    apiInstance.post(`/manifest/waybill/${waybillId}/unit/${unitId}/type/${type}/user/${userId}`).then(res => res.data),
 
+  // --- Bulk Upload ---
+  // Axios automatically detects FormData payloads and configures multipart/form-data headers for you!
   uploadSheet: (formData) =>
-    fetch(`${BASE_URL}/bulkUpload/generic_sheet`, {
-      method: "POST",
-      body: formData,
-    }).then(handleResponse),
+    apiInstance.post('/bulkUpload/generic_sheet', formData).then(res => res.data),
 };

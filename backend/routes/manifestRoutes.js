@@ -1,7 +1,13 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const manifestController = require('../controllers/manifestController');
+const manifestController = require("../controllers/manifestController");
+const { authenticateToken, restrictToRoles } = require("../middleware/auth");
 
-router.post('/waybill/:waybillId/unit/:unitId/type/:type/user/:userId', manifestController.createManifest);
+router.post(
+  "/waybill/:waybillId/unit/:unitId/type/:type/user/:userId",
+  authenticateToken,
+  restrictToRoles("ADMIN", "SCANNER"),
+  manifestController.createManifest,
+);
 
 module.exports = router;

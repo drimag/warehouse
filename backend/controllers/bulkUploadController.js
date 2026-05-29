@@ -15,6 +15,18 @@ const REQUIRED_WAYBILL_HEADERS = [
   "expected_arrival",
 ];
 
+const REQUIRED_WAYBILL_UPDATE_HEADERS = [
+  "current_id",
+  "new_status",
+  "new_origin_id",
+  "new_destination_id",
+  "new_client",
+  "new_truck_id",
+  "new_driver_id",
+  "new_expected_quantity",
+  "new_expected_arrival",
+];
+
 const REQUIRED_UNIT_HEADERS = [
   "engine",
   "frame",
@@ -26,150 +38,401 @@ const REQUIRED_UNIT_HEADERS = [
   "waybill_code",
 ];
 
-const processWaybills = async (data) => {
+const REQUIRED_UNIT_UPDATE_HEADERS = [
+  "old_engine",
+  "new_engine",
+  "new_frame",
+  "new_model",
+  "new_color",
+  "new_status",
+  "new_da",
+  "new_last_location_id",
+  "new_waybill_code",
+];
+
+const validateNewWaybillRow = (row, index) => {
   const VALID_STATUSES = ["ADVICE", "IN_TRANSIT", "ARRIVED", "CLOSED"];
-  const errors = [];
+  const rowErrors = [];
+  const rowNum = index + 1;
 
-  data.forEach((row, index) => {
-    const rowErrors = [];
-    const rowNum = index + 1;
+  const hasValue = (val) =>
+    val !== undefined && val !== null && val.toString().trim() !== "";
 
-    const status = row.status?.toString().trim().toUpperCase();
-    if (!VALID_STATUSES.includes(status)) {
-      rowErrors.push(`Invalid status: "${row.status}"`);
-    }
+  if (!hasValue(row.code)) rowErrors.push("Missing required field: 'code'");
 
-    if (!row.origin_id || isNaN(row.origin_id))
-      rowErrors.push("Origin ID must be a number");
-    if (!row.destination_id || isNaN(row.destination_id))
-      rowErrors.push("Destination ID must be a number");
-    if (!row.truck_id || isNaN(row.truck_id))
-      rowErrors.push("Truck ID must be a number");
-    if (!row.driver_id || isNaN(row.driver_id))
-      rowErrors.push("Driver ID must be a number");
+  if (
+    !hasValue(row.status) ||
+    !VALID_STATUSES.includes(row.status.toString().trim().toUpperCase())
+  ) {
+    rowErrors.push(`Invalid or missing status: "${row.status}"`);
+  }
 
-    const qty = parseInt(row.expected_quantity);
-    if (isNaN(qty) || qty < 0 || qty > 9999) {
-      rowErrors.push(`Quantity must be 0-9999 (got: ${row.expected_quantity})`);
-    }
-
-    if (!row.expected_arrival || isNaN(Date.parse(row.expected_arrival))) {
-      rowErrors.push(`Invalid date: "${row.expected_arrival}"`);
-    }
-
-    if (rowErrors.length > 0) {
-      errors.push({
-        row: rowNum,
-        identifier: row.id || `Row ${rowNum}`,
-        details: rowErrors,
-      });
+  ["origin_id", "destination_id", "truck_id", "driver_id"].forEach((field) => {
+    if (!hasValue(row[field]) || isNaN(row[field])) {
+      rowErrors.push(`Valid numeric '${field}' is required`);
     }
   });
 
+  const qty = parseInt(row.expected_quantity);
+  if (isNaN(qty) || qty < 0 || qty > 9999) {
+    rowErrors.push(`Quantity must be 0-9999 (got: ${row.expected_quantity})`);
+  }
+
+  if (
+    !hasValue(row.expected_arrival) ||
+    isNaN(Date.parse(row.expected_arrival))
+  ) {
+    rowErrors.push(`Invalid arrival date: "${row.expected_arrival}"`);
+  }
+
+  return rowErrors.length > 0
+    ? {
+        row: rowNum,
+        identifier: row.code || `Row ${rowNum}`,
+        details: rowErrors,
+      }
+    : null;
+};
+
+const processNewWaybills = async (data) => {
+  const errors = data
+    .map((row, idx) => validateNewWaybillRow(row, idx))
+    .filter(Boolean);
   if (errors.length > 0) {
     const errorBody = new Error("Validation Failed");
     errorBody.validationErrors = errors;
     throw errorBody;
   }
 
-  const waybillsToInsert = data.map((row) => ({
-    id: row.id || "WB",
-    status: row.status.toUpperCase(),
+  const formattedData = data.map((row) => ({
+    id: row.code,
+    status: row.status.toString().trim().toUpperCase(),
     origin_id: parseInt(row.origin_id),
     destination_id: parseInt(row.destination_id),
-    client: row.client,
+    client: row.client || null,
     truck_id: parseInt(row.truck_id),
     driver_id: parseInt(row.driver_id),
     expected_quantity: parseInt(row.expected_quantity),
     expected_arrival: new Date(row.expected_arrival).toISOString(),
   }));
 
-  const result = await Waybill.insertBulkWaybills(waybillsToInsert);
+  const result = await Waybill.insertBulkWaybills(formattedData);
 
   return {
-    totalProcessed: data.length,
-    successCount: result.length,
-    failedOrDuplicate: data.length - result.length,
-    type: "Waybill",
+    isSuccess: result.success,
+    count: result.count,
+    type: "Waybill Creation",
   };
 };
 
-const processUnits = async (data, validMetadata) => {
-  const VALID_STATUSES = ["IN_TRANSIT", "IN_STORAGE"];
-  const errors = [];
-  const formattedData = [];
+const validateUpdateWaybillRow = (row, index, validMetadata) => {
+  const VALID_STATUSES = ["ADVICE", "IN_TRANSIT", "ARRIVED", "CLOSED"];
+  const rowErrors = [];
+  const rowNum = index + 1;
 
-  data.forEach((row, index) => {
-    const rowNumber = index + 1;
-    const rowErrors = [];
+  const hasValue = (val) =>
+    val !== undefined && val !== null && val.toString().trim() !== "";
 
-    // 1. Engine & Frame Null Check
-    if (!row.engine || row.engine.toString().trim() === "") {
-      rowErrors.push("Engine number is required");
-    }
-    if (!row.frame || row.frame.toString().trim() === "") {
-      rowErrors.push("Frame number is required");
-    }
-
-    // 2. Status Validation
-    const currentStatus = row.status?.toString().trim().toUpperCase();
-    if (!VALID_STATUSES.includes(currentStatus)) {
-      rowErrors.push(
-        `Invalid status: "${row.status}". Must be ${VALID_STATUSES.join(", ")}`,
-      );
-    }
-
-    // 3. Location ID Validation (Check if it's a number AND exists in DB)
-    const locId = parseInt(row.last_location_id);
-    if (isNaN(locId)) {
-      rowErrors.push(
-        `Location ID must be a number (got: "${row.last_location_id}")`,
-      );
-    } else if (
-      validMetadata.locationIds &&
-      !validMetadata.locationIds.includes(locId)
+  if (!hasValue(row.current_id)) {
+    rowErrors.push(
+      "Missing key tracking constraint: 'current_id' column must contain data",
+    );
+  } else {
+    const currentWBID = row.current_id.toString().trim();
+    if (
+      validMetadata?.waybillCodes &&
+      !validMetadata.waybillCodes.includes(currentWBID)
     ) {
-      rowErrors.push(`Location ID ${locId} does not exist in the database`);
+      rowErrors.push(
+        `WB with code: "${currentWBID}" does not exist in the database`,
+      );
     }
+  }
 
-    // 4. Waybill Code Existence Check
-    if (row.waybill_code && validMetadata.waybillCodes) {
-      if (
-        !validMetadata.waybillCodes.includes(row.waybill_code.toString().trim())
-      ) {
-        rowErrors.push(
-          `Waybill Code "${row.waybill_code}" not found in database`,
-        );
-      }
-    }
+  if (
+    hasValue(row.new_status) &&
+    !VALID_STATUSES.includes(row.new_status.toString().trim().toUpperCase())
+  ) {
+    rowErrors.push(`Invalid status variant provided: "${row.new_status}"`);
+  }
 
-    if (rowErrors.length > 0) {
-      errors.push({
-        row: rowNumber,
-        engine: row.engine || "N/A",
-        details: rowErrors,
-      });
-    } else {
-      formattedData.push({
-        engine: row.engine.toString().trim(),
-        frame: row.frame.toString().trim(),
-        model: row.model,
-        color: row.color,
-        status: currentStatus,
-        da: row.da,
-        last_location_id: locId,
-        waybill_code: row.waybill_code?.toString().trim(),
-      });
+  [
+    "new_origin_id",
+    "new_destination_id",
+    "new_truck_id",
+    "new_driver_id",
+  ].forEach((field) => {
+    if (hasValue(row[field]) && isNaN(row[field])) {
+      rowErrors.push(
+        `Optional override content field '${field}' must be numeric`,
+      );
     }
   });
 
+  if (hasValue(row.new_expected_quantity)) {
+    const qty = parseInt(row.new_expected_quantity);
+    if (isNaN(qty) || qty < 0 || qty > 9999) {
+      rowErrors.push(
+        `Override entry volume must sit between 0-9999 (got: ${row.new_expected_quantity})`,
+      );
+    }
+  }
+
+  if (
+    hasValue(row.new_expected_arrival) &&
+    isNaN(Date.parse(row.new_expected_arrival))
+  ) {
+    rowErrors.push(
+      `Malformed date stamp string block discovered: "${row.new_expected_arrival}"`,
+    );
+  }
+
+  return rowErrors.length > 0
+    ? {
+        row: rowNum,
+        identifier: row.current_id || `Row ${rowNum}`,
+        details: rowErrors,
+      }
+    : null;
+};
+
+const processUpdateWaybills = async (data, validMetadata) => {
+  const errors = data
+    .map((row, idx) => validateUpdateWaybillRow(row, idx, validMetadata))
+    .filter(Boolean);
   if (errors.length > 0) {
     const errorBody = new Error("Validation Failed");
     errorBody.validationErrors = errors;
     throw errorBody;
   }
 
-  return await Unit.insertBulkUnits(formattedData);
+  const safeField = (val, formatter = (v) => v) => {
+    if (val === undefined || val === null || val.toString().trim() === "")
+      return null;
+    return formatter(val);
+  };
+
+  const formattedData = data.map((row) => ({
+    id: row.current_id,
+    status: safeField(row.new_status, (v) => v.toString().toUpperCase()),
+    origin_id: safeField(row.new_origin_id, parseInt),
+    destination_id: safeField(row.new_destination_id, parseInt),
+    client: safeField(row.new_client),
+    truck_id: safeField(row.new_truck_id, parseInt),
+    driver_id: safeField(row.new_driver_id, parseInt),
+    expected_quantity: safeField(row.new_expected_quantity, parseInt),
+    expected_arrival: safeField(row.new_expected_arrival, (v) =>
+      new Date(v).toISOString(),
+    ),
+  }));
+
+  const result = await Waybill.updateBulkWaybills(formattedData);
+
+  return {
+    isSuccess: result.success,
+    count: result.count,
+    type: "Waybill Update",
+  };
+};
+
+const validateNewUnitRow = (row, index, validMetadata) => {
+  const VALID_STATUSES = ["IN_TRANSIT", "IN_STORAGE"];
+  const rowErrors = [];
+  const rowNum = index + 1;
+
+  const hasValue = (val) =>
+    val !== undefined && val !== null && val.toString().trim() !== "";
+
+  if (!hasValue(row.engine)) rowErrors.push("Engine number is required");
+  if (!hasValue(row.frame)) rowErrors.push("Frame number is required");
+  if (!hasValue(row.model)) rowErrors.push("Missing required field: 'model'");
+  if (!hasValue(row.color)) rowErrors.push("Missing required field: 'color'");
+
+  const currentStatus = row.status?.toString().trim().toUpperCase();
+  if (!VALID_STATUSES.includes(currentStatus)) {
+    rowErrors.push(
+      `Invalid status: "${row.status}". Must be ${VALID_STATUSES.join(", ")}`,
+    );
+  }
+
+  if (validMetadata?.engines && validMetadata.engines.includes(row.engine.toString().trim())) {
+    rowErrors.push(
+      `Engine number "${row.engine}" already exists in the database`,
+    );
+  }
+
+  // 3. Location verification using database metadata
+  const locId = parseInt(row.last_location_id);
+  if (isNaN(locId)) {
+    rowErrors.push(
+      `Location ID must be a number (got: "${row.last_location_id}")`,
+    );
+  } else if (
+    validMetadata?.locationIds &&
+    !validMetadata.locationIds.includes(locId)
+  ) {
+    rowErrors.push(`Location ID ${locId} does not exist in the database`);
+  }
+
+  // 4. Waybill verification using database metadata
+  if (!hasValue(row.waybill_code)) {
+    rowErrors.push("Missing required field: 'waybill_code'");
+  } else if (validMetadata?.waybillCodes) {
+    const cleanCode = row.waybill_code.toString().trim();
+    if (!validMetadata.waybillCodes.includes(cleanCode)) {
+      rowErrors.push(
+        `Waybill Code "${row.waybill_code}" not found in database`,
+      );
+    }
+  }
+
+  return rowErrors.length > 0
+    ? { row: rowNum, engine: row.engine || "N/A", details: rowErrors }
+    : null;
+};
+const processNewUnits = async (data, validMetadata, userId) => {
+  const errors = data
+    .map((row, idx) => validateNewUnitRow(row, idx, validMetadata))
+    .filter(Boolean);
+  if (errors.length > 0) {
+    const errorBody = new Error("Validation Failed");
+    errorBody.validationErrors = errors;
+    throw errorBody;
+  }
+
+  const formattedData = data.map((row) => ({
+    engine: row.engine.toString().trim(),
+    frame: row.frame.toString().trim(),
+    model: row.model ? row.model.toString().trim() : null,
+    color: row.color ? row.color.toString().trim() : null,
+    status: row.status.toString().trim().toUpperCase(),
+    da: row.da ? row.da.toString().trim() : null,
+    last_location_id: parseInt(row.last_location_id),
+    waybill_code: row.waybill_code.toString().trim(),
+  }));
+
+  const result = await Unit.insertBulkUnits(formattedData, userId);
+
+  return {
+    isSuccess: result.success,
+    count: result.count,
+    type: "Unit Creation",
+  };
+};
+
+const validateUpdateUnitRow = (row, index, validMetadata) => {
+  const VALID_STATUSES = ["IN_TRANSIT", "IN_STORAGE"];
+  const rowErrors = [];
+  const rowNum = index + 1;
+
+  const hasValue = (val) =>
+    val !== undefined && val !== null && val.toString().trim() !== "";
+
+  // 1. Core tracking constraint check
+  if (!hasValue(row.old_engine)) {
+    rowErrors.push(
+      "Missing key tracking constraint: 'old_engine' column must contain data",
+    );
+  } else {
+    const cleanEngine = row.old_engine.toString().trim();
+    if (
+      validMetadata?.engines &&
+      !validMetadata.engines.includes(cleanEngine)
+    ) {
+      rowErrors.push(
+        `Old Engine number "${cleanEngine}" does not exist in database`,
+      );
+    }
+  }
+
+  if (!hasValue(row.new_engine)) {
+    rowErrors.push(
+      "Missing key tracking constraint: 'new_engine' column must contain data",
+    );
+  } else {
+    const cleanEngine = row.new_engine.toString().trim();
+    if (validMetadata?.engines && validMetadata.engines.includes(cleanEngine)) {
+      rowErrors.push(
+        `Engine number "${cleanEngine}" already exists in the database`,
+      );
+    }
+  }
+
+  // 2. Optional status check
+  if (hasValue(row.new_status)) {
+    const currentStatus = row.new_status.toString().trim().toUpperCase();
+    if (!VALID_STATUSES.includes(currentStatus)) {
+      rowErrors.push(
+        `Invalid status: "${row.new_status}". Must be ${VALID_STATUSES.join(", ")}`,
+      );
+    }
+  }
+
+  // 3. Optional location metadata check
+  if (hasValue(row.new_last_location_id)) {
+    const locId = parseInt(row.new_last_location_id);
+    if (isNaN(locId)) {
+      rowErrors.push(
+        `Location ID must be a number (got: "${row.new_last_location_id}")`,
+      );
+    } else if (
+      validMetadata?.locationIds &&
+      !validMetadata.locationIds.includes(locId)
+    ) {
+      rowErrors.push(`Location ID ${locId} does not exist in the database`);
+    }
+  }
+
+  // 4. Optional waybill metadata check
+  if (hasValue(row.new_waybill_code) && validMetadata?.waybillCodes) {
+    const cleanCode = row.new_waybill_code.toString().trim();
+    if (!validMetadata.waybillCodes.includes(cleanCode)) {
+      rowErrors.push(
+        `Waybill Code "${row.new_waybill_code}" not found in database`,
+      );
+    }
+  }
+
+  return rowErrors.length > 0
+    ? { row: rowNum, engine: row.old_engine || "N/A", details: rowErrors }
+    : null;
+};
+
+const processUpdateUnits = async (data, validMetadata, userId) => {
+  const errors = data
+    .map((row, idx) => validateUpdateUnitRow(row, idx, validMetadata))
+    .filter(Boolean);
+  if (errors.length > 0) {
+    const errorBody = new Error("Validation Failed");
+    errorBody.validationErrors = errors;
+    throw errorBody;
+  }
+
+  const safeField = (val, formatter = (v) => v) => {
+    if (val === undefined || val === null || val.toString().trim() === "")
+      return null;
+    return formatter(val);
+  };
+
+  const formattedData = data.map((row) => ({
+    old_engine: row.old_engine.toString().trim(),
+    new_engine: safeField(row.new_engine),
+    new_frame: safeField(row.new_frame),
+    new_model: safeField(row.new_model),
+    new_color: safeField(row.new_color),
+    new_status: safeField(row.new_status, (v) => v.toString().toUpperCase()),
+    new_da: safeField(row.new_da),
+    new_last_location_id: safeField(row.new_last_location_id, parseInt),
+    new_waybill_code: safeField(row.new_waybill_code),
+  }));
+
+  const result = await Unit.updateBulkUnits(formattedData, userId);
+
+  return {
+    isSuccess: result.success,
+    count: result.count,
+    type: "Unit Update",
+  };
 };
 
 exports.bulkUploadSheet = async (req, res) => {
@@ -181,14 +444,15 @@ exports.bulkUploadSheet = async (req, res) => {
   try {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(req.file.buffer);
-    const worksheet = workbook.getWorksheet(1); // Get first sheet
+    const worksheet = workbook.getWorksheet(1);
 
-    const [locationIds, waybillCodes] = await Promise.all([
+    const [locationIds, waybillCodes, engines] = await Promise.all([
       ReferenceModel.getAllLocationIds(),
       Waybill.getAllWaybillCodes(),
+      Unit.getAllEngines(),      
     ]);
 
-    const validMetadata = { locationIds, waybillCodes };
+    const validMetadata = { locationIds, waybillCodes, engines };
 
     const data = [];
     // workbook to JSON mapping
@@ -216,13 +480,31 @@ exports.bulkUploadSheet = async (req, res) => {
       headers.includes(header),
     );
 
+    const isWaybillUpdateSheet = REQUIRED_WAYBILL_UPDATE_HEADERS.every(
+      (header) => headers.includes(header),
+    );
+
+    const isUnitUpdateSheet = REQUIRED_UNIT_UPDATE_HEADERS.every((header) =>
+      headers.includes(header),
+    );
+
     if (isWaybillSheet) {
-      const result = await processWaybills(data);
+      const result = await processNewWaybills(data, validMetadata);
+      return res.status(200).json({ type: "WAYBILLS", ...result });
+    }
+
+    if (isWaybillUpdateSheet) {
+      const result = await processUpdateWaybills(data, validMetadata);
       return res.status(200).json({ type: "WAYBILLS", ...result });
     }
 
     if (isUnitSheet) {
-      const result = await processUnits(data, validMetadata);
+      const result = await processNewUnits(data, validMetadata);
+      return res.status(200).json({ type: "UNITS", ...result });
+    }
+
+    if (isUnitUpdateSheet) {
+      const result = await processUpdateUnits(data, validMetadata);
       return res.status(200).json({ type: "UNITS", ...result });
     }
 
