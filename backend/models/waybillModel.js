@@ -151,34 +151,6 @@ const Waybill = {
     return parseInt(result.rows[0].total);
   },
 
-  insertFromForm: async (data) => {
-    const {
-      id,
-      status,
-      origin_id,
-      destination_id,
-      client,
-      driver_id,
-      truck_id,
-    } = data;
-
-    const query = `
-      INSERT INTO waybills (id, status, origin_id, destination_id, client, driver_id, truck_id) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING *
-    `;
-    const res = await db.query(query, [
-      id,
-      status,
-      origin_id,
-      destination_id,
-      client,
-      driver_id || null,
-      truck_id || null,
-    ]);
-    return res.rows[0];
-  },
-
   setStatus: async (waybillId, status) => {
     const validStatuses = [
       "ADVICE",
@@ -201,6 +173,46 @@ const Waybill = {
     `;
 
     const res = await db.query(query, [waybillId, status]);
+    return res.rows[0];
+  },
+
+  insertFromForm: async (data) => {
+    const {
+      code, 
+      status, 
+      origin_id,
+      destination_id, 
+      client, 
+      driver_id, 
+      truck_id, 
+      expected_quantity,
+      expected_arrival,
+    } = data;
+
+    const query = `
+      INSERT INTO waybills (
+        id, status, origin_id, destination_id, client, driver_id, truck_id, expected_quantity, expected_arrival
+      ) 
+      VALUES (
+        $1 || '-' || TO_CHAR(CURRENT_DATE, 'YYMMDD') || '-' || LPAD(nextval('waybill_code_seq')::text, 4, '0'),
+        $2, $3, $4, $5, $6, $7, $8, $9
+      )
+      RETURNING id
+    `;
+
+    const values = [
+      code,
+      status,
+      origin_id,
+      destination_id,
+      client,
+      driver_id,
+      truck_id,
+      expected_quantity,
+      expected_arrival,
+    ];
+
+    const res = await db.query(query, values);
     return res.rows[0];
   },
 

@@ -23,6 +23,7 @@ export default function WaybillForm() {
   const [error, setError] = useState("");
 
   const [waybill, setWaybill] = useState(null);
+  const [wbCode, setWBCode] = useState("");
   const [status, setStatus] = useState("");
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
@@ -32,6 +33,7 @@ export default function WaybillForm() {
   const [expectedDate, setExpectedDate] = useState("");
   const [client, setClient] = useState("");
 
+  const statusRef = useRef(null);
   const clientRef = useRef(null);
   const originRef = useRef(null);
   const destRef = useRef(null);
@@ -114,12 +116,15 @@ export default function WaybillForm() {
       );
 
       const details = {
+        code: wbCode,
         status: status,
         origin_id: selectedOrig?.id,
         destination_id: selectedDest?.id,
         client: client,
         driver_id: selectedDriver?.id,
         truck_id: selectedTruck?.id,
+        expected_quantity: status === "ADVICE" ? expectedQty || null : null,
+        expected_arrival: status === "ADVICE" ? expectedDate || null : null,
       };
 
       const response = await api.saveWaybillForm(details);
@@ -198,8 +203,16 @@ export default function WaybillForm() {
         <>
           <h1 className="page-title"> Waybills </h1>
 
+          <GenericInput
+            val={wbCode}
+            setVal={setWBCode}
+            title={"WB Code"}
+            onKeyDown={(e) => handleGenericEnter(e, statusRef, wbCode)}
+            placeholder={"Enter Waybill Code"}
+          />
+
           <GenericSelect
-            ref={originRef}
+            ref={statusRef}
             selected={status}
             setSelected={(val) => {
               setStatus(val);
