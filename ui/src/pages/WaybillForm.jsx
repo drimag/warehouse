@@ -132,6 +132,7 @@ export default function WaybillForm() {
 
       const displayDetails = {
         id: response.id,
+        status: status,
         origin: origin,
         destination: destination,
         truck: truck,
