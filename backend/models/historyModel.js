@@ -48,13 +48,29 @@ const History = {
     return res.rows;
   },
 
-  createManifest: async (waybillId, unitId, type, userId) => {
+  createManifest: async (waybillId, unitScannedCode, type, userId) => {
     const query = `
-      INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type, user_id)
-      VALUES ($1, $2, $3, $4)
-      RETURNING *;
-    `;
-    const res = await db.query(query, [waybillId, unitId, type, userId]);
+    INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type, user_id)
+    VALUES (
+      $1, 
+      (SELECT id FROM units WHERE engine = $2 OR frame = $2 LIMIT 1), 
+      $3, 
+      $4
+    )
+    RETURNING *;
+  `;
+
+    const res = await db.query(query, [
+      waybillId,
+      unitScannedCode,
+      type,
+      userId,
+    ]);
+
+    if (res.rows.length === 0) {
+      throw new Error("Failed to log manifest item.");
+    }
+
     return res.rows[0];
   },
 
