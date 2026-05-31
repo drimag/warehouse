@@ -23,19 +23,18 @@ export default function WaybillConfirm({
       </p>
       <p>
         <strong>Client:</strong>{" "}
-        {waybill.client ? waybill.client : "Unknownd Client"}
+        {waybill.client ? waybill.client : "Unknown Client"}
       </p>
       <p>
         <strong>Driver:</strong>{" "}
-        {waybill.driver ? waybill.driver : "Unknownd Driver"}
+        {waybill.driver ? waybill.driver : "Unknown Driver"}
       </p>
       <p>
         <strong>Truck:</strong>{" "}
-        {waybill.truck ? waybill.truck : "Unknownd Truck"}
+        {waybill.truck ? waybill.truck : "Unknown Truck"}
       </p>
       {waybill.status === "ADVICE" && (
         <>
-          <h1>Advice</h1>
           <p>
             <strong>Expected Date of Arrival:</strong>{" "}
             {waybill.expectedDate ? waybill.expectedDate : "Unknown Time"}

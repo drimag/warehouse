@@ -4,7 +4,7 @@ const manifestController = require("../controllers/manifestController");
 const { authenticateToken, restrictToRoles } = require("../middleware/auth");
 
 router.post(
-  "/waybill/:waybillId/unit/:unitId/type/:type/user/:userId",
+  "/createNew",
   authenticateToken,
   restrictToRoles("ADMIN", "SCANNER"),
   manifestController.createManifest,

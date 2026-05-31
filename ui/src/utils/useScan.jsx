@@ -106,7 +106,7 @@ export const useScan = () => {
         await api.createManifest(
           waybillID,
           scan.value,
-          selectedWaybill.status,
+          selectedWaybill.status === "ADVICE" ? "DEPARTURE" : "ARRIVAL",
           null,
         );
       }

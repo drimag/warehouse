@@ -112,7 +112,17 @@ exports.setArrived = async (req, res) => {
 
 exports.saveWaybillForm = async (req, res) => {
   try {
-    const { status, origin_id, destination_id, client, driver_id, truck_id } = req.body;
+    const {
+      code,
+      status,
+      origin_id,
+      destination_id,
+      client,
+      driver_id,
+      truck_id,
+      expected_quantity,
+      expected_arrival,
+    } = req.body;
 
     if (!origin_id || !destination_id || !client) {
       return res
@@ -120,29 +130,21 @@ exports.saveWaybillForm = async (req, res) => {
         .json({ error: "Origin and Destination are mandatory" });
     }
 
-    const dateStr = new Date().toISOString().split("T")[0].replace(/-/g, "");
-
-    const count = await Waybill.getTodayCount();
-    const sequence = String(count + 1).padStart(2, "0");
-
-    // const prefix = `${origin.substring(0, 3).toUpperCase()}-${destination.substring(0, 3).toUpperCase()}`;
-    const prefix = 'SAM-PLE';
-
-    const id = `${prefix}-${dateStr}-${sequence}`;
-
     const result = await Waybill.insertFromForm({
-      id,
+      code,
       status,
       origin_id,
       destination_id,
       client,
       driver_id,
-      truck_id
+      truck_id,
+      expected_quantity,
+      expected_arrival,
     });
 
     res.status(200).json({
       message: "Created successfully",
-      id: result.id,
+      id: result.id || null,
     });
   } catch (err) {
     console.error("--- BACKEND CRASH ---");
