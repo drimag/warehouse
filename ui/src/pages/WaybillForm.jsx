@@ -40,7 +40,10 @@ export default function WaybillForm() {
   const driverRef = useRef(null);
   const truckRef = useRef(null);
 
-  const statusList = ["ADVICE", "IN_TRANSIT"];
+  const statusList = [
+    { value: "ADVICE", label: "For Arrival (ADVICE)" },
+    { value: "IN_TRANSIT", label: "For Departure (IN_TRANSIT)" },
+  ];
   const [locationList, setLocationsList] = useState([]);
   const [truckList, setTruckList] = useState([]);
   const [driverList, setDriverList] = useState([]);
