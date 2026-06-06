@@ -76,14 +76,8 @@ export const api = {
   getUnitHistory: (unitID) =>
     apiInstance.get(`/units/history/${unitID}`).then((res) => res.data),
 
-  scanUnitByVin: (scan) =>
-    apiInstance.post(`/units/scan/${scan}`).then((res) => res.data),
-
-  scanNewUnit: (scan) =>
-    apiInstance.post(`/units/new_scan/${scan}`).then((res) => res.data),
-
-  setUnitInTransit: (scan) =>
-    apiInstance.post(`/units/in_transit/${scan}`).then((res) => res.data),
+  findUnitByVIN: (scan) =>
+    apiInstance.post(`/units/find_unit/${scan}`).then((res) => res.data),
 
   insertNewUnit: (details) =>
     apiInstance.post("/units/new_unit", details).then((res) => res.data),
