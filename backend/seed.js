@@ -89,8 +89,13 @@ const seedDatabase = async () => {
         expected_arrival TIMESTAMP WITH TIME ZONE,
         departure_photo_url TEXT,
         arrival_photo_url TEXT,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        loading_started_at TIMESTAMP WITH TIME ZONE
       );
+
+      -- for fast lookup
+      CREATE INDEX idx_waybills_status ON waybills(status);
+      -- WHERE status = 'LOADING'; (can ignore wbs with other statuses)
 
       -- Selective SCD2 Implementation
       CREATE TABLE IF NOT EXISTS unit_history (

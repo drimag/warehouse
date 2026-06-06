@@ -1,6 +1,15 @@
 const db = require("../config/db");
 const { checkAndResetSequence } = require("../utils/waybillUtils");
 
+const cleanupLoadingQuery = 
+  `
+    UPDATE waybills 
+    SET status = 'ADVICE', 
+        loading_started_at = NULL
+    WHERE status = 'LOADING' 
+      AND loading_started_at < NOW() - INTERVAL '15 minutes';
+  `;
+
 const Waybill = {
   // Page 3: Display all waybills
   getAllWaybills: async () => {
@@ -15,6 +24,8 @@ const Waybill = {
   },
 
   getWaybillsForScan: async () => {
+    await db.query(cleanupLoadingQuery);
+
     const query = `
       SELECT w.*
       FROM waybills w
@@ -178,13 +189,13 @@ const Waybill = {
 
   insertFromForm: async (data) => {
     const {
-      code, 
-      status, 
+      code,
+      status,
       origin_id,
-      destination_id, 
-      client, 
-      driver_id, 
-      truck_id, 
+      destination_id,
+      client,
+      driver_id,
+      truck_id,
       expected_quantity,
       expected_arrival,
     } = data;
