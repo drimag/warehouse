@@ -191,6 +191,8 @@ const Waybill = {
   },
 
   touchLoadingTimeout: async (waybillId) => {
+    const cleanUp = await db.query(cleanupLoadingQuery);
+    
     const query = `
       UPDATE waybills 
       SET loading_started_at = NOW()
