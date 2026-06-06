@@ -298,6 +298,7 @@ const Waybill = {
     const client = await db.connect();
     await checkAndResetSequence();
     try {
+      await client.query("BEGIN");
       const query = `
         UPDATE waybills AS w
         SET 
