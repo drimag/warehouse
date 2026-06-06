@@ -18,9 +18,13 @@ const checkAndResetSequence = async () => {
 
 const cleanupLoadingQuery = `
   UPDATE waybills 
-  SET status = 'ADVICE', 
-      loading_started_at = NULL
-  WHERE status = 'LOADING' 
+  SET 
+    status = CASE 
+      WHEN status = 'LOADING' THEN 'ADVICE'::valid_waybill_status
+      WHEN status = 'UNLOADING' THEN 'IN_TRANSIT'::valid_waybill_status
+    END,
+    loading_started_at = NULL
+  WHERE status IN ('LOADING', 'UNLOADING') 
     AND loading_started_at < NOW() - INTERVAL '15 minutes';
 `;
 
