@@ -192,7 +192,7 @@ const Waybill = {
     const query = `
       UPDATE waybills 
       SET loading_started_at = NOW()
-      WHERE id = $1 AND status = 'LOADING'
+      WHERE id = $1 AND status IN ('LOADING', 'UNLOADING')
       RETURNING *;
     `;
 
