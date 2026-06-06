@@ -56,16 +56,34 @@ exports.getWaybillDetails = async (req, res) => {
   }
 };
 
-exports.startLoading = async (req, res) => {
+exports.startScanning = async (req, res) => {
+  const waybillId = req.params.id;
+
   try {
-    const waybill = await Waybill.setStatus(req.params.id, "LOADING");
-    if (!waybill) {
+    const waybillCheck = await Waybill.getById(waybillId);
+    
+    if (!waybillCheck) {
       return res.status(404).json({ error: "Waybill not found" });
     }
-    return res.status(200).json(waybill);
+
+    const currentStatus = waybillCheck.status;
+    let nextStatus = null;
+
+    if (currentStatus === "ADVICE") {
+      nextStatus = "LOADING";
+    } else if (currentStatus === "IN_TRANSIT") {
+      nextStatus = "UNLOADING"; 
+    } else {
+      return res.status(400).json({ 
+        error: `Cannot start scanning. Waybill is currently in '${currentStatus}' status.` 
+      });
+    }
+
+    const updatedWaybill = await Waybill.setStatus(waybillId, nextStatus);
+    return res.status(200).json(updatedWaybill);
   } catch (err) {
     console.error("❌ DATABASE ERROR:", err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
 

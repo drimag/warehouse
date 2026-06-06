@@ -5,10 +5,10 @@ const { authenticateToken, restrictToRoles } = require("../middleware/auth");
 
 // TODO: Change to router.post
 router.get(
-  "/loading/:id",
+  "/start_scan/:id",
   authenticateToken,
   restrictToRoles("ADMIN", "SCANNER"),
-  waybillController.startLoading,
+  waybillController.startScanning,
 );
 // TODO: Change to router.post
 router.get(

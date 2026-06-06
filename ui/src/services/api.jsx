@@ -53,8 +53,8 @@ export const api = {
   saveWaybillForm: (details) =>
     apiInstance.post("/waybills/save_form", details).then((res) => res.data),
 
-  startLoading: (id) =>
-    apiInstance.get(`/waybills/loading/${id}`).then((res) => res.data),
+  startScanning: (id) =>
+    apiInstance.get(`/waybills/start_scan/${id}`).then((res) => res.data),
 
   setAdvice: (id) =>
     apiInstance.get(`/waybills/advice/${id}`).then((res) => res.data),

@@ -161,6 +161,7 @@ const Waybill = {
       "ADVICE",
       "LOADING",
       "IN_TRANSIT",
+      "UNLOADING",
       "ARRIVED",
       "CLOSED",
     ];
