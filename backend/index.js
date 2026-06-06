@@ -19,7 +19,7 @@ app.use(cors({
     }
     return callback(null, true);
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true
 }));// Critical: Allows React (port 3000) to talk to Node (port 5000)
 app.use(express.json());

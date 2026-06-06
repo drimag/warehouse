@@ -1,5 +1,8 @@
 const db = require("../config/db");
-const { checkAndResetSequence } = require("../utils/waybillUtils");
+const {
+  checkAndResetSequence,
+  cleanupLoadingQuery,
+} = require("../utils/waybillUtils");
 
 const Waybill = {
   // Page 3: Display all waybills
@@ -15,6 +18,8 @@ const Waybill = {
   },
 
   getWaybillsForScan: async () => {
+    await db.query(cleanupLoadingQuery);
+
     const query = `
       SELECT w.*
       FROM waybills w
@@ -156,6 +161,7 @@ const Waybill = {
       "ADVICE",
       "LOADING",
       "IN_TRANSIT",
+      "UNLOADING",
       "ARRIVED",
       "CLOSED",
     ];
@@ -167,7 +173,11 @@ const Waybill = {
     const query = `
       UPDATE waybills 
       SET 
-        status = $2
+        status = $2::text,
+        loading_started_at = CASE 
+          WHEN $2::text = 'LOADING' THEN NOW() 
+          ELSE NULL 
+        END
       WHERE id = $1
       RETURNING *;
     `;
@@ -176,15 +186,34 @@ const Waybill = {
     return res.rows[0];
   },
 
+  touchLoadingTimeout: async (waybillId) => {
+    const cleanUp = await db.query(cleanupLoadingQuery);
+
+    const query = `
+      UPDATE waybills 
+      SET loading_started_at = NOW()
+      WHERE id = $1 AND status IN ('LOADING', 'UNLOADING')
+      RETURNING *;
+    `;
+
+    const res = await db.query(query, [waybillId]);
+
+    if (res.rows.length === 0) {
+      return null;
+    }
+
+    return res.rows[0];
+  },
+
   insertFromForm: async (data) => {
     const {
-      code, 
-      status, 
+      code,
+      status,
       origin_id,
-      destination_id, 
-      client, 
-      driver_id, 
-      truck_id, 
+      destination_id,
+      client,
+      driver_id,
+      truck_id,
       expected_quantity,
       expected_arrival,
     } = data;
@@ -269,6 +298,7 @@ const Waybill = {
     const client = await db.connect();
     await checkAndResetSequence();
     try {
+      await client.query("BEGIN");
       const query = `
         UPDATE waybills AS w
         SET 
@@ -315,6 +345,84 @@ const Waybill = {
       await client.query("ROLLBACK");
       console.error("UNNEST Bulk Update Failed:", error);
       throw error;
+    } finally {
+      client.release();
+    }
+  },
+
+  processBulkManifest: async (waybillId, barcodes) => {
+    const client = await db.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      const wbCheck = await client.query(
+        "SELECT status FROM waybills WHERE id = $1 FOR UPDATE;",
+        [waybillId],
+      );
+
+      if (wbCheck.rows.length === 0) {
+        throw new Error("Waybill manifest not found.");
+      }
+
+      const currentStatus = wbCheck.rows[0].status;
+
+      await client.query(cleanupLoadingQuery);
+
+      if (currentStatus !== "LOADING" && currentStatus !== "UNLOADING") {
+        throw new Error(
+          `Cannot finalize manifest. Waybill is currently ${currentStatus}.`,
+        );
+      }
+
+      const nextStatus = currentStatus === "LOADING" ? "IN_TRANSIT" : "ARRIVED";
+      const manifestType =
+        currentStatus === "LOADING" ? "DEPARTURE" : "ARRIVAL";
+
+      const updatedWb = await client.query(
+        `
+        UPDATE waybills 
+        SET status = $2, loading_started_at = NULL 
+        WHERE id = $1 
+        RETURNING *;
+      `,
+        [waybillId, nextStatus],
+      );
+
+      for (const barcode of barcodes) {
+        await client.query(
+          `
+            WITH updated AS (
+              UPDATE units 
+              SET status = 'IN_TRANSIT'
+              WHERE engine = $1 OR frame = $1
+              RETURNING id
+            )
+            INSERT INTO units (engine, status)
+            SELECT $1, 'IN_TRANSIT'
+            WHERE NOT EXISTS (SELECT 1 FROM updated);
+          `,
+          [barcode],
+        );
+
+        await client.query(
+          `
+            INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type)
+            VALUES (
+              $1, 
+              (SELECT id FROM units WHERE engine = $2 OR frame = $2 LIMIT 1), 
+              $3
+            );
+          `,
+          [waybillId, barcode, manifestType],
+        );
+      }
+
+      await client.query("COMMIT");
+      return updatedWb.rows[0];
+    } catch (transactionError) {
+      await client.query("ROLLBACK");
+      throw transactionError;
     } finally {
       client.release();
     }

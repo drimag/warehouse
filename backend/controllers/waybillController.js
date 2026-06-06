@@ -56,57 +56,65 @@ exports.getWaybillDetails = async (req, res) => {
   }
 };
 
-exports.startLoading = async (req, res) => {
+exports.startScanning = async (req, res) => {
+  const waybillId = req.params.id;
+
   try {
-    const waybill = await Waybill.setStatus(req.params.id, "LOADING");
-    if (!waybill) {
+    const waybillCheck = await Waybill.getWaybillInfo(waybillId);
+    
+    if (!waybillCheck) {
       return res.status(404).json({ error: "Waybill not found" });
     }
-    return res.status(200).json(waybill);
+
+    const currentStatus = waybillCheck.status;
+    let nextStatus = null;
+
+    if (currentStatus === "ADVICE") {
+      nextStatus = "LOADING";
+    } else if (currentStatus === "IN_TRANSIT") {
+      nextStatus = "UNLOADING"; 
+    } else {
+      return res.status(400).json({ 
+        error: `Cannot start scanning. Waybill is currently in '${currentStatus}' status.` 
+      });
+    }
+
+    const updatedWaybill = await Waybill.setStatus(waybillId, nextStatus);
+    return res.status(200).json(updatedWaybill);
   } catch (err) {
     console.error("❌ DATABASE ERROR:", err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
 
-exports.setAdvice = async (req, res) => {
-  try {
-    const waybill = await Waybill.setStatus(req.params.id, "ADVICE");
-    if (!waybill) {
-      return res.status(404).json({ error: "Waybill not found" });
-    }
-    return res.status(200).json(waybill);
-  } catch (err) {
-    console.error("❌ DATABASE ERROR:", err);
-    res.status(500).json({ error: err.message });
-  }
-};
+exports.cancelScanning = async (req, res) => {
+  const waybillId = req.params.id;
 
-exports.setInTransit = async (req, res) => {
-  console.log("called set In transit");
   try {
-    const waybill = await Waybill.setStatus(req.params.id, "IN_TRANSIT");
-    if (!waybill) {
+    const waybillCheck = await Waybill.getWaybillInfo(waybillId);
+    
+    if (!waybillCheck) {
       return res.status(404).json({ error: "Waybill not found" });
     }
-    return res.status(200).json(waybill);
-  } catch (err) {
-    console.error("❌ DATABASE ERROR:", err);
-    res.status(500).json({ error: err.message });
-  }
-};
 
-exports.setArrived = async (req, res) => {
-  console.log("called set arrvied");
-  try {
-    const waybill = await Waybill.setStatus(req.params.id, "ARRIVED");
-    if (!waybill) {
-      return res.status(404).json({ error: "Waybill not found" });
+    const currentStatus = waybillCheck.status;
+    let nextStatus = null;
+
+    if (currentStatus === "LOADING") {
+      nextStatus = "ADVICE";
+    } else if (currentStatus === "UNLOADING") {
+      nextStatus = "IN_TRANSIT"; 
+    } else {
+      return res.status(400).json({ 
+        error: `Cannot cancel scanning. Waybill is currently in '${currentStatus}' status.` 
+      });
     }
-    return res.status(200).json(waybill);
+
+    const updatedWaybill = await Waybill.setStatus(waybillId, nextStatus);
+    return res.status(200).json(updatedWaybill);
   } catch (err) {
     console.error("❌ DATABASE ERROR:", err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
 
@@ -152,5 +160,29 @@ exports.saveWaybillForm = async (req, res) => {
     console.error("---------------------");
 
     res.status(500).json({ error: err.message });
+  }
+};
+
+exports.touchLoadingTimeout = async (req, res) => {
+  const waybillId = req.params.id;
+
+  try {
+    const updatedWaybill = await Waybill.touchLoadingTimeout(waybillId);
+
+    if (!updatedWaybill) {
+      return res.status(409).json({
+        error:
+          "Session expired. This waybill is no longer locked to your terminal.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Lock extended successfully.",
+      expiresAt: updatedWaybill.loading_started_at,
+    });
+  } catch (error) {
+    console.error("Heartbeat error:", error);
+    return res.status(500);
   }
 };

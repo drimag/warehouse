@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { api } from "../services/api";
 
 export const useScan = () => {
@@ -11,10 +11,42 @@ export const useScan = () => {
   const [showRescan, setShowRescan] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState("");
+  const [scanError, setScanError] = useState("");
   const [confirmQtyMismatch, setConfirmQtyMismatch] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  const scan1Ref = useRef(null);
+  const scan2Ref = useRef(null);
+
   // --- LOGIC HANDLERS ---
+
+  const focusNext = (nextRef) => {
+    const element = nextRef.current;
+    if (!element) return;
+    element.focus();
+
+    if (element.tagName === "SELECT" && "showPicker" in element) {
+      try {
+        element.showPicker();
+      } catch (err) {
+        console.warn("Auto-picker blocked or unsupported:", err);
+      }
+    } else if (element.tagName === "INPUT" && element.type === "file") {
+      element.click();
+    }
+  };
+
+  const resetPage = () => {
+    setError("");
+    setScanError("");
+    setScan1("");
+    setScan2("");
+    setConfirmQtyMismatch(false);
+    setShowRescan(false);
+    setConfirmedScans([]);
+    setShowModal(false);
+    setSubmitted(false);
+  };
 
   const handleWaybillSelect = (id, validWaybills) => {
     const selectedDetails = validWaybills.find((wb) => wb.id === id);
@@ -24,54 +56,65 @@ export const useScan = () => {
   };
 
   const startScan = async () => {
-    setError("");
-    setConfirmQtyMismatch(false);
-    setShowRescan(false);
-    setConfirmedScans([]);
+    resetPage();
     setShowModal(true);
 
     try {
-      await api.startLoading(waybillID);
+      await api.startScanning(waybillID);
+      focusNext(scan1Ref);
     } catch (err) {
-      console.error("❌ ERROR SETTING WAYBILL STATUS TO LOADING:", err);
+      console.error("❌ ERROR STARTING WAYBILL SCAN:", err);
     }
   };
 
   const handleNext = async () => {
-    setError("");
+    setScanError("");
     setConfirmQtyMismatch(false);
 
     const currentScan = scan1.trim();
+    try {
+      const wbLoading = await api.touchLoadingTimeout(waybillID);
+    } catch (err) {
+      console.error("❌ ERROR RESETING LOADING:", err);
+      setScanError("Database connection error. Try again.");
+      resetPage();
+      setError("❌ SCAN ERROR. PLEASE TRY AGAIN");
+      return;
+    }
 
     if (confirmedScans.includes(currentScan)) {
-      setError(`Entry ${currentScan} Already Scanned. Please try again.`);
+      setScanError(`Entry ${currentScan} Already Scanned. Please try again.`);
       setScan1("");
       setScan2("");
+      focusNext(scan1Ref);
       return;
     } else if (showRescan) {
       if (scan1 !== scan2) {
-        setError("Mismatched scan values. Please try again.");
+        setScanError("Mismatched scan values. Please try again.");
         setScan1("");
         setScan2("");
         setShowRescan(false);
       } else {
         finishScan(currentScan, true);
       }
+      focusNext(scan1Ref);
       return;
     } else {
       try {
-        const unit = await api.scanUnitByVin(currentScan);
+        const unit = await api.findUnitByVIN(currentScan);
         if (unit) {
+          focusNext(scan1Ref);
           finishScan(currentScan, false);
         } else {
-          setError(
+          setScanError(
             `Entry ${currentScan} not found in database. Please rescan to confirm.`,
           );
           setShowRescan(true);
         }
       } catch (err) {
         console.error("❌ ERROR SEARCHING SCAN:", err);
-        setError("Database connection error. Try again.");
+        setScanError("Database connection error. Try again.");
+        focusNext(scan1Ref);
       }
     }
   };
@@ -80,7 +123,7 @@ export const useScan = () => {
     const expected = selectedWaybill?.expected_qty;
 
     if (expected && confirmedScans.length !== expected && !confirmQtyMismatch) {
-      setError(
+      setScanError(
         "Scanned Entries Do Not Match Expected Quantity. If this is correct, click Finish again.",
       );
       setConfirmQtyMismatch(true);
@@ -94,47 +137,31 @@ export const useScan = () => {
 
   const handleEnd = async () => {
     try {
-      const newUnits = confirmedScans.filter((scan) => !scan.isNew);
-      for (const scan of newUnits) {
-        await api.scanNewUnit(scan.value);
-      }
-      selectedWaybill.status === "ADVICE"
-        ? await api.setInTransit(waybillID)
-        : await api.setArrived(waybillID);
-      for (const scan of confirmedScans) {
-        await api.setUnitInTransit(scan.value);
-        await api.createManifest(
-          waybillID,
-          scan.value,
-          selectedWaybill.status === "ADVICE" ? "DEPARTURE" : "ARRIVAL",
-          null,
-        );
-      }
+      const barcodes = confirmedScans.map((scan) => scan.value);
+
+      await api.finalizeScan({
+        waybillId: waybillID,
+        barcodes: barcodes,
+      });
+
+      resetPage();
     } catch (err) {
-      console.log(err);
+      console.error(err);
+      resetPage();
+      setError(
+        err.response?.data?.error || "A network error occurred while saving.",
+      );
     }
-    setError("");
-    setShowModal(false);
-    setSubmitted(false);
-    setSelectedWaybill(null);
-    setWaybillID("");
-    setConfirmedScans([]);
   };
 
   const handleCancel = async () => {
     try {
-      await api.setAdvice(waybillID);
+      await api.cancelScanning(waybillID);
     } catch (err) {
-      console.error("❌ ERROR SETTING WAYBILL STATUS TO LOADING:", err);
+      console.error("❌ ERROR CANCELLING WAYBILL SCAN:", err);
+    } finally {
+      resetPage();
     }
-    setError("");
-    setScan1("");
-    setScan2("");
-    setConfirmQtyMismatch(false);
-    setShowRescan(false);
-    setConfirmedScans([]);
-    setShowModal(false);
-    setSubmitted(false);
   };
 
   const finishScan = (currentScan, isNew) => {
@@ -163,6 +190,7 @@ export const useScan = () => {
     setScan2,
     showRescan,
     showModal,
+    scanError,
     error,
     submitted,
     // Functions
@@ -172,5 +200,8 @@ export const useScan = () => {
     handleFinish,
     handleEnd,
     handleCancel,
+    focusNext,
+    scan1Ref,
+    scan2Ref,
   };
 };

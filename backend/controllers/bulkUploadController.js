@@ -236,7 +236,7 @@ const processUpdateWaybills = async (data, validMetadata) => {
 };
 
 const validateNewUnitRow = (row, index, validMetadata) => {
-  const VALID_STATUSES = ["IN_TRANSIT", "IN_STORAGE"];
+  const VALID_STATUSES = ["IN_TRANSIT", "IN_STORAGE", "CLOSED"];
   const rowErrors = [];
   const rowNum = index + 1;
 
@@ -321,7 +321,7 @@ const processNewUnits = async (data, validMetadata, userId) => {
 };
 
 const validateUpdateUnitRow = (row, index, validMetadata) => {
-  const VALID_STATUSES = ["IN_TRANSIT", "IN_STORAGE"];
+  const VALID_STATUSES = ["IN_TRANSIT", "IN_STORAGE", "CLOSED"];
   const rowErrors = [];
   const rowNum = index + 1;
 

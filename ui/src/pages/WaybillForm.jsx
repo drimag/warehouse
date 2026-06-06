@@ -40,7 +40,10 @@ export default function WaybillForm() {
   const driverRef = useRef(null);
   const truckRef = useRef(null);
 
-  const statusList = ["ADVICE", "IN_TRANSIT"];
+  const statusList = [
+    { value: "ADVICE", label: "For Arrival (ADVICE)" },
+    { value: "IN_TRANSIT", label: "For Departure (IN_TRANSIT)" },
+  ];
   const [locationList, setLocationsList] = useState([]);
   const [truckList, setTruckList] = useState([]);
   const [driverList, setDriverList] = useState([]);
@@ -128,7 +131,6 @@ export default function WaybillForm() {
       };
 
       const response = await api.saveWaybillForm(details);
-      console.log("response: ", response);
 
       const displayDetails = {
         id: response.id,
@@ -142,8 +144,6 @@ export default function WaybillForm() {
         expectedDate: expectedDate,
       };
       setWaybill(displayDetails);
-      console.log("display details: ", displayDetails);
-      console.log("waybill withinhandlesubmit: ", waybill);
       setSubmitted(true);
       return response;
     } catch (err) {

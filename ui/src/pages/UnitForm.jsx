@@ -25,7 +25,11 @@ export default function UnitForm() {
 
   const [locationsList, setLocationsList] = useState([]);
   const [locationData, setLocationData] = useState([]);
-  const statusList = ["IN_TRANSIT", "IN_STORAGE", "CLOSED"];
+  const statusList = [
+    { value: "IN_TRANSIT", label: "In Transit or for Arrival (IN_TRANSIT)" },
+    { value: "IN_STORAGE", label: "In Storage or for Departure (IN_STORAGE)" },
+    { value: "CLOSED", label: "CLOSED" },
+  ];
 
   const frameRef = useRef(null);
   const modelRef = useRef(null);

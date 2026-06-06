@@ -2,7 +2,6 @@ export default function WaybillConfirm({
   waybill,
   setSubmitted,
 }) {
-  console.log("waybill: ", waybill);
   return (
     <div className="scan-result">
       <h1>Confirm Details</h1>

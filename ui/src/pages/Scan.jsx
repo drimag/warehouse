@@ -23,6 +23,7 @@ export default function Scan() {
     setScan2,
     showRescan,
     showModal,
+    scanError,
     error,
     submitted,
     handleWaybillSelect,
@@ -31,14 +32,10 @@ export default function Scan() {
     handleFinish,
     handleEnd,
     handleCancel,
+    focusNext,
+    scan1Ref,
+    scan2Ref,
   } = useScan();
-
-  const originRef = useRef(null);
-  const destRef = useRef(null);
-  const driverRef = useRef(null);
-  const truckRef = useRef(null);
-  const qtyRef = useRef(null);
-  const photoRef = useRef(null);
 
   const [preview, setPreview] = useState(null);
 
@@ -48,22 +45,6 @@ export default function Scan() {
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [networkError, setNetworkError] = useState(null);
-
-  const focusNext = (nextRef) => {
-    const element = nextRef.current;
-    if (!element) return;
-    element.focus();
-
-    if (element.tagName === "SELECT" && "showPicker" in element) {
-      try {
-        element.showPicker();
-      } catch (err) {
-        console.warn("Auto-picker blocked or unsupported:", err);
-      }
-    } else if (element.tagName === "INPUT" && element.type === "file") {
-      element.click();
-    }
-  };
 
   useEffect(() => {
     const fetchPageData = async () => {
@@ -97,6 +78,12 @@ export default function Scan() {
   }, [user, authLoading]);
 
   useEffect(() => {
+    if (showRescan) {
+      focusNext(scan2Ref);
+    }
+  }, [showRescan, focusNext]);
+
+  useEffect(() => {
     if (!waybillID) return;
     if (authLoading) return;
     if (!user) return;
@@ -127,11 +114,9 @@ export default function Scan() {
           <h1 className="page-title"> Stock In / Stock Out </h1>
 
           <GenericSelect
-            ref={originRef}
             selected={waybillID}
             setSelected={(val) => {
               handleWaybillSelect(val, validWaybills);
-              focusNext(destRef);
             }}
             title={"Select Waybill"}
             options={waybillList}
@@ -168,7 +153,6 @@ export default function Scan() {
                 Destination: {selectedWaybill.destination}
               </p>
               <PhotoUpload
-                ref={photoRef}
                 title={"Photo"}
                 preview={preview}
                 setPreview={setPreview}
@@ -177,6 +161,12 @@ export default function Scan() {
                 Proceed to Scanning
               </button>
             </div>
+          )}
+
+          {error && (
+            <p className="error-text" style={{ color: "red" }}>
+              {error}
+            </p>
           )}
         </>
       ) : (
@@ -211,13 +201,14 @@ export default function Scan() {
           <div className="modal-content">
             <h1 className="page-title">Scan Next Unit</h1>
 
-            {error && (
+            {scanError && (
               <p className="error-text" style={{ color: "red" }}>
-                {error}
+                {scanError}
               </p>
             )}
 
             <ScanInput
+              ref={scan1Ref}
               vin={scan1}
               setVin={setScan1}
               title={"Scan"}
@@ -226,10 +217,12 @@ export default function Scan() {
 
             {showRescan && (
               <ScanInput
+                ref={scan2Ref}
                 vin={scan2}
                 setVin={setScan2}
                 title={"ReScan"}
                 placeholder={"ReScan to Confirm"}
+                autoFocus
               />
             )}
 

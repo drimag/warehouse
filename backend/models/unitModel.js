@@ -83,7 +83,6 @@ Unit.findByVin = async (vin) => {
       LIMIT 1;
     `;
   const res = await db.query(query, [vin]);
-  console.log("vin, unit ", vin, res.rows[0]);
   return res.rows[0] || null;
 };
 
@@ -114,7 +113,12 @@ Unit.insertBulkUnits = async (unitsData, userId) => {
         SELECT 
           iu.id, 
           idat.waybill_no, 
-          wb.status,
+          CASE 
+            WHEN wb.status IN ('ADVICE', 'LOADING') THEN 'ADVICE'
+            WHEN wb.status IN ('IN_TRANSIT', 'UNLOADING') THEN 'DEPARTURE'
+            WHEN wb.status IN ('ARRIVED', 'CLOSED') THEN 'ARRIVAL'
+            ELSE 'UNKNOWN' -- Optional safety fallback
+          END,
           $9 
         FROM inserted_units iu
         JOIN input_data idat ON iu.engine = idat.eng
@@ -195,7 +199,12 @@ Unit.updateBulkUnits = async (unitsData, userId) => {
         SELECT 
           uu.id, 
           iw.waybill_no, 
-          wb.status,
+          CASE 
+            WHEN wb.status IN ('ADVICE', 'LOADING') THEN 'ADVICE'
+            WHEN wb.status IN ('IN_TRANSIT', 'UNLOADING') THEN 'DEPARTURE'
+            WHEN wb.status IN ('ARRIVED', 'CLOSED') THEN 'ARRIVAL'
+            ELSE 'UNKNOWN' -- Optional safety fallback
+          END,
           $10 
         FROM updated_units uu
         JOIN input_waybills iw ON uu.engine = iw.curr_eng

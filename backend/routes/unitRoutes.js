@@ -17,22 +17,10 @@ router.get(
   unitController.getUnitHistory,
 );
 router.post(
-  "/scan/:scan",
+  "/find_unit/:scan",
   authenticateToken,
   restrictToRoles("ADMIN", "SCANNER"),
-  unitController.scanUnitByVin,
-);
-router.post(
-  "/new_scan/:scan",
-  authenticateToken,
-  restrictToRoles("ADMIN", "SCANNER"),
-  unitController.newScannedUnit,
-);
-router.post(
-  "/in_transit/:scan",
-  authenticateToken,
-  restrictToRoles("ADMIN", "SCANNER"),
-  unitController.setUnitInTransit,
+  unitController.findUnitByVIN,
 );
 router.post(
   "/new_unit",

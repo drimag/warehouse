@@ -53,17 +53,16 @@ export const api = {
   saveWaybillForm: (details) =>
     apiInstance.post("/waybills/save_form", details).then((res) => res.data),
 
-  startLoading: (id) =>
-    apiInstance.get(`/waybills/loading/${id}`).then((res) => res.data),
+  startScanning: (id) =>
+    apiInstance.patch(`/waybills/start_scan/${id}`).then((res) => res.data),
 
-  setAdvice: (id) =>
-    apiInstance.get(`/waybills/advice/${id}`).then((res) => res.data),
+  cancelScanning: (id) =>
+    apiInstance.patch(`/waybills/cancel_scan/${id}`).then((res) => res.data),
 
-  setInTransit: (id) =>
-    apiInstance.get(`/waybills/in_transit/${id}`).then((res) => res.data),
-
-  setArrived: (id) =>
-    apiInstance.get(`/waybills/arrived/${id}`).then((res) => res.data),
+  touchLoadingTimeout: (id) =>
+    apiInstance
+      .patch(`/waybills/loading_timeout/${id}`)
+      .then((res) => res.data),
 
   // --- Units ---
   getUnits: () => apiInstance.get("/units").then((res) => res.data),
@@ -71,14 +70,8 @@ export const api = {
   getUnitHistory: (unitID) =>
     apiInstance.get(`/units/history/${unitID}`).then((res) => res.data),
 
-  scanUnitByVin: (scan) =>
-    apiInstance.post(`/units/scan/${scan}`).then((res) => res.data),
-
-  scanNewUnit: (scan) =>
-    apiInstance.post(`/units/new_scan/${scan}`).then((res) => res.data),
-
-  setUnitInTransit: (scan) =>
-    apiInstance.post(`/units/in_transit/${scan}`).then((res) => res.data),
+  findUnitByVIN: (scan) =>
+    apiInstance.post(`/units/find_unit/${scan}`).then((res) => res.data),
 
   insertNewUnit: (details) =>
     apiInstance.post("/units/new_unit", details).then((res) => res.data),
@@ -102,6 +95,11 @@ export const api = {
         type,
         userId,
       })
+      .then((res) => res.data),
+
+  finalizeScan: (details) =>
+    apiInstance
+      .post("/manifest/finalize_scan", details)
       .then((res) => res.data),
 
   // --- Bulk Upload ---

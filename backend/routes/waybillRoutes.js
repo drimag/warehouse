@@ -3,40 +3,23 @@ const router = express.Router();
 const waybillController = require("../controllers/waybillController");
 const { authenticateToken, restrictToRoles } = require("../middleware/auth");
 
-// TODO: Change to router.post
-router.get(
-  "/loading/:id",
+router.patch(
+  "/start_scan/:id",
   authenticateToken,
   restrictToRoles("ADMIN", "SCANNER"),
-  waybillController.startLoading,
+  waybillController.startScanning,
 );
-// TODO: Change to router.post
-router.get(
-  "/advice/:id",
+router.patch(
+  "/cancel_scan/:id",
   authenticateToken,
   restrictToRoles("ADMIN", "SCANNER"),
-  waybillController.setAdvice,
+  waybillController.cancelScanning,
 );
-// TODO: Change to router.post
 router.get(
   "/scanning",
   authenticateToken,
   restrictToRoles("ADMIN", "SCANNER"),
   waybillController.getWaybillForScan,
-);
-// TODO: Change to router.post
-router.get(
-  "/in_transit/:id",
-  authenticateToken,
-  restrictToRoles("ADMIN", "SCANNER"),
-  waybillController.setInTransit,
-);
-// TODO: Change to router.post
-router.get(
-  "/arrived/:id",
-  authenticateToken,
-  restrictToRoles("ADMIN", "SCANNER"),
-  waybillController.setArrived,
 );
 router.get(
   "/display/:id",
@@ -50,6 +33,14 @@ router.post(
   restrictToRoles("ADMIN", "SCANNER"),
   waybillController.saveWaybillForm,
 );
+
+router.patch(
+  "/loading_timeout/:id",
+  authenticateToken,
+  restrictToRoles("ADMIN", "SCANNER"),
+  waybillController.touchLoadingTimeout,
+);
+
 //TODO: set route to something specific
 router.get(
   "/",

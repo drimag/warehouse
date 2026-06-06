@@ -10,4 +10,11 @@ router.post(
   manifestController.createManifest,
 );
 
+router.post(
+  "/finalize_scan",
+  authenticateToken,
+  restrictToRoles("ADMIN", "SCANNER"),
+  manifestController.finalizeScan,
+);
+
 module.exports = router;
