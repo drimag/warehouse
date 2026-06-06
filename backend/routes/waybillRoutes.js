@@ -3,19 +3,17 @@ const router = express.Router();
 const waybillController = require("../controllers/waybillController");
 const { authenticateToken, restrictToRoles } = require("../middleware/auth");
 
-// TODO: Change to router.post
-router.get(
+router.patch(
   "/start_scan/:id",
   authenticateToken,
   restrictToRoles("ADMIN", "SCANNER"),
   waybillController.startScanning,
 );
-// TODO: Change to router.post
-router.get(
-  "/advice/:id",
+router.patch(
+  "/cancel_scan/:id",
   authenticateToken,
   restrictToRoles("ADMIN", "SCANNER"),
-  waybillController.setAdvice,
+  waybillController.cancelScanning,
 );
 // TODO: Change to router.post
 router.get(

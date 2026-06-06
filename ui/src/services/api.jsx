@@ -54,10 +54,10 @@ export const api = {
     apiInstance.post("/waybills/save_form", details).then((res) => res.data),
 
   startScanning: (id) =>
-    apiInstance.get(`/waybills/start_scan/${id}`).then((res) => res.data),
+    apiInstance.patch(`/waybills/start_scan/${id}`).then((res) => res.data),
 
-  setAdvice: (id) =>
-    apiInstance.get(`/waybills/advice/${id}`).then((res) => res.data),
+  cancelScanning: (id) =>
+    apiInstance.patch(`/waybills/cancel_scan/${id}`).then((res) => res.data),
 
   setInTransit: (id) =>
     apiInstance.get(`/waybills/in_transit/${id}`).then((res) => res.data),

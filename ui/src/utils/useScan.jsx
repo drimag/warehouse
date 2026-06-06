@@ -41,9 +41,9 @@ export const useScan = () => {
     setShowModal(true);
 
     try {
-      await api.startLoading(waybillID);
+      await api.startScanning(waybillID);
     } catch (err) {
-      console.scanError("❌ ERROR SETTING WAYBILL STATUS TO LOADING:", err);
+      console.error("❌ ERROR STARTING WAYBILL SCAN:", err);
     }
   };
 
@@ -133,9 +133,9 @@ export const useScan = () => {
 
   const handleCancel = async () => {
     try {
-      await api.setAdvice(waybillID);
+      await api.cancelScanning(waybillID);
     } catch (err) {
-      console.error("❌ ERROR SETTING WAYBILL STATUS TO LOADING:", err);
+      console.error("❌ ERROR CANCELLING WAYBILL SCAN:", err);
     } finally {
       resetPage();
     }

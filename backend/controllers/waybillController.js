@@ -60,7 +60,7 @@ exports.startScanning = async (req, res) => {
   const waybillId = req.params.id;
 
   try {
-    const waybillCheck = await Waybill.getById(waybillId);
+    const waybillCheck = await Waybill.getWaybillInfo(waybillId);
     
     if (!waybillCheck) {
       return res.status(404).json({ error: "Waybill not found" });
@@ -87,16 +87,34 @@ exports.startScanning = async (req, res) => {
   }
 };
 
-exports.setAdvice = async (req, res) => {
+exports.cancelScanning = async (req, res) => {
+  const waybillId = req.params.id;
+
   try {
-    const waybill = await Waybill.setStatus(req.params.id, "ADVICE");
-    if (!waybill) {
+    const waybillCheck = await Waybill.getWaybillInfo(waybillId);
+    
+    if (!waybillCheck) {
       return res.status(404).json({ error: "Waybill not found" });
     }
-    return res.status(200).json(waybill);
+
+    const currentStatus = waybillCheck.status;
+    let nextStatus = null;
+
+    if (currentStatus === "LOADING") {
+      nextStatus = "ADVICE";
+    } else if (currentStatus === "UNLOADING") {
+      nextStatus = "IN_TRANSIT"; 
+    } else {
+      return res.status(400).json({ 
+        error: `Cannot cancel scanning. Waybill is currently in '${currentStatus}' status.` 
+      });
+    }
+
+    const updatedWaybill = await Waybill.setStatus(waybillId, nextStatus);
+    return res.status(200).json(updatedWaybill);
   } catch (err) {
     console.error("❌ DATABASE ERROR:", err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
 
