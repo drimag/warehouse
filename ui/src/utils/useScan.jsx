@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { api } from "../services/api";
 
 export const useScan = () => {
@@ -15,7 +15,26 @@ export const useScan = () => {
   const [confirmQtyMismatch, setConfirmQtyMismatch] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  const scan1Ref = useRef(null);
+  const scan2Ref = useRef(null);
+
   // --- LOGIC HANDLERS ---
+
+  const focusNext = (nextRef) => {
+    const element = nextRef.current;
+    if (!element) return;
+    element.focus();
+
+    if (element.tagName === "SELECT" && "showPicker" in element) {
+      try {
+        element.showPicker();
+      } catch (err) {
+        console.warn("Auto-picker blocked or unsupported:", err);
+      }
+    } else if (element.tagName === "INPUT" && element.type === "file") {
+      element.click();
+    }
+  };
 
   const resetPage = () => {
     setError("");
@@ -42,6 +61,7 @@ export const useScan = () => {
 
     try {
       await api.startScanning(waybillID);
+      focusNext(scan1Ref);
     } catch (err) {
       console.error("❌ ERROR STARTING WAYBILL SCAN:", err);
     }
@@ -66,6 +86,7 @@ export const useScan = () => {
       setScanError(`Entry ${currentScan} Already Scanned. Please try again.`);
       setScan1("");
       setScan2("");
+      focusNext(scan1Ref);
       return;
     } else if (showRescan) {
       if (scan1 !== scan2) {
@@ -76,12 +97,14 @@ export const useScan = () => {
       } else {
         finishScan(currentScan, true);
       }
+      focusNext(scan1Ref);
       return;
     } else {
       try {
         const unit = await api.findUnitByVIN(currentScan);
         console.log("LOOK AT ME", unit);
         if (unit) {
+          focusNext(scan1Ref);
           finishScan(currentScan, false);
         } else {
           setScanError(
@@ -92,6 +115,7 @@ export const useScan = () => {
       } catch (err) {
         console.error("❌ ERROR SEARCHING SCAN:", err);
         setScanError("Database connection error. Try again.");
+        focusNext(scan1Ref);
       }
     }
   };
@@ -177,5 +201,8 @@ export const useScan = () => {
     handleFinish,
     handleEnd,
     handleCancel,
+    focusNext,
+    scan1Ref,
+    scan2Ref,
   };
 };
