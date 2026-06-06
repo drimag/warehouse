@@ -37,10 +37,7 @@ export const useScan = () => {
   };
 
   const startScan = async () => {
-    setScanError("");
-    setConfirmQtyMismatch(false);
-    setShowRescan(false);
-    setConfirmedScans([]);
+    resetPage();
     setShowModal(true);
 
     try {
