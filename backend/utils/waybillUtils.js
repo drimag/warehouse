@@ -20,8 +20,8 @@ const cleanupLoadingQuery = `
   UPDATE waybills 
   SET 
     status = CASE 
-      WHEN status = 'LOADING' THEN 'ADVICE'::valid_waybill_status
-      WHEN status = 'UNLOADING' THEN 'IN_TRANSIT'::valid_waybill_status
+      WHEN status = 'LOADING' THEN 'ADVICE'
+      WHEN status = 'UNLOADING' THEN 'IN_TRANSIT'
     END,
     loading_started_at = NULL
   WHERE status IN ('LOADING', 'UNLOADING') 
