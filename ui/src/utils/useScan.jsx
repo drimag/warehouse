@@ -82,7 +82,10 @@ export const useScan = () => {
       return;
     }
 
-    if (confirmedScans.includes(currentScan)) {
+    const isAlreadyScanned = confirmedScans.some(
+      (scan) => scan.value.toLowerCase() === currentScan.toLowerCase(),
+    );
+    if (isAlreadyScanned) {
       setScanError(`Entry ${currentScan} Already Scanned. Please try again.`);
       setScan1("");
       setScan2("");
