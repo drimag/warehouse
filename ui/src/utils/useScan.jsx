@@ -11,6 +11,7 @@ export const useScan = () => {
   const [showRescan, setShowRescan] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState("");
+  const [scanError, setScanError] = useState("");
   const [confirmQtyMismatch, setConfirmQtyMismatch] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -24,7 +25,7 @@ export const useScan = () => {
   };
 
   const startScan = async () => {
-    setError("");
+    setScanError("");
     setConfirmQtyMismatch(false);
     setShowRescan(false);
     setConfirmedScans([]);
@@ -33,31 +34,33 @@ export const useScan = () => {
     try {
       await api.startLoading(waybillID);
     } catch (err) {
-      console.error("❌ ERROR SETTING WAYBILL STATUS TO LOADING:", err);
+      console.scanError("❌ ERROR SETTING WAYBILL STATUS TO LOADING:", err);
     }
   };
 
   const handleNext = async () => {
-    setError("");
+    setScanError("");
     setConfirmQtyMismatch(false);
 
     const currentScan = scan1.trim();
     try {
       const wbLoading = await api.touchLoadingTimeout(waybillID);
-      console.log("scan touch loading: ", wbLoading); // clear me
     } catch (err) {
       console.error("❌ ERROR RESETING LOADING:", err);
-      setError("Database connection error. Try again.");
+      setScanError("Database connection error. Try again.");
+      await handleCancel();
+      setError("❌ SCAN ERROR. PLEASE TRY AGAIN");
+      return;
     }
 
     if (confirmedScans.includes(currentScan)) {
-      setError(`Entry ${currentScan} Already Scanned. Please try again.`);
+      setScanError(`Entry ${currentScan} Already Scanned. Please try again.`);
       setScan1("");
       setScan2("");
       return;
     } else if (showRescan) {
       if (scan1 !== scan2) {
-        setError("Mismatched scan values. Please try again.");
+        setScanError("Mismatched scan values. Please try again.");
         setScan1("");
         setScan2("");
         setShowRescan(false);
@@ -72,14 +75,14 @@ export const useScan = () => {
         if (unit) {
           finishScan(currentScan, false);
         } else {
-          setError(
+          setScanError(
             `Entry ${currentScan} not found in database. Please rescan to confirm.`,
           );
           setShowRescan(true);
         }
       } catch (err) {
         console.error("❌ ERROR SEARCHING SCAN:", err);
-        setError("Database connection error. Try again.");
+        setScanError("Database connection error. Try again.");
       }
     }
   };
@@ -88,7 +91,7 @@ export const useScan = () => {
     const expected = selectedWaybill?.expected_qty;
 
     if (expected && confirmedScans.length !== expected && !confirmQtyMismatch) {
-      setError(
+      setScanError(
         "Scanned Entries Do Not Match Expected Quantity. If this is correct, click Finish again.",
       );
       setConfirmQtyMismatch(true);
@@ -121,7 +124,7 @@ export const useScan = () => {
     } catch (err) {
       console.log(err);
     }
-    setError("");
+    setScanError("");
     setShowModal(false);
     setSubmitted(false);
     setSelectedWaybill(null);
@@ -136,6 +139,7 @@ export const useScan = () => {
       console.error("❌ ERROR SETTING WAYBILL STATUS TO LOADING:", err);
     }
     setError("");
+    setScanError("");
     setScan1("");
     setScan2("");
     setConfirmQtyMismatch(false);
@@ -171,6 +175,7 @@ export const useScan = () => {
     setScan2,
     showRescan,
     showModal,
+    scanError,
     error,
     submitted,
     // Functions

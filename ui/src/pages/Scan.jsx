@@ -23,6 +23,7 @@ export default function Scan() {
     setScan2,
     showRescan,
     showModal,
+    scanError,
     error,
     submitted,
     handleWaybillSelect,
@@ -178,6 +179,12 @@ export default function Scan() {
               </button>
             </div>
           )}
+
+          {error && (
+            <p className="error-text" style={{ color: "red" }}>
+              {error}
+            </p>
+          )}
         </>
       ) : (
         <>
@@ -211,9 +218,9 @@ export default function Scan() {
           <div className="modal-content">
             <h1 className="page-title">Scan Next Unit</h1>
 
-            {error && (
+            {scanError && (
               <p className="error-text" style={{ color: "red" }}>
-                {error}
+                {scanError}
               </p>
             )}
 
