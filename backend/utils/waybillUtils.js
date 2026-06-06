@@ -16,6 +16,15 @@ const checkAndResetSequence = async () => {
   }
 };
 
+const cleanupLoadingQuery = `
+  UPDATE waybills 
+  SET status = 'ADVICE', 
+      loading_started_at = NULL
+  WHERE status = 'LOADING' 
+    AND loading_started_at < NOW() - INTERVAL '15 minutes';
+`;
+
 module.exports = {
   checkAndResetSequence,
+  cleanupLoadingQuery,
 };

@@ -66,7 +66,9 @@ export const api = {
     apiInstance.get(`/waybills/arrived/${id}`).then((res) => res.data),
 
   touchLoadingTimeout: (id) =>
-    apiInstance.patch(`/waybills/loading_timeout/${id}`).then((res) => res.data),
+    apiInstance
+      .patch(`/waybills/loading_timeout/${id}`)
+      .then((res) => res.data),
 
   // --- Units ---
   getUnits: () => apiInstance.get("/units").then((res) => res.data),
@@ -105,6 +107,11 @@ export const api = {
         type,
         userId,
       })
+      .then((res) => res.data),
+
+  finalizeScan: (details) =>
+    apiInstance
+      .post("/manifest/finalize_scan", details)
       .then((res) => res.data),
 
   // --- Bulk Upload ---

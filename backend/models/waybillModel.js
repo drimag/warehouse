@@ -1,13 +1,8 @@
 const db = require("../config/db");
-const { checkAndResetSequence } = require("../utils/waybillUtils");
-
-const cleanupLoadingQuery = `
-    UPDATE waybills 
-    SET status = 'ADVICE', 
-        loading_started_at = NULL
-    WHERE status = 'LOADING' 
-      AND loading_started_at < NOW() - INTERVAL '15 minutes';
-  `;
+const {
+  checkAndResetSequence,
+  cleanupLoadingQuery,
+} = require("../utils/waybillUtils");
 
 const Waybill = {
   // Page 3: Display all waybills
@@ -192,7 +187,7 @@ const Waybill = {
 
   touchLoadingTimeout: async (waybillId) => {
     const cleanUp = await db.query(cleanupLoadingQuery);
-    
+
     const query = `
       UPDATE waybills 
       SET loading_started_at = NOW()
@@ -348,6 +343,84 @@ const Waybill = {
       await client.query("ROLLBACK");
       console.error("UNNEST Bulk Update Failed:", error);
       throw error;
+    } finally {
+      client.release();
+    }
+  },
+
+  processBulkManifest: async (waybillId, barcodes) => {
+    const client = await db.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      const wbCheck = await client.query(
+        "SELECT status FROM waybills WHERE id = $1 FOR UPDATE;",
+        [waybillId],
+      );
+
+      if (wbCheck.rows.length === 0) {
+        throw new Error("Waybill manifest not found.");
+      }
+
+      const currentStatus = wbCheck.rows[0].status;
+
+      await client.query(cleanupLoadingQuery);
+
+      if (currentStatus !== "LOADING" && currentStatus !== "UNLOADING") {
+        throw new Error(
+          `Cannot finalize manifest. Waybill is currently ${currentStatus}.`,
+        );
+      }
+
+      const nextStatus = currentStatus === "LOADING" ? "IN_TRANSIT" : "ARRIVED";
+      const manifestType =
+        currentStatus === "LOADING" ? "DEPARTURE" : "ARRIVAL";
+
+      const updatedWb = await client.query(
+        `
+        UPDATE waybills 
+        SET status = $2, loading_started_at = NULL 
+        WHERE id = $1 
+        RETURNING *;
+      `,
+        [waybillId, nextStatus],
+      );
+
+      for (const barcode of barcodes) {
+        await client.query(
+          `
+            WITH updated AS (
+              UPDATE units 
+              SET status = 'IN_TRANSIT'
+              WHERE engine = $1 OR frame = $1
+              RETURNING id
+            )
+            INSERT INTO units (engine, status)
+            SELECT $1, 'IN_TRANSIT'
+            WHERE NOT EXISTS (SELECT 1 FROM updated);
+          `,
+          [barcode],
+        );
+
+        await client.query(
+          `
+            INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type)
+            VALUES (
+              $1, 
+              (SELECT id FROM units WHERE engine = $2 OR frame = $2 LIMIT 1), 
+              $3
+            );
+          `,
+          [waybillId, barcode, manifestType],
+        );
+      }
+
+      await client.query("COMMIT");
+      return updatedWb.rows[0];
+    } catch (transactionError) {
+      await client.query("ROLLBACK");
+      throw transactionError;
     } finally {
       client.release();
     }

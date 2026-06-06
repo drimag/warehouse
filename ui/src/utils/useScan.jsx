@@ -17,6 +17,18 @@ export const useScan = () => {
 
   // --- LOGIC HANDLERS ---
 
+  const resetPage = () => {
+    setError("");
+    setScanError("");
+    setScan1("");
+    setScan2("");
+    setConfirmQtyMismatch(false);
+    setShowRescan(false);
+    setConfirmedScans([]);
+    setShowModal(false);
+    setSubmitted(false);
+  };
+
   const handleWaybillSelect = (id, validWaybills) => {
     const selectedDetails = validWaybills.find((wb) => wb.id === id);
     if (selectedDetails) {
@@ -48,7 +60,7 @@ export const useScan = () => {
     } catch (err) {
       console.error("❌ ERROR RESETING LOADING:", err);
       setScanError("Database connection error. Try again.");
-      await handleCancel();
+      resetPage();
       setError("❌ SCAN ERROR. PLEASE TRY AGAIN");
       return;
     }
@@ -105,31 +117,21 @@ export const useScan = () => {
 
   const handleEnd = async () => {
     try {
-      const newUnits = confirmedScans.filter((scan) => !scan.isNew);
-      for (const scan of newUnits) {
-        await api.scanNewUnit(scan.value);
-      }
-      selectedWaybill.status === "ADVICE"
-        ? await api.setInTransit(waybillID)
-        : await api.setArrived(waybillID);
-      for (const scan of confirmedScans) {
-        await api.setUnitInTransit(scan.value);
-        await api.createManifest(
-          waybillID,
-          scan.value,
-          selectedWaybill.status === "ADVICE" ? "DEPARTURE" : "ARRIVAL",
-          null,
-        );
-      }
+      const barcodes = confirmedScans.map((scan) => scan.value);
+
+      await api.finalizeScan({
+        waybillId: waybillID,
+        barcodes: barcodes,
+      });
+
+      resetPage();
     } catch (err) {
-      console.log(err);
+      console.error(err);
+      resetPage();
+      setError(
+        err.response?.data?.error || "A network error occurred while saving.",
+      );
     }
-    setScanError("");
-    setShowModal(false);
-    setSubmitted(false);
-    setSelectedWaybill(null);
-    setWaybillID("");
-    setConfirmedScans([]);
   };
 
   const handleCancel = async () => {
@@ -137,16 +139,9 @@ export const useScan = () => {
       await api.setAdvice(waybillID);
     } catch (err) {
       console.error("❌ ERROR SETTING WAYBILL STATUS TO LOADING:", err);
+    } finally {
+      resetPage();
     }
-    setError("");
-    setScanError("");
-    setScan1("");
-    setScan2("");
-    setConfirmQtyMismatch(false);
-    setShowRescan(false);
-    setConfirmedScans([]);
-    setShowModal(false);
-    setSubmitted(false);
   };
 
   const finishScan = (currentScan, isNew) => {
