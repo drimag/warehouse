@@ -131,7 +131,6 @@ export default function WaybillForm() {
       };
 
       const response = await api.saveWaybillForm(details);
-      console.log("response: ", response);
 
       const displayDetails = {
         id: response.id,
@@ -145,8 +144,6 @@ export default function WaybillForm() {
         expectedDate: expectedDate,
       };
       setWaybill(displayDetails);
-      console.log("display details: ", displayDetails);
-      console.log("waybill withinhandlesubmit: ", waybill);
       setSubmitted(true);
       return response;
     } catch (err) {

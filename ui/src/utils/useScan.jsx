@@ -102,7 +102,6 @@ export const useScan = () => {
     } else {
       try {
         const unit = await api.findUnitByVIN(currentScan);
-        console.log("LOOK AT ME", unit);
         if (unit) {
           focusNext(scan1Ref);
           finishScan(currentScan, false);
