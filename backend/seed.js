@@ -28,7 +28,7 @@ const seedDatabase = async () => {
       DROP SEQUENCE IF EXISTS waybill_code_seq CASCADE;
       DROP TYPE IF EXISTS user_role CASCADE;
     `);
-    console.log("🗑️  Old tables dropped.");
+    console.log("🗑️ Old tables dropped.");
 
     await db.query(`
       CREATE SEQUENCE waybill_code_seq;  
@@ -155,6 +155,12 @@ const seedDatabase = async () => {
     `);
 
     await db.query(`
+      DROP TRIGGER IF EXISTS on_waybill_update ON waybills; 
+      DROP TRIGGER IF EXISTS on_unit_update ON units;
+    `);
+    console.log("🗑️ Old triggers dropped.");
+
+    await db.query(`
       -- 1. Create the Function
       CREATE OR REPLACE FUNCTION handle_unit_scd2()
       RETURNS TRIGGER AS $$
@@ -229,8 +235,9 @@ const seedDatabase = async () => {
 
       -- 2. Create the Trigger on the Waybills table
       CREATE TRIGGER on_waybill_update
-      AFTER INSERT OR UPDATE ON waybills
-      FOR EACH ROW EXECUTE FUNCTION handle_waybill_scd2();
+      AFTER INSERT OR UPDATE OF id, status, origin_id, destination_id, client, truck_id, driver_id, expected_quantity, expected_arrival ON waybills
+      FOR EACH ROW 
+      EXECUTE FUNCTION handle_waybill_scd2();
     `);
 
     await db.query(`
