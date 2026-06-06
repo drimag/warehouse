@@ -154,3 +154,27 @@ exports.saveWaybillForm = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.touchLoadingTimeout = async (req, res) => {
+  const waybillId = req.params.id;
+
+  try {
+    const updatedWaybill = await Waybill.touchLoadingTimeout(waybillId);
+
+    if (!updatedWaybill) {
+      return res.status(409).json({
+        error:
+          "Session expired. This waybill is no longer locked to your terminal.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Lock extended successfully.",
+      expiresAt: updatedWaybill.loading_started_at,
+    });
+  } catch (error) {
+    console.error("Heartbeat error:", error);
+    return res.status(500);
+  }
+};

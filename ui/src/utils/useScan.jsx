@@ -42,6 +42,13 @@ export const useScan = () => {
     setConfirmQtyMismatch(false);
 
     const currentScan = scan1.trim();
+    try {
+      const wbLoading = await api.touchLoadingTimeout(waybillID);
+      console.log("scan touch loading: ", wbLoading); // clear me
+    } catch (err) {
+      console.error("❌ ERROR RESETING LOADING:", err);
+      setError("Database connection error. Try again.");
+    }
 
     if (confirmedScans.includes(currentScan)) {
       setError(`Entry ${currentScan} Already Scanned. Please try again.`);
@@ -61,6 +68,7 @@ export const useScan = () => {
     } else {
       try {
         const unit = await api.scanUnitByVin(currentScan);
+        console.log("LOOK AT ME", unit);
         if (unit) {
           finishScan(currentScan, false);
         } else {

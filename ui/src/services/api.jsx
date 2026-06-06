@@ -65,6 +65,9 @@ export const api = {
   setArrived: (id) =>
     apiInstance.get(`/waybills/arrived/${id}`).then((res) => res.data),
 
+  touchLoadingTimeout: (id) =>
+    apiInstance.patch(`/waybills/loading_timeout/${id}`).then((res) => res.data),
+
   // --- Units ---
   getUnits: () => apiInstance.get("/units").then((res) => res.data),
 

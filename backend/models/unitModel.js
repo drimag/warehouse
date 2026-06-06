@@ -83,7 +83,6 @@ Unit.findByVin = async (vin) => {
       LIMIT 1;
     `;
   const res = await db.query(query, [vin]);
-  console.log("vin, unit ", vin, res.rows[0]);
   return res.rows[0] || null;
 };
 

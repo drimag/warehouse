@@ -50,6 +50,14 @@ router.post(
   restrictToRoles("ADMIN", "SCANNER"),
   waybillController.saveWaybillForm,
 );
+
+router.patch(
+  "/loading_timeout/:id",
+  authenticateToken,
+  restrictToRoles("ADMIN", "SCANNER"),
+  waybillController.touchLoadingTimeout,
+);
+
 //TODO: set route to something specific
 router.get(
   "/",

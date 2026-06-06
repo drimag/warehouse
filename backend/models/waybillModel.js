@@ -1,8 +1,7 @@
 const db = require("../config/db");
 const { checkAndResetSequence } = require("../utils/waybillUtils");
 
-const cleanupLoadingQuery = 
-  `
+const cleanupLoadingQuery = `
     UPDATE waybills 
     SET status = 'ADVICE', 
         loading_started_at = NULL
@@ -178,12 +177,33 @@ const Waybill = {
     const query = `
       UPDATE waybills 
       SET 
-        status = $2
+        status = $2::text,
+        loading_started_at = CASE 
+          WHEN $2::text = 'LOADING' THEN NOW() 
+          ELSE NULL 
+        END
       WHERE id = $1
       RETURNING *;
     `;
 
     const res = await db.query(query, [waybillId, status]);
+    return res.rows[0];
+  },
+
+  touchLoadingTimeout: async (waybillId) => {
+    const query = `
+      UPDATE waybills 
+      SET loading_started_at = NOW()
+      WHERE id = $1 AND status = 'LOADING'
+      RETURNING *;
+    `;
+
+    const res = await db.query(query, [waybillId]);
+
+    if (res.rows.length === 0) {
+      return null;
+    }
+
     return res.rows[0];
   },
 
