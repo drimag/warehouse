@@ -38,12 +38,9 @@ exports.getUnitHistory = async (req, res) => {
 exports.scanUnitByVin = async (req, res) => {
   try {
     const { scan } = req.params;
-    let unit = await Unit.findByVin(scan);
+    const unit = await Unit.findByVin(scan);
 
-    if (!unit) {
-      return res.json(null);
-    }
-
+    return res.json(unit);
   } catch (err) {
     console.error(`❌ ERROR SEARCHING SCAN ${req.params.scan}:`, err.message);
     return res.status(500).json({ error: "Internal Server Error" });
