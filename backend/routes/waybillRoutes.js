@@ -15,26 +15,11 @@ router.patch(
   restrictToRoles("ADMIN", "SCANNER"),
   waybillController.cancelScanning,
 );
-// TODO: Change to router.post
 router.get(
   "/scanning",
   authenticateToken,
   restrictToRoles("ADMIN", "SCANNER"),
   waybillController.getWaybillForScan,
-);
-// TODO: Change to router.post
-router.get(
-  "/in_transit/:id",
-  authenticateToken,
-  restrictToRoles("ADMIN", "SCANNER"),
-  waybillController.setInTransit,
-);
-// TODO: Change to router.post
-router.get(
-  "/arrived/:id",
-  authenticateToken,
-  restrictToRoles("ADMIN", "SCANNER"),
-  waybillController.setArrived,
 );
 router.get(
   "/display/:id",

@@ -59,12 +59,6 @@ export const api = {
   cancelScanning: (id) =>
     apiInstance.patch(`/waybills/cancel_scan/${id}`).then((res) => res.data),
 
-  setInTransit: (id) =>
-    apiInstance.get(`/waybills/in_transit/${id}`).then((res) => res.data),
-
-  setArrived: (id) =>
-    apiInstance.get(`/waybills/arrived/${id}`).then((res) => res.data),
-
   touchLoadingTimeout: (id) =>
     apiInstance
       .patch(`/waybills/loading_timeout/${id}`)
