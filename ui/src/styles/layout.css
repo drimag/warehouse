@@ -9,6 +9,21 @@
   overflow: auto;
 }
 
+@media print {
+  .app-layout {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .main-content {
+    display: block !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+}
+
 /* Layout */
 .page {
   padding: 1.5rem;

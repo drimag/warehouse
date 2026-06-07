@@ -8,7 +8,9 @@ import {
   FilePlus,
   PlusSquare,
   UploadCloud,
+  BookOpen,
   LogOut,
+  Book,
 } from "lucide-react"; // Example using Lucide icons
 
 const Sidebar = () => {
@@ -63,6 +65,11 @@ const Sidebar = () => {
       {/* Bulk Upload */}
       <NavLink to="/bulk_upload" className={getNavClass} title="Bulk Upload">
         <UploadCloud size={24} />
+      </NavLink>
+
+      {/* Bulk Upload */}
+      <NavLink to="/help" className={getNavClass} title="Help Page">
+        <BookOpen size={24} />
       </NavLink>
 
       <NavLink

@@ -12,6 +12,7 @@ import Waybills from "./pages/Waybills";
 import WaybillForm from "./pages/WaybillForm";
 import WaybillLogs from "./pages/WaybillLogs";
 import BulkUpload from "./pages/BulkUpload";
+import { HelpPage } from "./pages/HelpPage";
 import "./styles/layout.css";
 import "./styles/tables.css";
 import "./styles/scan.css";
@@ -51,6 +52,7 @@ function App() {
             <Route path="/unit_logs/:unitID" element={<UnitLogs />} />
             <Route path="/waybills" element={<Waybills />} />
             <Route path="/waybill_logs/:id" element={<WaybillLogs />} />
+            <Route path="/help" element={<HelpPage />} />
           </Route>
 
           <Route

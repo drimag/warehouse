@@ -1,0 +1,6 @@
+@media print {
+  /* Target the nav tag, or a class name like .main-navbar */
+  .sidebar {
+    display: none !important;
+  }
+}
