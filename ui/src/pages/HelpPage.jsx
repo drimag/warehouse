@@ -284,7 +284,7 @@ export const HelpPage = () => {
               {/* --- WAYBILL AUDIT LOGS --- */}
               <div className="mt-8 print:break-inside-avoid">
                 <h3 className="text-lg font-bold text-slate-800 mb-2 print:text-md">
-                  📋 Waybill Progression Ledger & Cargo Manifests
+                  📋 Waybill Logs
                 </h3>
                 <p className="text-slate-600 text-sm leading-relaxed mb-3 print:text-black">
                   Similar to <code>units</code>, the{" "}

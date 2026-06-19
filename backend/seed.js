@@ -306,8 +306,8 @@ const seedDatabase = async () => {
     `);
     await db.query(`
       -- 2. Create the "Advice" record directly in the Waybills table
-      INSERT INTO waybills (id, status, origin_id, destination_id, client, truck_id, driver_id)
-      VALUES ('wb1', 'ADVICE', 1, 2, 'Client Alpha', 1, 1);
+      INSERT INTO waybills (id, status, origin_id, destination_id, client, truck_id, driver_id, expected_quantity)
+      VALUES ('wb1', 'ADVICE', 1, 2, 'Client Alpha', 1, 1, 2);
 
       -- 3. expected units
       INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 

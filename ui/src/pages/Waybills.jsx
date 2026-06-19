@@ -26,7 +26,7 @@ const columns = [
     label: "Qty (Act/Exp)",
     render: (_, row) => {
       const isMismatch =
-        Number(row.actual_qty) !== Number(row.expected_qty) && row.expected_qty;
+        Number(row.actual_qty) !== Number(row.expected_quantity) && row.expected_quantity;
       return (
         <span
           style={{
@@ -34,7 +34,7 @@ const columns = [
             fontWeight: isMismatch ? "bold" : "normal",
           }}
         >
-          {row.actual_qty} / {row.expected_qty ? row.expected_qty : "?"}
+          {row.actual_qty} / {row.expected_quantity ? row.expected_quantity : "?"}
         </span>
       );
     },

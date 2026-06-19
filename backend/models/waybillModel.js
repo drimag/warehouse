@@ -40,14 +40,6 @@ const Waybill = {
         -- Truck and Driver Names
         t.plate_number AS truck,
         dr.full_name AS driver,
-        
-        -- Subquery for Expected Quantity (from the ADVICE manifest)
-        (
-          SELECT COUNT(*) 
-          FROM waybill_manifest wm 
-          WHERE wm.waybill_id = w.id 
-          AND wm.manifest_type = 'ADVICE'
-        ) AS expected_qty,
 
         -- Subquery for Actual Quantity based on the Waybill's current status
         (
@@ -55,6 +47,8 @@ const Waybill = {
           FROM waybill_manifest wm 
           WHERE wm.waybill_id = w.id 
           AND (
+            (w.status IN ('ADVICE') AND wm.manifest_type = 'ADVICE')
+            OR
             (w.status IN ('UNLOADING', 'ARRIVED', 'CLOSED') AND wm.manifest_type = 'ARRIVAL')
             OR 
             (w.status IN ('LOADING', 'IN_TRANSIT') AND wm.manifest_type = 'DEPARTURE')
@@ -83,19 +77,14 @@ const Waybill = {
           -- Truck and Driver Names
           t.plate_number AS truck,
           dr.full_name AS driver,
-          -- Subquery for Expected Quantity (Unified from Manifest)
-          (
-            SELECT COUNT(*)::INT 
-            FROM waybill_manifest wm 
-            WHERE wm.waybill_id = w.id 
-            AND wm.manifest_type = 'ADVICE'
-          ) AS expected_qty,
           -- Subquery for Actual Quantity based on Status
           (
             SELECT COUNT(*)::INT 
             FROM waybill_manifest wm 
             WHERE wm.waybill_id = w.id 
             AND (
+              (w.status IN ('ADVICE') AND wm.manifest_type = 'ADVICE')
+              OR
               (w.status IN ('ARRIVED', 'CLOSED') AND wm.manifest_type = 'ARRIVAL')
               OR 
               (w.status IN ('IN_TRANSIT', 'LOADING') AND wm.manifest_type = 'DEPARTURE')
