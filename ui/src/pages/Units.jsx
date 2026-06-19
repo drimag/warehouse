@@ -67,49 +67,67 @@ export default function Units() {
       <h1 className="page-title">Units</h1>
 
       <div className="filter-bar">
-        <input
-          type="text"
-          placeholder="Search Engine or Frame..."
-          className="border p-2 rounded w-64"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+        <div className="flex flex-col">
+          <label className="text-xs font-semibold text-gray-500 mb-1 ml-1">
+            SEARCH
+          </label>
+          <input
+            type="text"
+            placeholder="Search Engine or Frame..."
+            className="border p-2 rounded w-64"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
         {/* Status Dropdown */}
-        <select
-          className="border p-2 rounded"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="">All Statuses</option>
-          <option value="IN_TRANSIT">IN_TRANSIT</option>
-          <option value="IN_STORAGE">IN_STORAGE</option>=
-        </select>
+
+        <div className="flex flex-col">
+          <label className="text-xs font-semibold text-gray-500 mb-1 ml-1">
+            STATUS
+          </label>
+          <select
+            className="border p-2 rounded"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">All Statuses</option>
+            <option value="IN_TRANSIT">IN_TRANSIT</option>
+            <option value="IN_STORAGE">IN_STORAGE</option>=
+          </select>
+        </div>
 
         {/* Location Dropdown */}
-        <select
-          className="border p-2 rounded"
-          value={locationFilter}
-          onChange={(e) => setLocationFilter(e.target.value)}
-        >
-          <option value="">All Locations</option>
-          {/* You can map through a list of unique locations if you have them */}
-          {[...new Set(data.map((item) => item.last_location_id))].map((id) => (
-            <option key={id} value={id}>
-              Location {id}
-            </option>
-          ))}
-        </select>
 
+        <div className="flex flex-col">
+          <label className="text-xs font-semibold text-gray-500 mb-1 ml-1">
+            DESTINATION
+          </label>
+          <select
+            className="border p-2 rounded"
+            value={locationFilter}
+            onChange={(e) => setLocationFilter(e.target.value)}
+          >
+            <option value="">All Locations</option>
+            {/* You can map through a list of unique locations if you have them */}
+            {[...new Set(data.map((item) => item.last_location_id))].map(
+              (id) => (
+                <option key={id} value={id}>
+                  Location {id}
+                </option>
+              ),
+            )}
+          </select>
+        </div>
         <button
           onClick={() => {
             setSearchTerm("");
             setStatusFilter("");
             setLocationFilter("");
           }}
-          className="text-sm text-blue-600 hover:underline"
+          className="mt-5 text-sm text-red-500 hover:text-red-700 font-medium transition-colors"
         >
-          Clear Filters
+          Reset Filters
         </button>
       </div>
       <GenericTable
