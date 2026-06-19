@@ -131,12 +131,21 @@ export default function Waybills() {
             onChange={(e) => setDestFilter(e.target.value)}
           >
             <option value="">All Destinations</option>
-            {/* Automatically generate options from your data */}
-            {[...new Set(data.map((wb) => wb.destination_id))]
-              .filter(Boolean)
-              .map((id) => (
-                <option key={id} value={id}>
-                  Location {id}
+            {/* Automatically generate unique destination options from data */}
+            {data
+              // 1. Filter out duplicates based on destination_id, and skip null/falsy values
+              .filter(
+                (wb, index, self) =>
+                  wb?.destination_id &&
+                  index ===
+                    self.findIndex(
+                      (t) => t.destination_id === wb.destination_id,
+                    ),
+              )
+              // 2. Map into option elements using the human-readable text name
+              .map((wb) => (
+                <option key={wb.destination_id} value={wb.destination_id}>
+                  {wb.destination || `Location ${wb.destination_id}`}
                 </option>
               ))}
           </select>

@@ -109,14 +109,23 @@ export default function Units() {
             onChange={(e) => setLocationFilter(e.target.value)}
           >
             <option value="">All Locations</option>
-            {/* You can map through a list of unique locations if you have them */}
-            {[...new Set(data.map((item) => item.last_location_id))].map(
-              (id) => (
-                <option key={id} value={id}>
-                  Location {id}
+            {data
+              .filter(
+                (item, index, self) =>
+                  index ===
+                  self.findIndex(
+                    (t) => t.last_location_id === item.last_location_id,
+                  ),
+              )
+              .map((item) => (
+                <option
+                  key={item.last_location_id}
+                  value={item.last_location_id}
+                >
+                  {item.last_known_location ||
+                    `Location ${item.last_location_id}`}
                 </option>
-              ),
-            )}
+              ))}
           </select>
         </div>
         <button
