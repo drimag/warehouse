@@ -55,7 +55,7 @@ const Waybill = {
           FROM waybill_manifest wm 
           WHERE wm.waybill_id = w.id 
           AND (
-            (w.status IN ('ARRIVED', 'CLOSED') AND wm.manifest_type = 'ARRIVAL')
+            (w.status IN ('UNLOADING', 'ARRIVED', 'CLOSED') AND wm.manifest_type = 'ARRIVAL')
             OR 
             (w.status IN ('LOADING', 'IN_TRANSIT') AND wm.manifest_type = 'DEPARTURE')
           )

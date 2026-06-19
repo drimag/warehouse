@@ -58,7 +58,24 @@ const validateNewWaybillRow = (row, index) => {
   const hasValue = (val) =>
     val !== undefined && val !== null && val.toString().trim() !== "";
 
-  if (!hasValue(row.code)) rowErrors.push("Missing required field: 'code'");
+  if (!hasValue(row.code)) {
+    rowErrors.push("Missing required field: 'code'");
+  } else {
+    const cleanCode = row.code.toString().trim();
+
+    if (cleanCode.length < 2 || cleanCode.length > 6) {
+      rowErrors.push(
+        `Code prefix "${row.code}" must be between 2 and 6 characters.`,
+      );
+    }
+
+    const alphanumericRegex = /^[A-Za-z0-9]+$/;
+    if (!alphanumericRegex.test(cleanCode)) {
+      rowErrors.push(
+        `Code prefix "${row.code}" must contain only letters and numbers (no spaces or symbols).`,
+      );
+    }
+  }
 
   if (
     !hasValue(row.status) ||
@@ -243,10 +260,11 @@ const validateNewUnitRow = (row, index, validMetadata) => {
   const hasValue = (val) =>
     val !== undefined && val !== null && val.toString().trim() !== "";
 
-  if (!hasValue(row.engine)) rowErrors.push("Engine number is required");
-  if (!hasValue(row.frame)) rowErrors.push("Frame number is required");
-  if (!hasValue(row.model)) rowErrors.push("Missing required field: 'model'");
-  if (!hasValue(row.color)) rowErrors.push("Missing required field: 'color'");
+  if (!hasValue(row.engine)) {
+    rowErrors.push("Engine number is required");
+  } else if (row.engine.toLowerCase() === row.frame.toLowerCase()) {
+    rowErrors.push("Engine number and Frame number cannot be identical.");
+  }
 
   const currentStatus = row.status?.toString().trim().toUpperCase();
   if (!VALID_STATUSES.includes(currentStatus)) {
@@ -255,7 +273,10 @@ const validateNewUnitRow = (row, index, validMetadata) => {
     );
   }
 
-  if (validMetadata?.engines && validMetadata.engines.includes(row.engine.toString().trim())) {
+  if (
+    validMetadata?.engines &&
+    validMetadata.engines.includes(row.engine.toString().trim())
+  ) {
     rowErrors.push(
       `Engine number "${row.engine}" already exists in the database`,
     );
@@ -275,9 +296,7 @@ const validateNewUnitRow = (row, index, validMetadata) => {
   }
 
   // 4. Waybill verification using database metadata
-  if (!hasValue(row.waybill_code)) {
-    rowErrors.push("Missing required field: 'waybill_code'");
-  } else if (validMetadata?.waybillCodes) {
+  if (validMetadata?.waybillCodes) {
     const cleanCode = row.waybill_code.toString().trim();
     if (!validMetadata.waybillCodes.includes(cleanCode)) {
       rowErrors.push(
@@ -345,17 +364,11 @@ const validateUpdateUnitRow = (row, index, validMetadata) => {
     }
   }
 
-  if (!hasValue(row.new_engine)) {
+  const cleanEngine = row.new_engine.toString().trim();
+  if (validMetadata?.engines && validMetadata.engines.includes(cleanEngine)) {
     rowErrors.push(
-      "Missing key tracking constraint: 'new_engine' column must contain data",
+      `Engine number "${cleanEngine}" already exists in the database`,
     );
-  } else {
-    const cleanEngine = row.new_engine.toString().trim();
-    if (validMetadata?.engines && validMetadata.engines.includes(cleanEngine)) {
-      rowErrors.push(
-        `Engine number "${cleanEngine}" already exists in the database`,
-      );
-    }
   }
 
   // 2. Optional status check
@@ -449,7 +462,7 @@ exports.bulkUploadSheet = async (req, res) => {
     const [locationIds, waybillCodes, engines] = await Promise.all([
       ReferenceModel.getAllLocationIds(),
       Waybill.getAllWaybillCodes(),
-      Unit.getAllEngines(),      
+      Unit.getAllEngines(),
     ]);
 
     const validMetadata = { locationIds, waybillCodes, engines };
