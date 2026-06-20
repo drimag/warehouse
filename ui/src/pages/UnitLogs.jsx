@@ -13,12 +13,21 @@ const unitLogColumns = [
   { label: "DA", key: "da" },
   { label: "Current Location", key: "last_known_location" },
   { label: "Status", key: "status" },
-  { label: "Start", key: "eff_start" },
-  { label: "End", key: "eff_end" },
   {
-    label: "isCurrent?",
+    label: "Start",
+    key: "eff_start",
+    render: (val) => new Date(val).toLocaleString(),
+  },
+  {
+    label: "Current?",
     key: "is_current",
-    render: (val) => (val ? "Yes" : "No"),
+    render: (val) => (
+      <span
+        className={`badge ${val ? "text-green-600 font-bold" : "text-gray-400"}`}
+      >
+        {val ? "● Current" : "○ Previous"}
+      </span>
+    ),
   },
 ];
 

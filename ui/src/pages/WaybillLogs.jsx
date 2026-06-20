@@ -31,7 +31,7 @@ const logColumns = [
     render: (val) => new Date(val).toLocaleString(),
   },
   {
-    label: "Active",
+    label: "Current?",
     key: "is_current",
     render: (val) => (
       <span
@@ -47,7 +47,11 @@ const scanColumns = [
   { label: "Waybill ID", key: "waybill_id" },
   { label: "Unit Engine", key: "engine" },
   { label: "User", key: "user_id" },
-  { label: "Created At", key: "created_at" },
+  {
+    label: "Created At",
+    key: "created_at",
+    render: (val) => new Date(val).toLocaleString(),
+  },
 ];
 
 const unitAdviceColumns = [
@@ -109,6 +113,17 @@ export default function WaybillLogs() {
         data={waybillData.stateHistory}
         emptyMessage="No activity logged for this waybill yet."
       />
+      {arrivalManifest.length > 0 && (
+        <>
+          <hr className="divider" />
+          <h1 className="page-title">Units at Arrival</h1>
+          <GenericTable
+            columns={scanColumns}
+            data={arrivalManifest}
+            emptyMessage="No units recorded"
+          />
+        </>
+      )}
 
       {departureManifest.length > 0 && (
         <>
@@ -117,18 +132,6 @@ export default function WaybillLogs() {
           <GenericTable
             columns={scanColumns}
             data={departureManifest}
-            emptyMessage="No units recorded"
-          />
-        </>
-      )}
-
-      {arrivalManifest.length > 0 && (
-        <>
-          <hr className="divider" />
-          <h1 className="page-title">Units at Arrival</h1>
-          <GenericTable
-            columns={scanColumns}
-            data={arrivalManifest}
             emptyMessage="No units recorded"
           />
         </>

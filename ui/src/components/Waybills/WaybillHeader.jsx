@@ -38,7 +38,7 @@ export default function WaybillHeader({ waybill }) {
         </span>
 
         <span>
-          <strong>Last Update:</strong> {waybill.last_updated}
+          <strong>Last Update:</strong> {Date(waybill.last_updated).toLocaleString()}
         </span>
       </div>
     </div>

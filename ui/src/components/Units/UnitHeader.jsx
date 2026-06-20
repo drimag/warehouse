@@ -29,7 +29,7 @@ export default function UnitHeader({ unit }) {
           <strong>Status:</strong> {unit.status}
         </span>
         <span>
-          <strong>Last Update:</strong> {unit.updated_at}
+          <strong>Last Update:</strong> {Date(unit.updated_at).toLocaleString()}
         </span>
       </div>
     </div>
