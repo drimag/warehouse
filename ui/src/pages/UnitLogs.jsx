@@ -6,8 +6,6 @@ import GenericTable from "../components/GenericTable";
 import { api } from "../services/api";
 
 const unitLogColumns = [
-  { label: "Log ID", key: "id" },
-  { label: "Unit ID", key: "unit_id" },
   { label: "Engine", key: "engine" },
   { label: "Frame", key: "frame" },
   { label: "Model", key: "model" },

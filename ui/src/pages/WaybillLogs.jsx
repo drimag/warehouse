@@ -44,8 +44,7 @@ const logColumns = [
 ];
 
 const scanColumns = [
-  { label: "Manifest ID", key: "id" },
-  { label: "Unit ID", key: "unit_id" },
+  { label: "Waybill ID", key: "waybill_id" },
   { label: "Unit Engine", key: "engine" },
   { label: "User", key: "user_id" },
   { label: "Created At", key: "created_at" },
