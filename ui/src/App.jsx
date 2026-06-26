@@ -13,6 +13,7 @@ import WaybillForm from "./pages/WaybillForm";
 import WaybillLogs from "./pages/WaybillLogs";
 import BulkUpload from "./pages/BulkUpload";
 import { HelpPage } from "./pages/HelpPage";
+import Register from "./pages/Register";
 import "./styles/layout.css";
 import "./styles/tables.css";
 import "./styles/scan.css";
@@ -29,6 +30,8 @@ function App() {
         <Routes>
           {/* 2. Public Pathways */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<Register />} />
+          
           <Route
             path="/unauthorized"
             element={

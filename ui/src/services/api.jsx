@@ -86,6 +86,10 @@ export const api = {
   getLocations: () =>
     apiInstance.get("/references/locations").then((res) => res.data),
 
+  // --- Users ---
+  registerUser: (details) =>
+    apiInstance.post("/users/register", details).then((res) => res.data),
+
   // --- Manifests ---
   createManifest: (waybillId, unitId, type, userId) =>
     apiInstance

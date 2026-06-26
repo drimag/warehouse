@@ -12,26 +12,47 @@ const generateSessionToken = (user) => {
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: "All account fields are required" });
+    const { fullName, email, employeeId, password } = req.body;
+
+    // 1. Double-check mandatory requirements
+    if (!fullName || !email || !employeeId || !password) {
+      return res.status(400).json({ error: 'All registration parameters are strictly required.' });
     }
 
-    const existingUser = await User.findByEmail(email);
+    // 2. Query database index to prevent duplicate account creation
+    const existingUser = await userModel.findByEmailOrEmployeeId(email, employeeId);
     if (existingUser) {
-      return res.status(409).json({ error: "An account with this email already exists" });
+      return res.status(409).json({ 
+        error: 'A node account with this email address or Employee ID already exists inside the system.' 
+      });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
+    // 3. Encrypt the secret pass phrase (10 salt rounds provides strong protection without lagging the CPU)
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = await User.create({ name, email, passwordHash });
-    const token = generateSessionToken(newUser);
+    // 4. Commit data row changes to storage engine
+    const newUser = await userModel.createNewUser({
+      fullName,
+      email: email.toLowerCase().trim(),
+      employeeId: employeeId.toUpperCase().trim(),
+      passwordHash: hashedPassword
+    });
 
-    res.status(201).json({ success: true, token, user: { name: newUser.name, email: newUser.email, role: newUser.role } });
-  } catch (err) {
-    res.status(500).json({ error: "Internal Registration System Error" });
+    // 5. Respond with success metadata (Exclude password hashes from transmission payloads!)
+    return res.status(201).json({
+      success: true,
+      message: 'System account successfully indexed.',
+      user: {
+        id: newUser.id,
+        fullName: newUser.full_name,
+        email: newUser.email,
+        employeeId: newUser.employee_id
+      }
+    });
+
+  } catch (error) {
+    console.error('Controller Transaction Exception:', error);
+    return res.status(500).json({ error: 'Internal system fault detected during user write sequence.' });
   }
 };
 
