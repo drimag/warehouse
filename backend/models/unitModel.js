@@ -1,5 +1,6 @@
 const db = require("../config/db");
 const History = require("../models/historyModel");
+const crypto = require('crypto'); 
 
 const Unit = {};
 Unit.getAll = async () => {
@@ -11,8 +12,8 @@ Unit.getAll = async () => {
       LEFT JOIN locations l ON u.last_location_id = l.id
       ORDER BY u.updated_at DESC
     `;
-  const res = await db.query(query);
-  return res.rows;
+  const [res] = await db.execute(query);
+  return res;
 };
 
 Unit.getAllEngines = async () => {
@@ -21,9 +22,9 @@ Unit.getAllEngines = async () => {
       FROM units 
       ORDER BY updated_at DESC
     `;
-  const res = await db.query(query);
-  
-  return res.rows.map(row => row.engine ? row.engine.toString() : "");
+  const res = await db.execute(query);
+
+  return res.rows.map((row) => (row.engine ? row.engine.toString() : ""));
 };
 
 Unit.getById = async (id) => {
@@ -33,10 +34,10 @@ Unit.getById = async (id) => {
         l.name AS last_known_location 
       FROM units u
       LEFT JOIN locations l ON u.last_location_id = l.id
-      WHERE u.id = $1
+      WHERE u.id = ?
     `;
-  const res = await db.query(query, [id]);
-  return res.rows[0];
+  const res = await db.execute(query, [id]);
+  return res.rows;
 };
 
 Unit.createNew = async (unitData) => {
@@ -60,180 +61,193 @@ Unit.createNew = async (unitData) => {
         da, 
         last_location_id
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
       RETURNING *;
     `;
 
   const values = [engine, frame, model, color, status, da, last_location_id];
 
-  const res = await db.query(query, values);
-  return res.rows[0];
+  const [result] = await db.execute(query, values);
+  if (result.affectedRows === 0) {
+    throw new Error("Failed to Insert New Row");
+  }
+
+  return { success: true, engine: engine, status };
 };
 
 Unit.setStatus = async (id, status) => {
-  const query = `UPDATE units SET status = $2, updated_at = NOW() WHERE id = $1 RETURNING *;`;
-  const res = await db.query(query, [id, status]);
-  return res.rows[0];
+  const query = `UPDATE units SET status = ?, updated_at = NOW() WHERE id = ? RETURNING *;`;
+  const [result] = await db.execute(query, [status, id]);
+  if (result.affectedRows === 0) {
+    throw new Error("Failed to Set Unit Status to ", status);
+  }
+  return { success: true, id: id, status };
 };
 
 Unit.findByVin = async (vin) => {
   const query = `
       SELECT * FROM units 
-      WHERE engine = $1 OR frame = $1 
+      WHERE engine = ? OR frame = ? 
       LIMIT 1;
     `;
-  const res = await db.query(query, [vin]);
+  const res = await db.execute(query, [vin, vin]);
   return res.rows[0] || null;
 };
 
 Unit.insertBulkUnits = async (unitsData, userId) => {
-  const client = await db.connect();
+  const connection = await db.getConnection();
   try {
-    await client.query("BEGIN");
+    await connection.beginTransaction();
 
-    const engines = unitsData.map((u) => u.engine);
-    const frames = unitsData.map((u) => u.frame);
-    const models = unitsData.map((u) => u.model);
-    const colors = unitsData.map((u) => u.color);
-    const statuses = unitsData.map((u) => u.status);
-    const das = unitsData.map((u) => u.da);
-    const locIds = unitsData.map((u) => u.last_location_id);
-    const waybillNos = unitsData.map((u) => u.waybill_code);
+    for (const unit of unitsData) {
+      const newUnitId = crypto.randomUUID();
 
-    const query = `
-        WITH inserted_units AS (
-          INSERT INTO units (engine, frame, model, color, status, da, last_location_id)
-          SELECT * FROM UNNEST($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::text[], $7::int[])
-          RETURNING id, engine
-        ),
-        input_data AS (
-          SELECT UNNEST($1::text[]) as eng, UNNEST($8::text[]) as waybill_no
-        )
-        INSERT INTO waybill_manifest (unit_id, waybill_id, manifest_type, user_id)
-        SELECT 
-          iu.id, 
-          idat.waybill_no, 
-          CASE 
-            WHEN wb.status IN ('ADVICE', 'LOADING') THEN 'ADVICE'
-            WHEN wb.status IN ('IN_TRANSIT', 'UNLOADING') THEN 'DEPARTURE'
-            WHEN wb.status IN ('ARRIVED', 'CLOSED') THEN 'ARRIVAL'
-            ELSE 'UNKNOWN' -- Optional safety fallback
-          END,
-          $9 
-        FROM inserted_units iu
-        JOIN input_data idat ON iu.engine = idat.eng
-        JOIN waybills wb ON idat.waybill_no = wb.id;
+      // Insert the unit with the pre-generated ID
+      const insertUnitQuery = `
+        INSERT INTO units (id, engine, frame, model, color, status, da, last_location_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
-    const values = [
-      engines, // $1
-      frames, // $2
-      models, // $3
-      colors, // $4
-      statuses, // $5
-      das, // $6
-      locIds, // $7
-      waybillNos, // $8
-      userId, // $9
-    ];
+      await connection.query(insertUnitQuery, [
+        newUnitId,
+        unit.engine,
+        unit.frame,
+        unit.model,
+        unit.color,
+        unit.status,
+        unit.da,
+        unit.last_location_id,
+      ]);
 
-    const result = await client.query(query, values);
+      // Look up the waybill's current status
+      const [waybillRows] = await connection.query(
+        'SELECT status FROM waybills WHERE id = ?',
+        [unit.waybill_code]
+      );
 
-    await client.query("COMMIT");
+      if (waybillRows.length === 0) {
+        throw new Error(`Waybill not found: ${unit.waybill_code}`);
+      }
+
+      const waybillStatus = waybillRows[0].status;
+
+      let manifestType;
+      if (['ADVICE', 'LOADING'].includes(waybillStatus)) {
+        manifestType = 'ADVICE';
+      } else if (['IN_TRANSIT', 'UNLOADING'].includes(waybillStatus)) {
+        manifestType = 'DEPARTURE';
+      } else if (['ARRIVED', 'CLOSED'].includes(waybillStatus)) {
+        manifestType = 'ARRIVAL';
+      } else {
+        manifestType = 'UNKNOWN';
+      }
+
+      // Insert into waybill_manifest (also needs its own UUID)
+      const manifestId = crypto.randomUUID();
+
+      await connection.query(
+        `INSERT INTO waybill_manifest (id, unit_id, waybill_id, manifest_type, user_id)
+         VALUES (?, ?, ?, ?, ?)`,
+        [manifestId, newUnitId, unit.waybill_code, manifestType, userId]
+      );
+    }
+
+    await connection.commit();
     return { success: true, count: unitsData.length };
   } catch (error) {
-    await client.query("ROLLBACK");
-    console.error("UNNEST Bulk Insert Failed:", error);
+    await connection.rollback();
+    console.error('Bulk Insert Failed:', error);
     throw error;
   } finally {
-    client.release();
+    connection.release();
   }
 };
 
 Unit.updateBulkUnits = async (unitsData, userId) => {
-  const client = await db.connect();
+  const connection = await db.getConnection();
   try {
-    await client.query("BEGIN");
+    await connection.beginTransaction();
 
-    const old_engines = unitsData.map((u) => u.old_engine);
-    const new_engines = unitsData.map((u) => u.new_engine);
-    const frames = unitsData.map((u) => u.new_frame);
-    const models = unitsData.map((u) => u.new_model);
-    const colors = unitsData.map((u) => u.new_color);
-    const statuses = unitsData.map((u) => u.new_status);
-    const das = unitsData.map((u) => u.new_da);
-    const locIds = unitsData.map((u) => u.new_last_location_id);
-    const waybillNos = unitsData.map((u) => u.new_waybill_code);
-
-    const query = `
-        WITH updated_units AS (
-          UPDATE units AS u
-          SET 
-            engine = COALESCE(d.new_engine, u.engine),
-            frame = COALESCE(d.new_frame, u.frame),
-            model = COALESCE(d.model, u.model),
-            color = COALESCE(d.color, u.color),
-            status = COALESCE(d.status, u.status),
-            da = COALESCE(d.da, u.da),
-            last_location_id = COALESCE(d.last_location_id, u.last_location_id)
-          FROM UNNEST(
-            $1::text[],      -- current_engine 
-            $2::text[],      -- new_engine
-            $3::text[],      -- new_frame
-            $4::text[],      -- model
-            $5::text[],      -- color
-            $6::text[],      -- status
-            $7::text[],      -- da
-            $8::int[]        -- last_location_id
-          ) AS d(curr_eng, new_engine, new_frame, model, color, status, da, last_location_id)
-          WHERE u.engine = d.curr_eng
-          RETURNING u.id, u.engine
-        ),
-        input_waybills AS (
-          -- Maps the current engine to the waybill ID provided in the sheet
-          SELECT 
-            UNNEST($1::text[]) as curr_eng, 
-            UNNEST($9::text[]) as waybill_no
-        )
-        INSERT INTO waybill_manifest (unit_id, waybill_id, manifest_type, user_id)
-        SELECT 
-          uu.id, 
-          iw.waybill_no, 
-          CASE 
-            WHEN wb.status IN ('ADVICE', 'LOADING') THEN 'ADVICE'
-            WHEN wb.status IN ('IN_TRANSIT', 'UNLOADING') THEN 'DEPARTURE'
-            WHEN wb.status IN ('ARRIVED', 'CLOSED') THEN 'ARRIVAL'
-            ELSE 'UNKNOWN' -- Optional safety fallback
-          END,
-          $10 
-        FROM updated_units uu
-        JOIN input_waybills iw ON uu.engine = iw.curr_eng
-        JOIN waybills wb ON iw.waybill_no = wb.id; 
+    // Since MySQL doesn't have UNNEST, we'll do this in multiple steps
+    for (const unit of unitsData) {
+      // Step 1: Update the unit
+      const updateQuery = `
+        UPDATE units 
+        SET 
+          engine = ?,
+          frame = ?,
+          model = ?,
+          color = ?,
+          status = ?,
+          da = ?,
+          last_location_id = ?
+        WHERE engine = ?
       `;
 
-    const values = [
-      old_engines, // $1
-      new_engines, // $2
-      frames, // $3
-      models, // $4
-      colors, // $5
-      statuses, // $6
-      das, // $7
-      locIds, // $8
-      waybillNos, // $9
-      userId, // $10
-    ];
+      await connection.execute(updateQuery, [
+        unit.new_engine,
+        unit.new_frame,
+        unit.new_model,
+        unit.new_color,
+        unit.new_status,
+        unit.new_da,
+        unit.new_last_location_id,
+        unit.old_engine,
+      ]);
 
-    const result = await client.query(query, values);
+      // Step 2: Get the updated unit's ID
+      const [unitRows] = await connection.execute(
+        "SELECT id FROM units WHERE engine = ?",
+        [unit.new_engine],
+      );
 
-    await client.query("COMMIT");
+      if (unitRows.length > 0) {
+        const unitId = unitRows[0].id;
+
+        // Step 3: Get waybill status
+        const [waybillRows] = await connection.execute(
+          "SELECT status FROM waybills WHERE id = ?",
+          [unit.new_waybill_code],
+        );
+
+        if (waybillRows.length > 0) {
+          const waybillStatus = waybillRows[0].status;
+
+          let manifestType;
+          if (["ADVICE", "LOADING"].includes(waybillStatus)) {
+            manifestType = "ADVICE";
+          } else if (["IN_TRANSIT", "UNLOADING"].includes(waybillStatus)) {
+            manifestType = "DEPARTURE";
+          } else if (["ARRIVED", "CLOSED"].includes(waybillStatus)) {
+            manifestType = "ARRIVAL";
+          } else {
+            manifestType = "UNKNOWN";
+          }
+
+          // Step 4: Insert into waybill_manifest
+          const insertQuery = `
+            INSERT INTO waybill_manifest (unit_id, waybill_id, manifest_type, user_id)
+            VALUES (?, ?, ?, ?)
+          `;
+
+          await connection.execute(insertQuery, [
+            unitId,
+            unit.new_waybill_code,
+            manifestType,
+            userId,
+          ]);
+        }
+      }
+    }
+
+    await connection.commit();
     return { success: true, count: unitsData.length };
   } catch (error) {
-    await client.query("ROLLBACK");
-    console.error("UNNEST Bulk Update Failed:", error);
+    await connection.rollback();
+    console.error("Bulk Update Failed:", error);
     throw error;
   } finally {
-    client.release();
+    connection.release();
   }
 };
 

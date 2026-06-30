@@ -4,7 +4,7 @@ const History = require("../models/historyModel");
 exports.getAllWaybillDisplay = async (req, res) => {
   try {
     const waybills = await Waybill.getAllWaybillDisplay();
-    res.json(waybills);
+    return res.json(waybills);
   } catch (err) {
     console.error("❌ DATABASE ERROR:", err);
     res.status(500).json({ error: err.message });
@@ -15,7 +15,7 @@ exports.getWaybillDisplayById = async (req, res) => {
   try {
     const { id } = req.params;
     const waybills = await Waybill.getWaybillDisplayById(id);
-    res.json(waybills);
+    return res.json(waybills);
   } catch (err) {
     console.error("❌ DATABASE ERROR:", err);
     res.status(500).json({ error: err.message });
