@@ -3,7 +3,7 @@
     "concurrently": "^9.2.1"
   },
   "scripts": {
-    "backend": "npm run dev --prefix backend",
+    "backend": "npx nodemon index.js --prefix backend",
     "seed": "npm run seed --prefix backend",
     "ui": "npm run dev --prefix ui",
     "dev": "concurrently \"npm run backend\" \"npm run ui\""
