@@ -1,5 +1,5 @@
-const mysql = require('mysql2/promise');
-require('dotenv').config();
+const mysql = require("mysql2/promise");
+require("dotenv").config();
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
@@ -10,13 +10,17 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  multipleStatements: true,
 });
 
-pool.getConnection()
-  .then(() => console.log('✅ Connected to MySQL'))
+pool
+  .getConnection()
+  .then(() => console.log("✅ Connected to MySQL"))
   .catch((err) => {
-    console.error('❌ Database connection failed', err);
+    console.error("❌ Database connection failed", err);
     process.exit(-1);
   });
+
+console.log('Multiple statements enabled:', pool.pool.config.connectionConfig.multipleStatements);
 
 module.exports = pool;
