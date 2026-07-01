@@ -6,7 +6,7 @@ User.findByEmail = async (email) => {
   const [result] = await db.execute("SELECT * FROM users WHERE email = ?", [
     email.toLowerCase().trim(),
   ]);
-  return result;
+  return result[0];
 };
 
 User.create = async ({ name, email, passwordHash, role = "VIEWER" }) => {
