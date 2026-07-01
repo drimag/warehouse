@@ -5,7 +5,7 @@
   "scripts": {
     "backend": "npx nodemon index.js --prefix backend",
     "seed": "npm run seed --prefix backend",
-    "ui": "npm run dev --prefix ui",
+    "ui": "npm --prefix ui run build -- --watch",
     "dev": "concurrently \"npm run backend\" \"npm run ui\""
   },
   "dependencies": {
