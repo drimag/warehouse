@@ -68,6 +68,7 @@ exports.login = async (req, res) => {
     const token = generateSessionToken(user);
     res.status(200).json({ success: true, token, user: { name: user.name, email: user.email, role: user.role } });
   } catch (err) {
+    console.error('❌ LOGIN ERROR:', err); 
     res.status(500).json({ error: "Internal Authentication System Error" });
   }
 };
