@@ -6,6 +6,7 @@ const allowedOrigins = [
   'http://localhost:5173', 
   'https://warehouse-drab.vercel.app',
   'https://warehouse.ila.com.ph',
+  'http://warehouse.ila.com.ph',
 ];
 
 const app = express();
