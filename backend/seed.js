@@ -4,6 +4,8 @@ const seedDatabase = async () => {
   try {
     console.log("🚀 Initializing Database Schema & Seed...");
 
+    await db.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
+
     await db.query(`
       DROP TABLE IF EXISTS unit_scans CASCADE;
       DROP TABLE IF EXISTS waybill_logs CASCADE;
