@@ -164,14 +164,6 @@ const BulkUpload = () => {
       )}
 
       <UploadFeedback errors={uploadErrors} />
-      <h1 className="page-title" style={{ marginTop: "2rem" }}>
-        ID References
-      </h1>
-      <div className="table-row-container">
-        <GenericTable columns={locationColumns} data={locations} />
-        <GenericTable columns={driverColumns} data={drivers} />
-        <GenericTable columns={truckColumns} data={trucks} />
-      </div>
     </div>
   );
 };
