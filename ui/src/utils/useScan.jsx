@@ -82,11 +82,31 @@ export const useScan = () => {
       return;
     }
 
-    const isAlreadyScanned = confirmedScans.some(
-      (scan) => scan.value.toLowerCase() === currentScan.toLowerCase(),
-    );
+    let unit;
+    let engine;
+
+    try {
+      unit = await api.findUnitByVIN(currentScan);
+      engine = unit?.engine;
+    } catch (err) {
+      console.error("❌ ERROR SEARCHING SCAN:", err);
+      setScanError("Database connection error. Try again.");
+      focusNext(scan1Ref);
+      return;
+    }
+
+    const isAlreadyScanned =
+      confirmedScans.some(
+        (scan) => scan.value.toLowerCase() === currentScan.toLowerCase(),
+      ) ||
+      confirmedScans.some(
+        (scan) => scan.value.toLowerCase() === engine.toLowerCase(),
+      );
+
     if (isAlreadyScanned) {
-      setScanError(`Entry ${currentScan} Already Scanned. Please try again.`);
+      setScanError(
+        `${currentScan} or its Engine/Frame Already Scanned. Please Try Again.`,
+      );
       setScan1("");
       setScan2("");
       focusNext(scan1Ref);
@@ -102,23 +122,16 @@ export const useScan = () => {
       }
       focusNext(scan1Ref);
       return;
+    }
+
+    if (unit) {
+      focusNext(scan1Ref);
+      finishScan(engine, false);
     } else {
-      try {
-        const unit = await api.findUnitByVIN(currentScan);
-        if (unit) {
-          focusNext(scan1Ref);
-          finishScan(currentScan, false);
-        } else {
-          setScanError(
-            `Entry ${currentScan} not found in database. Please rescan to confirm.`,
-          );
-          setShowRescan(true);
-        }
-      } catch (err) {
-        console.error("❌ ERROR SEARCHING SCAN:", err);
-        setScanError("Database connection error. Try again.");
-        focusNext(scan1Ref);
-      }
+      setScanError(
+        `Entry ${currentScan} not found in database. Please rescan to confirm.`,
+      );
+      setShowRescan(true);
     }
   };
 
@@ -167,11 +180,11 @@ export const useScan = () => {
     }
   };
 
-  const finishScan = (currentScan, isNew) => {
+  const finishScan = (referenceVIN, isNew) => {
     setConfirmedScans((prev) => [
       ...prev,
       {
-        value: currentScan,
+        value: referenceVIN,
         isNew: isNew,
       },
     ]);
