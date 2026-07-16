@@ -1,17 +1,21 @@
 const Unit = require("../../models/unitModel");
 const Waybill = require("../../models/waybillModel");
+const History = require("../../models/historyModel");
 const {
   validateNewWaybillRow,
   validateUpdateWaybillRow,
   validateNewUnitRow,
   validateUpdateUnitRow,
+  validateManifestRow,
   throwIfErrors,
 } = require("./bulkUploadValidator");
+const { WAYBILL_STATUS_TO_MANIFEST_TYPE } = require("./bulkUploadConstants");
 
 // ─── Shared Helpers ───────────────────────────────────────────────────────────
 
 const safeField = (val, formatter = (v) => v) => {
-  if (val === undefined || val === null || val.toString().trim() === "") return null;
+  if (val === undefined || val === null || val.toString().trim() === "")
+    return null;
   return formatter(val);
 };
 
@@ -36,7 +40,11 @@ const processNewWaybills = async (data, validMetadata) => {
   }));
 
   const result = await Waybill.insertBulkWaybills(formattedData);
-  return { isSuccess: result.success, count: result.count, type: "Waybill Creation" };
+  return {
+    isSuccess: result.success,
+    count: result.count,
+    type: "Waybill Creation",
+  };
 };
 
 const processUpdateWaybills = async (data, validMetadata) => {
@@ -55,12 +63,16 @@ const processUpdateWaybills = async (data, validMetadata) => {
     driver_id: safeField(row.new_driver_id, parseInt),
     expected_quantity: safeField(row.new_expected_quantity, parseInt),
     expected_arrival: safeField(row.new_expected_arrival, (v) =>
-      new Date(v).toISOString()
+      new Date(v).toISOString(),
     ),
   }));
 
   const result = await Waybill.updateBulkWaybills(formattedData);
-  return { isSuccess: result.success, count: result.count, type: "Waybill Update" };
+  return {
+    isSuccess: result.success,
+    count: result.count,
+    type: "Waybill Update",
+  };
 };
 
 // ─── Unit Services ────────────────────────────────────────────────────────────
@@ -83,7 +95,11 @@ const processNewUnits = async (data, validMetadata, userId) => {
   }));
 
   const result = await Unit.insertBulkUnits(formattedData, userId);
-  return { isSuccess: result.success, count: result.count, type: "Unit Creation" };
+  return {
+    isSuccess: result.success,
+    count: result.count,
+    type: "Unit Creation",
+  };
 };
 
 const processUpdateUnits = async (data, validMetadata, userId) => {
@@ -105,7 +121,36 @@ const processUpdateUnits = async (data, validMetadata, userId) => {
   }));
 
   const result = await Unit.updateBulkUnits(formattedData, userId);
-  return { isSuccess: result.success, count: result.count, type: "Unit Update" };
+  return {
+    isSuccess: result.success,
+    count: result.count,
+    type: "Unit Update",
+  };
+};
+
+// ─── Manifest Services ────────────────────────────────────────────────────────
+
+const processManifestEntries = async (data, validMetadata, userId) => {
+  const errors = data
+    .map((row, idx) => validateManifestRow(row, idx, validMetadata))
+    .filter(Boolean);
+  throwIfErrors(errors);
+
+  const formattedData = data.map((row) => ({
+    engine: row.engine.toString().trim(),
+    waybill_code: row.waybill_code.toString().trim(),
+  }));
+
+  const result = await History.insertBulkManifestByEngine(
+    formattedData,
+    userId,
+  );
+
+  return {
+    isSuccess: result.success,
+    count: result.count,
+    type: "Manifest Entry",
+  };
 };
 
 module.exports = {
@@ -113,4 +158,5 @@ module.exports = {
   processUpdateWaybills,
   processNewUnits,
   processUpdateUnits,
+  processManifestEntries,
 };

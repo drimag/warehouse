@@ -207,10 +207,44 @@ const validateUpdateUnitRow = (row, index, validMetadata) => {
     : null;
 };
 
+// ─── Manifest Validators ──────────────────────────────────────────────────────
+
+const validateManifestRow = (row, index, validMetadata) => {
+  const rowErrors = [];
+  const rowNum = index + 1;
+
+  if (!hasValue(row.engine)) {
+    rowErrors.push("Engine number is required");
+  } else if (
+    validMetadata?.engines &&
+    !validMetadata.engines.includes(row.engine.toString().trim())
+  ) {
+    rowErrors.push(
+      `Engine "${row.engine}" does not exist in the database`
+    );
+  }
+
+  if (!hasValue(row.waybill_code)) {
+    rowErrors.push("Waybill code is required");
+  } else if (
+    validMetadata?.waybillCodes &&
+    !validMetadata.waybillCodes.includes(row.waybill_code.toString().trim())
+  ) {
+    rowErrors.push(
+      `Waybill code "${row.waybill_code}" does not exist in the database`
+    );
+  }
+
+  return rowErrors.length > 0
+    ? { row: rowNum, engine: row.engine || `Row ${rowNum}`, details: rowErrors }
+    : null;
+};
+
 module.exports = {
   validateNewWaybillRow,
   validateUpdateWaybillRow,
   validateNewUnitRow,
   validateUpdateUnitRow,
+  validateManifestRow,
   throwIfErrors,
 };

@@ -45,14 +45,25 @@ const REQUIRED_UNIT_UPDATE_HEADERS = [
   "new_waybill_code",
 ];
 
+const REQUIRED_MANIFEST_HEADERS = ["engine", "waybill_code"];
+
 const VALID_WAYBILL_STATUSES = ["ADVICE", "IN_TRANSIT", "ARRIVED", "CLOSED"];
 const VALID_UNIT_STATUSES = ["IN_TRANSIT", "IN_STORAGE", "CLOSED"];
+
+const WAYBILL_STATUS_TO_MANIFEST_TYPE = (waybillStatus) => {
+  if (["ADVICE", "LOADING"].includes(waybillStatus)) return "ADVICE";
+  if (["IN_TRANSIT", "UNLOADING"].includes(waybillStatus)) return "DEPARTURE";
+  if (["ARRIVED", "CLOSED"].includes(waybillStatus)) return "ARRIVAL";
+  return "UNKNOWN";
+};
 
 module.exports = {
   REQUIRED_WAYBILL_HEADERS,
   REQUIRED_WAYBILL_UPDATE_HEADERS,
   REQUIRED_UNIT_HEADERS,
   REQUIRED_UNIT_UPDATE_HEADERS,
+  REQUIRED_MANIFEST_HEADERS,
   VALID_WAYBILL_STATUSES,
   VALID_UNIT_STATUSES,
+  WAYBILL_STATUS_TO_MANIFEST_TYPE,
 };

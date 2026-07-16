@@ -54,6 +54,7 @@ const BulkUpload = () => {
         setUploadErrors(err.response.data.errors);
       } else {
         console.log("2 - Generic Error");
+        console.log(err);
         alert(err.message || "An unexpected error occurred");
       }
     } finally {

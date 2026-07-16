@@ -7,12 +7,14 @@ const {
   REQUIRED_WAYBILL_UPDATE_HEADERS,
   REQUIRED_UNIT_HEADERS,
   REQUIRED_UNIT_UPDATE_HEADERS,
+  REQUIRED_MANIFEST_HEADERS,
 } = require("./bulkUploadConstants");
 const {
   processNewWaybills,
   processUpdateWaybills,
   processNewUnits,
   processUpdateUnits,
+  processManifestEntries,
 } = require("./bulkUploadService");
 
 exports.bulkUploadSheet = async (req, res) => {
@@ -31,6 +33,7 @@ exports.bulkUploadSheet = async (req, res) => {
       .getRow(1)
       .values.map((v) => v?.toString().toLowerCase().trim());
 
+    console.log('📋 Detected headers:', headers);
     // Parse rows into JSON
     const data = [];
     worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
@@ -75,7 +78,12 @@ exports.bulkUploadSheet = async (req, res) => {
       return res.status(200).json({ type: "UNITS", ...result });
     }
 
-    return res.status(400).json({ error: "Columns do not match Waybill or Unit templates." });
+    if (matches(REQUIRED_MANIFEST_HEADERS)) {
+      const result = await processManifestEntries(data, validMetadata, userId);
+      return res.status(200).json({ type: "MANIFEST", ...result });
+    }
+
+    return res.status(400).json({ error: "Columns do not match Waybill, Unit, or Manifest templates." });
 
   } catch (err) {
     console.error(err);
