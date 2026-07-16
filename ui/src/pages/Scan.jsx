@@ -229,8 +229,8 @@ export default function Scan() {
             <h3 className="scan-counter">
               {" "}
               {confirmedScans.length}{" "}
-              {selectedWaybill?.expected_qty &&
-                ` / ${selectedWaybill.expected_qty}`}{" "}
+              {selectedWaybill?.expected_quantity &&
+                ` / ${selectedWaybill.expected_quantity}`}{" "}
             </h3>
 
             <div className="warehouse-row">
