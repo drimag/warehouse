@@ -12,47 +12,39 @@ const generateSessionToken = (user) => {
 
 exports.register = async (req, res) => {
   try {
-    const { fullName, email, employeeId, password } = req.body;
+    const { name, email, password } = req.body;
+    console.log(name);
 
-    // 1. Double-check mandatory requirements
-    if (!fullName || !email || !employeeId || !password) {
-      return res.status(400).json({ error: 'All registration parameters are strictly required.' });
+    // Basic validation
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "Name, email and password are required" });
     }
 
-    // 2. Query database index to prevent duplicate account creation
-    const existingUser = await userModel.findByEmailOrEmployeeId(email, employeeId);
-    if (existingUser) {
-      return res.status(409).json({ 
-        error: 'A node account with this email address or Employee ID already exists inside the system.' 
-      });
+    if (password.length < 8) {
+      return res.status(400).json({ error: "Password must be at least 8 characters" });
     }
 
-    // 3. Encrypt the secret pass phrase (10 salt rounds provides strong protection without lagging the CPU)
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Check if email already exists
+    const existing = await User.findByEmail(email);
+    if (existing) {
+      return res.status(409).json({ error: "An account with this email already exists" });
+    }
 
-    // 4. Commit data row changes to storage engine
-    const newUser = await userModel.createNewUser({
-      fullName,
-      email: email.toLowerCase().trim(),
-      employeeId: employeeId.toUpperCase().trim(),
-      passwordHash: hashedPassword
-    });
+    // Hash password and create user
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await User.create({ name, email, passwordHash });
 
-    // 5. Respond with success metadata (Exclude password hashes from transmission payloads!)
-    return res.status(201).json({
+    // Generate token so they're logged in immediately after registering
+    const token = generateSessionToken(user);
+
+    res.status(201).json({
       success: true,
-      message: 'System account successfully indexed.',
-      user: {
-        id: newUser.id,
-        fullName: newUser.full_name,
-        email: newUser.email,
-        employeeId: newUser.employee_id
-      }
+      token,
+      user: { name: user.name, email: user.email, role: user.role }
     });
-
-  } catch (error) {
-    console.error('Controller Transaction Exception:', error);
-    return res.status(500).json({ error: 'Internal system fault detected during user write sequence.' });
+  } catch (err) {
+    console.error('Register error:', err);
+    res.status(500).json({ error: "Internal Registration Error" });
   }
 };
 

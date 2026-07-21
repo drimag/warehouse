@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 const apiInstance = axios.create({
   baseURL: BASE_URL,
@@ -87,8 +87,10 @@ export const api = {
     apiInstance.get("/references/locations").then((res) => res.data),
 
   // --- Users ---
-  registerUser: (details) =>
-    apiInstance.post("/users/register", details).then((res) => res.data),
+  registerUser: (name, email, password) =>
+    apiInstance
+      .post("/auth/register", { name, email, password })
+      .then((res) => res.data),
 
   // --- Manifests ---
   createManifest: (waybillId, unitId, type, userId) =>

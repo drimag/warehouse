@@ -1,10 +1,10 @@
 import React, { useState } from "react";
+import { api } from "../services/api";
 
 export default function Register() {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    employeeId: "",
     password: "",
     confirmPassword: "",
     agreeTerms: false,
@@ -27,14 +27,12 @@ export default function Register() {
 
     const cleanFullName = formData.fullName?.trim();
     const cleanEmail = formData.email?.trim().toLowerCase();
-    const cleanEmployeeId = formData.employeeId?.trim().toUpperCase();
     const cleanPassword = formData.password;
     const cleanConfirmPassword = formData.confirmPassword;
 
     if (
       !cleanFullName ||
       !cleanEmail ||
-      !cleanEmployeeId ||
       !cleanPassword ||
       !cleanConfirmPassword
     ) {
@@ -72,14 +70,13 @@ export default function Register() {
 
       // Example Endpoint Integration
       // const { data, error } = await supabase.auth.signUp({ ... })
+      const data = await api.registerUser(cleanFullName, cleanEmail, cleanPassword);
 
-      console.log("Submitting Registration Data:", formData);
-
-      // Simulate API lag
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       alert("Registration submitted successfully!");
     } catch (err) {
-      setError(err.message || "An unexpected error occurred.");
+      console.log(err);
+      const message = err.response?.data?.error || "Registration failed. Try again.";
+      setError(message);
     } finally {
       setLoading(false);
     }
