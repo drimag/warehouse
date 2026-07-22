@@ -108,6 +108,11 @@ export const api = {
       .post("/manifest/finalize_scan", details)
       .then((res) => res.data),
 
+  getUnitManifest: (unitId) =>
+    apiInstance
+      .get(`/manifest/get_unit_manifest/${unitId}`)
+      .then((res) => res.data),
+
   // --- Bulk Upload ---
   // Axios automatically detects FormData payloads and configures multipart/form-data headers for you!
   uploadSheet: (formData) =>

@@ -17,4 +17,11 @@ router.post(
   manifestController.finalizeScan,
 );
 
+router.get(
+  "/get_unit_manifest/:unitId",
+  authenticateToken,
+  restrictToRoles("ADMIN", "SCANNER", "VIEWER"),
+  manifestController.getUnitManifest,
+);
+
 module.exports = router;

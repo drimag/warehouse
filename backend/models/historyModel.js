@@ -1,10 +1,11 @@
 const db = require("../config/db");
 const crypto = require("crypto");
-const { WAYBILL_STATUS_TO_MANIFEST_TYPE } = require("../controllers/bulkUpload/bulkUploadConstants");
+const {
+  WAYBILL_STATUS_TO_MANIFEST_TYPE,
+} = require("../controllers/bulkUpload/bulkUploadConstants");
 
 const History = {};
 
-// Page 2: Get SCD2 History for a Unit
 History.getUnitStateHistory = async (unitId) => {
   const query = `
       SELECT 
@@ -48,6 +49,16 @@ History.getManifest = async (waybillId) => {
       WHERE m.waybill_id = $1
       ORDER BY m.created_at ASC`;
   const res = await db.query(query, [waybillId]);
+  return res.rows;
+};
+
+History.getUnitManifest = async (unitId) => {
+  const query = `
+      SELECT waybill_id, manifest_type, created_at
+      FROM waybill_manifest 
+      WHERE unit_id = $1
+      ORDER BY created_at ASC`;
+  const res = await db.query(query, [unitId]);
   return res.rows;
 };
 
@@ -105,13 +116,13 @@ History.getWaybillStateHistory = async (waybillId) => {
 History.insertBulkManifestByEngine = async (data, userId) => {
   const client = await db.connect();
   try {
-    await client.query('BEGIN');
+    await client.query("BEGIN");
 
     for (const entry of data) {
       // 1. Look up unit by engine number
       const unitRes = await client.query(
         `SELECT id FROM units WHERE engine = $1 LIMIT 1`,
-        [entry.engine]
+        [entry.engine],
       );
 
       if (unitRes.rows.length === 0) {
@@ -123,28 +134,30 @@ History.insertBulkManifestByEngine = async (data, userId) => {
       // 2. Look up waybill status
       const waybillRes = await client.query(
         `SELECT status FROM waybills WHERE id = $1 LIMIT 1`,
-        [entry.waybill_code]
+        [entry.waybill_code],
       );
 
       if (waybillRes.rows.length === 0) {
         throw new Error(`Waybill "${entry.waybill_code}" not found`);
       }
 
-      const manifestType = WAYBILL_STATUS_TO_MANIFEST_TYPE(waybillRes.rows[0].status);
+      const manifestType = WAYBILL_STATUS_TO_MANIFEST_TYPE(
+        waybillRes.rows[0].status,
+      );
 
       // 3. Insert manifest entry
       await client.query(
         `INSERT INTO waybill_manifest (id, unit_id, waybill_id, manifest_type, user_id)
          VALUES (gen_random_uuid(), $1, $2, $3, $4)`,
-        [unitId, entry.waybill_code, manifestType, userId]
+        [unitId, entry.waybill_code, manifestType, userId],
       );
     }
 
-    await client.query('COMMIT');
+    await client.query("COMMIT");
     return { success: true, count: data.length };
   } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('Bulk Manifest Insert Failed:', error);
+    await client.query("ROLLBACK");
+    console.error("Bulk Manifest Insert Failed:", error);
     throw error;
   } finally {
     client.release();

@@ -44,3 +44,16 @@ exports.finalizeScan = async (req, res) => {
     return res.status(500).json({ error: "Internal server error saving manifest." });
   }
 };
+
+exports.getUnitManifest = async (req, res) => {
+  const { unitId } = req.params;
+  try {
+    console.log("unit ID: ", unitId);
+    const history = await History.getUnitManifest(unitId);
+    console.log(history);
+    res.json(history);
+  } catch (err) {
+    console.error("❌ DATABASE ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+};

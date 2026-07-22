@@ -31,9 +31,21 @@ const unitLogColumns = [
   },
 ];
 
+const manifestColumns = [
+  { label: "Waybill ID", key: "waybill_id" },
+  { label: "Status", key: "manifest_type" },
+  { label: "User", key: "user_id" },
+  {
+    label: "Created At",
+    key: "created_at",
+    render: (val) => new Date(val).toLocaleString(),
+  },
+];
+
 export default function UnitLogs() {
   const { unitID } = useParams();
   const [unitData, setUnitData] = useState(null);
+  const [manifestData, setManifestData] = useState(null);
 
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -45,16 +57,16 @@ export default function UnitLogs() {
 
     setNetworkError(null);
 
-    api
-      .getUnitHistory(unitID)
-      .then((data) => {
+    Promise.all([api.getUnitHistory(unitID), api.getUnitManifest(unitID)])
+      .then(([data, manifest]) => {
         setUnitData(data);
+        setManifestData(manifest);
       })
       .catch((err) => {
         console.error(err);
         setNetworkError("Failed to load logistics form data. Please refresh.");
       })
-      .finally(setLoading(false));
+      .finally(() => setLoading(false));
   }, [unitID, user, authLoading]);
 
   if (authLoading || loading) return <div>Loading Page...</div>;
@@ -64,7 +76,18 @@ export default function UnitLogs() {
 
   return (
     <div className="page">
-      <UnitHeader unit={unitData.details} />
+      <UnitHeader unit={unitData.details} />{" "}
+      {manifestData.length > 0 && (
+        <>
+          <h1 className="page-title">Unit History</h1>
+          <GenericTable
+            columns={manifestColumns}
+            data={manifestData}
+            emptyMessage="No advice logged"
+          />
+        </>
+      )}
+      <hr className="divider" />
       <h1 className="page-title">Unit Logs</h1>
       <GenericTable
         columns={unitLogColumns}
