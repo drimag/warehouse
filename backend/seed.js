@@ -350,7 +350,7 @@ const seedDatabase = async () => {
         ), 
         (
           'wb2', 
-          (SELECT id FROM units WHERE engine = 'ENG-P2-003' LIMIT 1), 
+          (SELECT id FROM units WHERE engine = 'ENG-P2-005' LIMIT 1), 
           'ADVICE'
         );
 
@@ -375,7 +375,7 @@ const seedDatabase = async () => {
         ), 
         (
           'wb2', 
-          (SELECT id FROM units WHERE engine = 'ENG-P2-003' LIMIT 1), 
+          (SELECT id FROM units WHERE engine = 'ENG-P2-005' LIMIT 1), 
           'DEPARTURE'
         );
 
@@ -398,7 +398,7 @@ const seedDatabase = async () => {
         ), 
         (
           'wb2', 
-          (SELECT id FROM units WHERE engine = 'ENG-P2-003' LIMIT 1), 
+          (SELECT id FROM units WHERE engine = 'ENG-P2-005' LIMIT 1), 
           'ARRIVAL'
         );
 
