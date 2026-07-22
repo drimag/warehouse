@@ -106,7 +106,7 @@ export const HelpPage = () => {
               {/* 📸 IMAGE BLOCK */}
               <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col items-center print:border-black print:break-inside-avoid">
                 <img
-                  src="../../public/units_table.png" // Replace with your actual image path or URL
+                  src="/units_table.png" // Replace with your actual image path or URL
                   alt="Dropdown Selection and Scanning Workflow Reference Diagram"
                   className="max-w-full h-auto rounded-lg border border-slate-200 shadow-sm max-h-64 object-contain print:shadow-none print:border-black"
                 />
@@ -118,7 +118,7 @@ export const HelpPage = () => {
               {/* 📸 IMAGE BLOCK */}
               <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col items-center print:border-black print:break-inside-avoid">
                 <img
-                  src="../../public/waybills_table.png" // Replace with your actual image path or URL
+                  src="/waybills_table.png" // Replace with your actual image path or URL
                   alt="Dropdown Selection and Scanning Workflow Reference Diagram"
                   className="max-w-full h-auto rounded-lg border border-slate-200 shadow-sm max-h-64 object-contain print:shadow-none print:border-black"
                 />
@@ -243,7 +243,7 @@ export const HelpPage = () => {
                 {/* 📸 IMAGE BLOCK */}
                 <div className="mb-4 pb-4 border-slate-100 flex flex-col items-center print:border-black print:break-inside-avoid">
                   <img
-                    src="../../public/unit_logs.png" // Replace with your actual image path or URL
+                    src="/unit_logs.png" // Replace with your actual image path or URL
                     alt="Dropdown Selection and Scanning Workflow Reference Diagram"
                     className="max-w-full h-auto rounded-lg border border-slate-200 shadow-sm max-h-64 object-contain print:shadow-none print:border-black"
                   />
@@ -295,7 +295,7 @@ export const HelpPage = () => {
                 {/* 📸 IMAGE BLOCK */}
                 <div className="mb-4 pb-4 border-slate-100 flex flex-col items-center print:border-black print:break-inside-avoid">
                   <img
-                    src="../../public/waybill_logs.png" // Replace with your actual image path or URL
+                    src="/waybill_logs.png" // Replace with your actual image path or URL
                     alt="Dropdown Selection and Scanning Workflow Reference Diagram"
                     className="max-w-full h-auto rounded-lg border border-slate-200 shadow-sm max-h-64 object-contain print:shadow-none print:border-black"
                   />
@@ -316,7 +316,7 @@ export const HelpPage = () => {
                 {/* 📸 IMAGE BLOCK */}
                 <div className="mb-4 pb-4 border-slate-100 flex flex-col items-center print:border-black print:break-inside-avoid">
                   <img
-                    src="../../public/waybill_logs2.png" // Replace with your actual image path or URL
+                    src="/waybill_logs2.png" // Replace with your actual image path or URL
                     alt="Dropdown Selection and Scanning Workflow Reference Diagram"
                     className="max-w-full h-auto rounded-lg border border-slate-200 shadow-sm max-h-64 object-contain print:shadow-none print:border-black"
                   />
@@ -353,7 +353,7 @@ export const HelpPage = () => {
                     {/* 📸 IMAGE BLOCK */}
                     <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col items-center print:border-black print:break-inside-avoid">
                       <img
-                        src="../../public/wb_select.png" // Replace with your actual image path or URL
+                        src="/wb_select.png" // Replace with your actual image path or URL
                         alt="Dropdown Selection and Scanning Workflow Reference Diagram"
                         className="max-w-full h-auto rounded-lg border border-slate-200 shadow-sm max-h-64 object-contain print:shadow-none print:border-black"
                       />
@@ -393,7 +393,7 @@ export const HelpPage = () => {
                   {/* 📸 IMAGE BLOCK */}
                   <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col items-center print:border-black print:break-inside-avoid">
                     <img
-                      src="../../public/wb_select.png" // Replace with your actual image path or URL
+                      src="/wb_select.png" // Replace with your actual image path or URL
                       alt="Dropdown Selection and Scanning Workflow Reference Diagram"
                       className="max-w-full h-auto rounded-lg border border-slate-200 shadow-sm max-h-64 object-contain print:shadow-none print:border-black"
                     />
@@ -439,7 +439,7 @@ export const HelpPage = () => {
                     {/* 📸 IMAGE BLOCK */}
                     <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col items-center print:border-black print:break-inside-avoid">
                       <img
-                        src="../../public/scan_empty.png" // Replace with your actual image path or URL
+                        src="/scan_empty.png" // Replace with your actual image path or URL
                         alt="Dropdown Selection and Scanning Workflow Reference Diagram"
                         className="max-w-full h-auto rounded-lg border border-slate-200 shadow-sm max-h-64 object-contain print:shadow-none print:border-black"
                       />
@@ -528,7 +528,7 @@ export const HelpPage = () => {
                     {/* 📸 IMAGE BLOCK */}
                     <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col items-center print:border-black print:break-inside-avoid">
                       <img
-                        src="../../public/scan_double.png" // Replace with your actual image path or URL
+                        src="/scan_double.png" // Replace with your actual image path or URL
                         alt="Dropdown Selection and Scanning Workflow Reference Diagram"
                         className="max-w-full h-auto rounded-lg border border-slate-200 shadow-sm max-h-64 object-contain print:shadow-none print:border-black"
                       />
