@@ -16,25 +16,35 @@ const throwIfErrors = (errors) => {
   }
 };
 
+const resolveId = (value, collection, nameField) => {
+  if (!hasValue(value)) return null;
+  const str = value.toString().trim();
+
+  const byId = collection.find((item) => item.id.toString() === str);
+  if (byId) return byId.id;
+
+  const byName = collection.find(
+    (item) => item[nameField].toLowerCase() === str.toLowerCase()
+  );
+  return byName ? byName.id : null;
+};
+
 // ─── Waybill Validators ───────────────────────────────────────────────────────
 
-const validateNewWaybillRow = (row, index) => {
+const validateNewWaybillRow = (row, index, validMetadata) => {
   const rowErrors = [];
   const rowNum = index + 1;
+  const resolvedRow = { ...row };
 
   if (!hasValue(row.code)) {
     rowErrors.push("Missing required field: 'code'");
   } else {
     const cleanCode = row.code.toString().trim();
     if (cleanCode.length < 2 || cleanCode.length > 6) {
-      rowErrors.push(
-        `Code prefix "${row.code}" must be between 2 and 6 characters.`
-      );
+      rowErrors.push(`Code prefix "${row.code}" must be between 2 and 6 characters.`);
     }
     if (!/^[A-Za-z0-9]+$/.test(cleanCode)) {
-      rowErrors.push(
-        `Code prefix "${row.code}" must contain only letters and numbers (no spaces or symbols).`
-      );
+      rowErrors.push(`Code prefix "${row.code}" must contain only letters and numbers (no spaces or symbols).`);
     }
   }
 
@@ -45,11 +55,34 @@ const validateNewWaybillRow = (row, index) => {
     rowErrors.push(`Invalid or missing status: "${row.status}"`);
   }
 
-  ["origin_id", "destination_id", "truck_id", "driver_id"].forEach((field) => {
-    if (!hasValue(row[field]) || isNaN(row[field])) {
-      rowErrors.push(`Valid numeric '${field}' is required`);
+  ["origin_id", "destination_id"].forEach((field) => {
+    const resolved = resolveId(row[field], validMetadata.locations, "name");
+    if (resolved === null) {
+      rowErrors.push(
+        `'${field}' value "${row[field]}" does not match any known location (accepts ID or name).`
+      );
+    } else {
+      resolvedRow[field] = resolved;
     }
   });
+
+  const resolvedTruck = resolveId(row.truck_id, validMetadata.trucks, "plate_number");
+  if (resolvedTruck === null) {
+    rowErrors.push(
+      `'truck_id' value "${row.truck_id}" does not match any known truck (accepts ID or plate number).`
+    );
+  } else {
+    resolvedRow.truck_id = resolvedTruck;
+  }
+
+  const resolvedDriver = resolveId(row.driver_id, validMetadata.drivers, "full_name");
+  if (resolvedDriver === null) {
+    rowErrors.push(
+      `'driver_id' value "${row.driver_id}" does not match any known driver (accepts ID or full name).`
+    );
+  } else {
+    resolvedRow.driver_id = resolvedDriver;
+  }
 
   const qty = parseInt(row.expected_quantity);
   if (isNaN(qty) || qty < 0 || qty > 9999) {
@@ -62,12 +95,13 @@ const validateNewWaybillRow = (row, index) => {
 
   return rowErrors.length > 0
     ? { row: rowNum, identifier: row.code || `Row ${rowNum}`, details: rowErrors }
-    : null;
+    : { resolved: resolvedRow };
 };
 
 const validateUpdateWaybillRow = (row, index, validMetadata) => {
   const rowErrors = [];
   const rowNum = index + 1;
+  const resolvedRow = { ...row };
 
   if (!hasValue(row.current_id)) {
     rowErrors.push(
@@ -87,13 +121,40 @@ const validateUpdateWaybillRow = (row, index, validMetadata) => {
     rowErrors.push(`Invalid status variant provided: "${row.new_status}"`);
   }
 
-  ["new_origin_id", "new_destination_id", "new_truck_id", "new_driver_id"].forEach(
-    (field) => {
-      if (hasValue(row[field]) && isNaN(row[field])) {
-        rowErrors.push(`Optional override content field '${field}' must be numeric`);
-      }
+  ["new_origin_id", "new_destination_id"].forEach((field) => {
+    if (!hasValue(row[field])) return;
+    const baseField = field.replace("new_", "");
+    const resolved = resolveId(row[field], validMetadata.locations, "name");
+    if (resolved === null) {
+      rowErrors.push(
+        `'${field}' value "${row[field]}" does not match any known location (accepts ID or name).`
+      );
+    } else {
+      resolvedRow[field] = resolved;
     }
-  );
+  });
+
+  if (hasValue(row.new_truck_id)) {
+    const resolved = resolveId(row.new_truck_id, validMetadata.trucks, "plate_number");
+    if (resolved === null) {
+      rowErrors.push(
+        `'new_truck_id' value "${row.new_truck_id}" does not match any known truck (accepts ID or plate number).`
+      );
+    } else {
+      resolvedRow.new_truck_id = resolved;
+    }
+  }
+
+  if (hasValue(row.new_driver_id)) {
+    const resolved = resolveId(row.new_driver_id, validMetadata.drivers, "full_name");
+    if (resolved === null) {
+      rowErrors.push(
+        `'new_driver_id' value "${row.new_driver_id}" does not match any known driver (accepts ID or full name).`
+      );
+    } else {
+      resolvedRow.new_driver_id = resolved;
+    }
+  }
 
   if (hasValue(row.new_expected_quantity)) {
     const qty = parseInt(row.new_expected_quantity);
@@ -112,7 +173,7 @@ const validateUpdateWaybillRow = (row, index, validMetadata) => {
 
   return rowErrors.length > 0
     ? { row: rowNum, identifier: row.current_id || `Row ${rowNum}`, details: rowErrors }
-    : null;
+    : { resolved: resolvedRow };
 };
 
 // ─── Unit Validators ──────────────────────────────────────────────────────────
@@ -120,6 +181,7 @@ const validateUpdateWaybillRow = (row, index, validMetadata) => {
 const validateNewUnitRow = (row, index, validMetadata) => {
   const rowErrors = [];
   const rowNum = index + 1;
+  const resolvedRow = { ...row };
 
   if (!hasValue(row.engine)) {
     rowErrors.push("Engine number is required");
@@ -138,11 +200,13 @@ const validateNewUnitRow = (row, index, validMetadata) => {
     rowErrors.push(`Engine number "${row.engine}" already exists in the database`);
   }
 
-  const locId = parseInt(row.last_location_id);
-  if (isNaN(locId)) {
-    rowErrors.push(`Location ID must be a number (got: "${row.last_location_id}")`);
-  } else if (validMetadata?.locationIds && !validMetadata.locationIds.includes(locId)) {
-    rowErrors.push(`Location ID ${locId} does not exist in the database`);
+  const resolved = resolveId(row.last_location_id, validMetadata.locations, "name");
+  if (resolved === null) {
+    rowErrors.push(
+      `'last_location_id' value "${row.last_location_id}" does not match any known location (accepts ID or name).`
+    );
+  } else {
+    resolvedRow.last_location_id = resolved;
   }
 
   if (validMetadata?.waybillCodes) {
@@ -154,12 +218,13 @@ const validateNewUnitRow = (row, index, validMetadata) => {
 
   return rowErrors.length > 0
     ? { row: rowNum, engine: row.engine || "N/A", details: rowErrors }
-    : null;
+    : { resolved: resolvedRow };
 };
 
 const validateUpdateUnitRow = (row, index, validMetadata) => {
   const rowErrors = [];
   const rowNum = index + 1;
+  const resolvedRow = { ...row };
 
   if (!hasValue(row.old_engine)) {
     rowErrors.push(
@@ -187,11 +252,13 @@ const validateUpdateUnitRow = (row, index, validMetadata) => {
   }
 
   if (hasValue(row.new_last_location_id)) {
-    const locId = parseInt(row.new_last_location_id);
-    if (isNaN(locId)) {
-      rowErrors.push(`Location ID must be a number (got: "${row.new_last_location_id}")`);
-    } else if (validMetadata?.locationIds && !validMetadata.locationIds.includes(locId)) {
-      rowErrors.push(`Location ID ${locId} does not exist in the database`);
+    const resolved = resolveId(row.new_last_location_id, validMetadata.locations, "name");
+    if (resolved === null) {
+      rowErrors.push(
+        `'new_last_location_id' value "${row.new_last_location_id}" does not match any known location (accepts ID or name).`
+      );
+    } else {
+      resolvedRow.new_last_location_id = resolved;
     }
   }
 
@@ -204,7 +271,7 @@ const validateUpdateUnitRow = (row, index, validMetadata) => {
 
   return rowErrors.length > 0
     ? { row: rowNum, engine: row.old_engine || "N/A", details: rowErrors }
-    : null;
+    : { resolved: resolvedRow };
 };
 
 // ─── Manifest Validators ──────────────────────────────────────────────────────
@@ -219,9 +286,7 @@ const validateManifestRow = (row, index, validMetadata) => {
     validMetadata?.engines &&
     !validMetadata.engines.includes(row.engine.toString().trim())
   ) {
-    rowErrors.push(
-      `Engine "${row.engine}" does not exist in the database`
-    );
+    rowErrors.push(`Engine "${row.engine}" does not exist in the database`);
   }
 
   if (!hasValue(row.waybill_code)) {
@@ -230,9 +295,7 @@ const validateManifestRow = (row, index, validMetadata) => {
     validMetadata?.waybillCodes &&
     !validMetadata.waybillCodes.includes(row.waybill_code.toString().trim())
   ) {
-    rowErrors.push(
-      `Waybill code "${row.waybill_code}" does not exist in the database`
-    );
+    rowErrors.push(`Waybill code "${row.waybill_code}" does not exist in the database`);
   }
 
   return rowErrors.length > 0

@@ -22,12 +22,11 @@ const safeField = (val, formatter = (v) => v) => {
 // ─── Waybill Services ─────────────────────────────────────────────────────────
 
 const processNewWaybills = async (data, validMetadata) => {
-  const errors = data
-    .map((row, idx) => validateNewWaybillRow(row, idx, validMetadata))
-    .filter(Boolean);
-  throwIfErrors(errors);
+  const results = data.map((row, idx) => validateNewWaybillRow(row, idx, validMetadata));
+  throwIfErrors(results.filter((r) => r?.details));
 
-  const formattedData = data.map((row) => ({
+  const resolvedData = results.map((r) => r.resolved);
+  const formattedData = resolvedData.map((row) => ({
     id: row.code,
     status: row.status.toString().trim().toUpperCase(),
     origin_id: parseInt(row.origin_id),
@@ -48,12 +47,11 @@ const processNewWaybills = async (data, validMetadata) => {
 };
 
 const processUpdateWaybills = async (data, validMetadata) => {
-  const errors = data
-    .map((row, idx) => validateUpdateWaybillRow(row, idx, validMetadata))
-    .filter(Boolean);
-  throwIfErrors(errors);
+  const results = data.map((row, idx) => validateUpdateWaybillRow(row, idx, validMetadata));
+  throwIfErrors(results.filter((r) => r?.details));
 
-  const formattedData = data.map((row) => ({
+  const resolvedData = results.map((r) => r.resolved);
+  const formattedData = resolvedData.map((row) => ({
     id: row.current_id,
     status: safeField(row.new_status, (v) => v.toString().toUpperCase()),
     origin_id: safeField(row.new_origin_id, parseInt),
@@ -63,7 +61,7 @@ const processUpdateWaybills = async (data, validMetadata) => {
     driver_id: safeField(row.new_driver_id, parseInt),
     expected_quantity: safeField(row.new_expected_quantity, parseInt),
     expected_arrival: safeField(row.new_expected_arrival, (v) =>
-      new Date(v).toISOString(),
+      new Date(v).toISOString()
     ),
   }));
 
@@ -78,12 +76,11 @@ const processUpdateWaybills = async (data, validMetadata) => {
 // ─── Unit Services ────────────────────────────────────────────────────────────
 
 const processNewUnits = async (data, validMetadata, userId) => {
-  const errors = data
-    .map((row, idx) => validateNewUnitRow(row, idx, validMetadata))
-    .filter(Boolean);
-  throwIfErrors(errors);
+  const results = data.map((row, idx) => validateNewUnitRow(row, idx, validMetadata));
+  throwIfErrors(results.filter((r) => r?.details));
 
-  const formattedData = data.map((row) => ({
+  const resolvedData = results.map((r) => r.resolved);
+  const formattedData = resolvedData.map((row) => ({
     engine: row.engine.toString().trim(),
     frame: row.frame.toString().trim(),
     model: row.model ? row.model.toString().trim() : null,
@@ -103,12 +100,11 @@ const processNewUnits = async (data, validMetadata, userId) => {
 };
 
 const processUpdateUnits = async (data, validMetadata, userId) => {
-  const errors = data
-    .map((row, idx) => validateUpdateUnitRow(row, idx, validMetadata))
-    .filter(Boolean);
-  throwIfErrors(errors);
+  const results = data.map((row, idx) => validateUpdateUnitRow(row, idx, validMetadata));
+  throwIfErrors(results.filter((r) => r?.details));
 
-  const formattedData = data.map((row) => ({
+  const resolvedData = results.map((r) => r.resolved);
+  const formattedData = resolvedData.map((row) => ({
     old_engine: row.old_engine.toString().trim(),
     new_engine: safeField(row.new_engine),
     new_frame: safeField(row.new_frame),
@@ -133,7 +129,7 @@ const processUpdateUnits = async (data, validMetadata, userId) => {
 const processManifestEntries = async (data, validMetadata, userId) => {
   const errors = data
     .map((row, idx) => validateManifestRow(row, idx, validMetadata))
-    .filter(Boolean);
+    .filter((r) => r?.details);
   throwIfErrors(errors);
 
   const formattedData = data.map((row) => ({
@@ -141,11 +137,7 @@ const processManifestEntries = async (data, validMetadata, userId) => {
     waybill_code: row.waybill_code.toString().trim(),
   }));
 
-  const result = await History.insertBulkManifestByEngine(
-    formattedData,
-    userId,
-  );
-
+  const result = await History.insertBulkManifestByEngine(formattedData, userId);
   return {
     isSuccess: result.success,
     count: result.count,

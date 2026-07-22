@@ -47,12 +47,14 @@ exports.bulkUploadSheet = async (req, res) => {
     });
 
     // Fetch reference data for validation
-    const [locationIds, waybillCodes, engines] = await Promise.all([
-      ReferenceModel.getAllLocationIds(),
+    const [locations, drivers, trucks, waybillCodes, engines] = await Promise.all([
+      ReferenceModel.getAll("locations"),
+      ReferenceModel.getAll("drivers"),
+      ReferenceModel.getAll("trucks"),
       Waybill.getAllWaybillCodes(),
       Unit.getAllEngines(),
     ]);
-    const validMetadata = { locationIds, waybillCodes, engines };
+    const validMetadata = { locations, drivers, trucks, waybillCodes, engines };
 
     // Detect sheet type and process
     const matches = (required) => required.every((h) => headers.includes(h));

@@ -245,11 +245,11 @@ const seedDatabase = async () => {
     await db.query(`
       INSERT INTO locations (id, name, type) 
       VALUES
-        (1, 'Central Hub - Makati', 'WAREHOUSE'),
-        (2, 'North Luzon Depot', 'WAREHOUSE'),
-        (3, 'Cebu Distribution Center', 'WAREHOUSE'),
-        (4, 'Sta. Rosa Main Plant', 'PLANT'),
-        (5, 'End Consumer / Dealer', 'CONSUMER')
+        (1, 'MMNL', 'WAREHOUSE'),
+        (2, 'NLZN', 'WAREHOUSE'),
+        (3, 'CEBU', 'WAREHOUSE'),
+        (4, 'STRS', 'PLANT'),
+        (5, 'PLNT', 'PLANT')
       ON CONFLICT (id) DO UPDATE SET 
         name = EXCLUDED.name, 
         type = EXCLUDED.type;
