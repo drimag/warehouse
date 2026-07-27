@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import UnitHeader from "../components/Units/UnitHeader";
 import GenericTable from "../components/GenericTable";
@@ -42,7 +43,10 @@ const manifestColumns = [
   },
 ];
 
+
 export default function UnitLogs() {
+  
+  const navigate = useNavigate();
   const { unitID } = useParams();
   const [unitData, setUnitData] = useState(null);
   const [manifestData, setManifestData] = useState(null);
@@ -84,6 +88,7 @@ export default function UnitLogs() {
             columns={manifestColumns}
             data={manifestData}
             emptyMessage="No advice logged"
+            onRowClick={(row) => navigate("/waybill_logs/" + row.waybill_id)}
           />
         </>
       )}
