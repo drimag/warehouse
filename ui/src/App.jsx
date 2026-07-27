@@ -21,7 +21,9 @@ import "./styles/sidebar.css";
 import "./styles/unit.css";
 
 function App() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div className="app-layout">
