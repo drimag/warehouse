@@ -123,7 +123,6 @@ const validateUpdateWaybillRow = (row, index, validMetadata) => {
 
   ["new_origin_id", "new_destination_id"].forEach((field) => {
     if (!hasValue(row[field])) return;
-    const baseField = field.replace("new_", "");
     const resolved = resolveId(row[field], validMetadata.locations, "name");
     if (resolved === null) {
       rowErrors.push(

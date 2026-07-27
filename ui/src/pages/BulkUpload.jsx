@@ -49,7 +49,7 @@ const BulkUpload = () => {
       alert("Bulk upload completed!");
     } catch (err) {
       console.error("The actual crash reason:", err);
-      if (err.status === 422 && err.response?.data?.errors) {
+      if (err.response?.status === 422 && err.response?.data?.errors) {
         console.log("1 - Success! Errors found:", err.response.data.errors);
         setUploadErrors(err.response.data.errors);
       } else {
@@ -103,8 +103,9 @@ const BulkUpload = () => {
         <ul style={{ paddingLeft: "1.25rem", margin: 0 }}>
           {errors.map((err, i) => (
             <li key={i} style={{ marginBottom: "0.25rem" }}>
-              <strong>Row {err.row}</strong> ({err.id}
-              {err.engine}): {err.details.join(", ")}
+              <strong>Row {err.row}</strong> (
+              {err.identifier ?? err.engine ?? "Unknown"}):{" "}
+              {err.details?.join(", ")}
             </li>
           ))}
         </ul>

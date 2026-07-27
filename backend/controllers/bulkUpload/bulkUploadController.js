@@ -19,7 +19,9 @@ const {
 
 exports.bulkUploadSheet = async (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded. Check the field name." });
+    return res
+      .status(400)
+      .json({ error: "No file uploaded. Check the field name." });
   }
 
   try {
@@ -33,7 +35,7 @@ exports.bulkUploadSheet = async (req, res) => {
       .getRow(1)
       .values.map((v) => v?.toString().toLowerCase().trim());
 
-    console.log('📋 Detected headers:', headers);
+    console.log("📋 Detected headers:", headers);
     // Parse rows into JSON
     const data = [];
     worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
@@ -47,13 +49,14 @@ exports.bulkUploadSheet = async (req, res) => {
     });
 
     // Fetch reference data for validation
-    const [locations, drivers, trucks, waybillCodes, engines] = await Promise.all([
-      ReferenceModel.getAll("locations"),
-      ReferenceModel.getAll("drivers"),
-      ReferenceModel.getAll("trucks"),
-      Waybill.getAllWaybillCodes(),
-      Unit.getAllEngines(),
-    ]);
+    const [locations, drivers, trucks, waybillCodes, engines] =
+      await Promise.all([
+        ReferenceModel.getAll("locations"),
+        ReferenceModel.getAll("drivers"),
+        ReferenceModel.getAll("trucks"),
+        Waybill.getAllWaybillCodes(),
+        Unit.getAllEngines(),
+      ]);
     const validMetadata = { locations, drivers, trucks, waybillCodes, engines };
 
     // Detect sheet type and process
@@ -85,18 +88,25 @@ exports.bulkUploadSheet = async (req, res) => {
       return res.status(200).json({ type: "MANIFEST", ...result });
     }
 
-    return res.status(400).json({ error: "Columns do not match Waybill, Unit, or Manifest templates." });
-
+    return res
+      .status(400)
+      .json({
+        error: "Columns do not match Waybill, Unit, or Manifest templates.",
+      });
   } catch (err) {
-    console.error(err);
-
     if (err.validationErrors) {
+      console.error(
+        "❌ Validation errors:",
+        JSON.stringify(err.validationErrors, null, 2),
+      );
       return res.status(422).json({
         message: "Multiple validation errors found in the file.",
         errors: err.validationErrors,
       });
     }
-
-    return res.status(500).json({ error: "Internal Server Error during bulk processing" });
+    console.error("❌ Unexpected error:", err);
+    return res
+      .status(500)
+      .json({ error: "Internal Server Error during bulk processing" });
   }
 };
