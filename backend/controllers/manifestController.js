@@ -48,9 +48,7 @@ exports.finalizeScan = async (req, res) => {
 exports.getUnitManifest = async (req, res) => {
   const { unitId } = req.params;
   try {
-    console.log("unit ID: ", unitId);
     const history = await History.getUnitManifest(unitId);
-    console.log(history);
     res.json(history);
   } catch (err) {
     console.error("❌ DATABASE ERROR:", err);
