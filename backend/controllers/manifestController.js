@@ -2,7 +2,10 @@ const History = require("../models/historyModel");
 const Waybill = require("../models/waybillModel");
 
 exports.createManifest = async (req, res) => {
-  const { waybillId, unitScannedCode, type, userId } = req.body;
+  const { waybillId, unitScannedCode, type } = req.body;
+  const userId = req.user.email;
+
+  console.log("called create manifest: ", userId);
   try {
     const manifest = History.createManifest(
       waybillId,
@@ -20,13 +23,14 @@ exports.createManifest = async (req, res) => {
 
 exports.finalizeScan = async (req, res) => {
   const { waybillId, barcodes } = req.body;
+  const userId = req.user.email;
 
   if (!waybillId || !Array.isArray(barcodes)) {
     return res.status(400).json({ error: "Invalid payload structure." });
   }
 
   try {
-    const result = await Waybill.processBulkManifest(waybillId, barcodes);
+    const result = await Waybill.processBulkManifest(waybillId, barcodes, userId);
 
     return res.status(200).json({
       success: true,

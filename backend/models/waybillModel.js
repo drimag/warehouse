@@ -116,8 +116,8 @@ const Waybill = {
     return res.rows[0];
   },
 
-getWaybillManifestByWBID: async (wbID) => {
-  const query = `
+  getWaybillManifestByWBID: async (wbID) => {
+    const query = `
     SELECT 
       wm.id,
       wm.waybill_id,
@@ -146,9 +146,9 @@ getWaybillManifestByWBID: async (wbID) => {
     WHERE wm.waybill_id = $1
     ORDER BY wm.created_at;
   `;
-  const res = await db.query(query, [wbID]);
-  return res.rows || null;
-},
+    const res = await db.query(query, [wbID]);
+    return res.rows || null;
+  },
 
   //TODO: confirm if correct
   getTodayCount: async () => {
@@ -355,7 +355,7 @@ getWaybillManifestByWBID: async (wbID) => {
     }
   },
 
-  processBulkManifest: async (waybillId, barcodes) => {
+  processBulkManifest: async (waybillId, barcodes, userEmail) => {
     const client = await db.connect();
 
     try {
@@ -412,14 +412,15 @@ getWaybillManifestByWBID: async (wbID) => {
 
         await client.query(
           `
-            INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type)
+            INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type, user_id)
             VALUES (
               $1, 
               (SELECT id FROM units WHERE engine = $2 OR frame = $2 LIMIT 1), 
-              $3
+              $3,
+              $4
             );
           `,
-          [waybillId, barcode, manifestType],
+          [waybillId, barcode, manifestType, userEmail], 
         );
       }
 
