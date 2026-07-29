@@ -116,23 +116,39 @@ const Waybill = {
     return res.rows[0];
   },
 
-  getWaybillManifestByWBID: async (wbID) => {
-    const query = `
-      SELECT 
-        wm.id,
-        wm.waybill_id,
-        wm.unit_id,
-        u.engine,
-        wm.manifest_type,
-        wm.user_id,
-        wm.created_at
-      FROM waybill_manifest wm
-      LEFT JOIN units u ON wm.unit_id = u.id
-      WHERE wm.waybill_id = $1;
-    `;
-    const res = await db.query(query, [wbID]);
-    return res.rows || null;
-  },
+getWaybillManifestByWBID: async (wbID) => {
+  const query = `
+    SELECT 
+      wm.id,
+      wm.waybill_id,
+      wm.unit_id,
+      u.engine,
+      wm.manifest_type,
+      wm.user_id,
+      wm.created_at,
+      CASE 
+        WHEN wm.manifest_type = 'DEPARTURE' AND NOT EXISTS (
+          SELECT 1 FROM waybill_manifest prev
+          WHERE prev.unit_id = wm.unit_id
+            AND prev.waybill_id = wm.waybill_id
+            AND prev.manifest_type = 'ADVICE'
+        ) THEN true
+        WHEN wm.manifest_type = 'ARRIVAL' AND NOT EXISTS (
+          SELECT 1 FROM waybill_manifest prev
+          WHERE prev.unit_id = wm.unit_id
+            AND prev.waybill_id = wm.waybill_id
+            AND prev.manifest_type = 'DEPARTURE'
+        ) THEN true
+        ELSE false
+      END AS is_unexpected
+    FROM waybill_manifest wm
+    LEFT JOIN units u ON wm.unit_id = u.id
+    WHERE wm.waybill_id = $1
+    ORDER BY wm.created_at;
+  `;
+  const res = await db.query(query, [wbID]);
+  return res.rows || null;
+},
 
   //TODO: confirm if correct
   getTodayCount: async () => {

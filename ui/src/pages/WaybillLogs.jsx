@@ -52,6 +52,18 @@ const scanColumns = [
     key: "created_at",
     render: (val) => new Date(val).toLocaleString(),
   },
+  {
+    label: "Flag",
+    key: "is_unexpected",
+    render: (val) =>
+      val ? (
+        <span className="text-red-600 font-bold" title="Unit was not in a prior stage">
+          ⚠️ Unexpected
+        </span>
+      ) : (
+        <span className="text-green-600"></span>
+      ),
+  },
 ];
 
 const unitAdviceColumns = [
@@ -82,7 +94,7 @@ export default function WaybillLogs() {
       .catch((err) => {
         setNetworkError("Failed to load logistics form data. Please refresh.");
       })
-      .finally(setLoading(false));
+      .finally(() => setLoading(false));
   }, [id, user, authLoading]);
 
   if (authLoading || loading) return <div>Loading Page...</div>;
