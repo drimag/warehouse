@@ -61,7 +61,7 @@ exports.bulkUploadSheet = async (req, res) => {
 
     // Detect sheet type and process
     const matches = (required) => required.every((h) => headers.includes(h));
-    const userId = req.user?.id;
+    const userId = req.user.email;
 
     if (matches(REQUIRED_WAYBILL_HEADERS)) {
       const result = await processNewWaybills(data, validMetadata);
