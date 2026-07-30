@@ -75,15 +75,14 @@ export const useScan = () => {
     try {
       const wbLoading = await api.touchLoadingTimeout(waybillID);
     } catch (err) {
-      console.error("❌ ERROR RESETING LOADING:", err);
       setScanError("Database connection error. Try again.");
       resetPage();
       setError("❌ SCAN ERROR. PLEASE TRY AGAIN");
       return;
     }
 
-    let unit;
-    let engine;
+    let unit = null;
+    let engine = null;
 
     try {
       unit = await api.findUnitByVIN(currentScan);
@@ -99,9 +98,10 @@ export const useScan = () => {
       confirmedScans.some(
         (scan) => scan.value.toLowerCase() === currentScan.toLowerCase(),
       ) ||
-      confirmedScans.some(
-        (scan) => scan.value.toLowerCase() === engine.toLowerCase(),
-      );
+      (engine &&
+        confirmedScans.some(
+          (scan) => scan.value.toLowerCase() === engine.toLowerCase(),
+        ));
 
     if (isAlreadyScanned) {
       setScanError(
