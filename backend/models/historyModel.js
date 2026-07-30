@@ -54,7 +54,7 @@ History.getManifest = async (waybillId) => {
 
 History.getUnitManifest = async (unitId) => {
   const query = `
-      SELECT waybill_id, manifest_type, created_at
+      SELECT *
       FROM waybill_manifest 
       WHERE unit_id = $1
       ORDER BY created_at ASC`;
