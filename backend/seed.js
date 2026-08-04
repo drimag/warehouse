@@ -4,8 +4,6 @@ const seedDatabase = async () => {
   try {
     console.log("🚀 Initializing Database Schema & Seed...");
 
-    await db.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
-
     await db.query(`
       DROP TABLE IF EXISTS unit_scans CASCADE;
       DROP TABLE IF EXISTS waybill_logs CASCADE;
@@ -68,7 +66,7 @@ const seedDatabase = async () => {
       );
 
       CREATE TABLE IF NOT EXISTS units (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         engine VARCHAR(50) UNIQUE,
         frame VARCHAR(50) UNIQUE,
         model VARCHAR(50),
@@ -139,7 +137,7 @@ const seedDatabase = async () => {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         user_id VARCHAR(100), -- subject to change
         entity_type VARCHAR(100) NOT NULL,
-        entity_id UUID NOT NULL,
+        entity_id TEXT NOT NULL, 
         event_type TEXT NOT NULL,
         metadata JSONB DEFAULT '{}'::jsonb,
         description TEXT
@@ -175,10 +173,10 @@ const seedDatabase = async () => {
 
         -- 2. Insert the new version
         INSERT INTO unit_history (
-          unit_id, engine, frame, model, color, status, last_location_id, eff_start, is_current
+          unit_id, engine, frame, model, color, status, da, last_location_id, eff_start, is_current
         )
         VALUES (
-          NEW.id, NEW.engine, NEW.frame, NEW.model, NEW.color, NEW.status, NEW.last_location_id, now(), TRUE
+          NEW.id, NEW.engine, NEW.frame, NEW.model, NEW.color, NEW.status, NEW.da, NEW.last_location_id, now(), TRUE
         );
 
         RETURN NEW;
@@ -312,17 +310,19 @@ const seedDatabase = async () => {
       VALUES ('wb1', 'ADVICE', 1, 2, 'Client Alpha', 1, 1, 2);
 
       -- 3. expected units
-      INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
+      INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type, user_id) 
       VALUES 
         (
           'wb1', 
           (SELECT id FROM units WHERE engine = 'ENG-P1-001' LIMIT 1), 
-          'ADVICE'
+          'ADVICE',
+          'admin@company.com'
         ),
         (
           'wb1', 
           (SELECT id FROM units WHERE engine = 'ENG-P1-002' LIMIT 1), 
-          'ADVICE'
+          'ADVICE',
+          'admin@company.com'
         );
       `);
 
@@ -336,22 +336,25 @@ const seedDatabase = async () => {
     await db.query(`
       INSERT INTO waybills (id, status, origin_id, destination_id, client, truck_id, driver_id)
       VALUES ('wb2', 'ADVICE', 2, 3, 'Client Beta', 2, 2);
-      INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
+      INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type, user_id) 
       VALUES 
         (
           'wb2', 
           (SELECT id FROM units WHERE engine = 'ENG-P2-003' LIMIT 1), 
-          'ADVICE'
+          'ADVICE',
+          'admin@company.com'
         ), 
         (
           'wb2', 
           (SELECT id FROM units WHERE engine = 'ENG-P2-004' LIMIT 1), 
-          'ADVICE'
+          'ADVICE',
+          'admin@company.com'
         ), 
         (
           'wb2', 
           (SELECT id FROM units WHERE engine = 'ENG-P2-005' LIMIT 1), 
-          'ADVICE'
+          'ADVICE',
+          'admin@company.com'
         );
 
       UPDATE waybills SET status = 'LOADING' WHERE id = 'wb2';
@@ -361,22 +364,25 @@ const seedDatabase = async () => {
       SET status = 'IN_TRANSIT' 
       WHERE engine IN ('ENG-P2-003', 'ENG-P2-004', 'ENG-P2-005');
 
-      INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
+      INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type, user_id) 
       VALUES 
         (
           'wb2', 
           (SELECT id FROM units WHERE engine = 'ENG-P2-003' LIMIT 1), 
-          'DEPARTURE'
+          'DEPARTURE',
+          'admin@company.com'
         ), 
         (
           'wb2', 
           (SELECT id FROM units WHERE engine = 'ENG-P2-004' LIMIT 1), 
-          'DEPARTURE'
+          'DEPARTURE',
+          'admin@company.com'
         ), 
         (
           'wb2', 
           (SELECT id FROM units WHERE engine = 'ENG-P2-005' LIMIT 1), 
-          'DEPARTURE'
+          'DEPARTURE',
+          'admin@company.com'
         );
 
       `);
@@ -384,22 +390,25 @@ const seedDatabase = async () => {
       UPDATE waybills SET status = 'ARRIVED' WHERE id = 'wb2';
       UPDATE units SET status = 'IN_STORAGE', last_location_id = 3 WHERE engine IN ('ENG-P2-003', 'ENG-P2-004', 'ENG-P2-005');
 
-      INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type) 
+      INSERT INTO waybill_manifest (waybill_id, unit_id, manifest_type, user_id) 
       VALUES 
         (
           'wb2', 
           (SELECT id FROM units WHERE engine = 'ENG-P2-003' LIMIT 1), 
-          'ARRIVAL'
+          'ARRIVAL',
+          'admin@company.com'
         ), 
         (
           'wb2', 
           (SELECT id FROM units WHERE engine = 'ENG-P2-004' LIMIT 1), 
-          'ARRIVAL'
+          'ARRIVAL',
+          'admin@company.com'
         ), 
         (
           'wb2', 
           (SELECT id FROM units WHERE engine = 'ENG-P2-005' LIMIT 1), 
-          'ARRIVAL'
+          'ARRIVAL',
+          'admin@company.com'
         );
 
       UPDATE waybills SET status = 'CLOSED' WHERE id = 'wb2';
