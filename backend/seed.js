@@ -4,6 +4,8 @@ const seedDatabase = async () => {
   try {
     console.log("🚀 Initializing Database Schema & Seed...");
 
+    // gen_random_uuid() is built into PostgreSQL 13+ — no extension needed
+
     await db.query(`
       DROP TABLE IF EXISTS unit_scans CASCADE;
       DROP TABLE IF EXISTS waybill_logs CASCADE;
@@ -25,6 +27,7 @@ const seedDatabase = async () => {
       DROP TABLE IF EXISTS locations CASCADE;
       DROP TABLE IF EXISTS drivers CASCADE;
       DROP TABLE IF EXISTS users CASCADE;
+      DROP TABLE IF EXISTS archives CASCADE;
       DROP SEQUENCE IF EXISTS waybill_code_seq CASCADE;
       DROP TYPE IF EXISTS user_role CASCADE;
     `);
@@ -137,10 +140,23 @@ const seedDatabase = async () => {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
         user_id VARCHAR(100), -- subject to change
         entity_type VARCHAR(100) NOT NULL,
-        entity_id TEXT NOT NULL, 
+        entity_id TEXT NOT NULL, -- TEXT supports both UUID (units) and VARCHAR (waybill) PKs
         event_type TEXT NOT NULL,
         metadata JSONB DEFAULT '{}'::jsonb,
         description TEXT
+      );
+
+      -- Archive tracking table
+      -- Stores metadata for each archive run; actual data lives in Cloudinary Excel files
+      CREATE TABLE IF NOT EXISTS archives (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        created_by VARCHAR(100),
+        file_url TEXT NOT NULL,
+        file_name TEXT NOT NULL,
+        waybill_count INTEGER,
+        date_from TIMESTAMP WITH TIME ZONE,
+        date_to TIMESTAMP WITH TIME ZONE
       );
 
       -- Join Tables

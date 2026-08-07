@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const apiRouter = require('./routes/api');
+const archiveRoutes = require("./routes/archiveRoutes");
+const { startArchiveCron } = require("./cron");
 
 const allowedOrigins = [
   'http://localhost:5173', 
@@ -27,6 +29,9 @@ app.use(cors({
 app.use(express.json());
 
 app.use('/api', apiRouter);
+app.use("/admin/archive", archiveRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+startArchiveCron();
