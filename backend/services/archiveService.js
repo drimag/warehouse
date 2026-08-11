@@ -33,7 +33,8 @@ const fetchArchivableData = async (client) => {
     LEFT JOIN trucks t ON w.truck_id = t.id
     LEFT JOIN drivers d ON w.driver_id = d.id
     WHERE w.status = 'CLOSED'
-      AND w.updated_at < now() - INTERVAL '1 week'
+      AND w.updated_at < now()
+      -- AND w.updated_at < now() - INTERVAL '1 week'
     ORDER BY w.updated_at ASC;
   `);
 

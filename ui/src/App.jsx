@@ -14,6 +14,7 @@ import WaybillLogs from "./pages/WaybillLogs";
 import BulkUpload from "./pages/BulkUpload";
 import { HelpPage } from "./pages/HelpPage";
 import Register from "./pages/Register";
+import ArchiveManager from "./pages/ArchiveManager";
 import "./styles/layout.css";
 import "./styles/tables.css";
 import "./styles/scan.css";
@@ -70,6 +71,7 @@ function App() {
 
           <Route element={<ProtectedRoute permittedRoles={["ADMIN"]} />}>
             <Route path="/bulk_upload" element={<BulkUpload />} />
+            <Route path="/admin/archive" element={<ArchiveManager />} />
           </Route>
 
           {/* Wildcard Catch-all safety net routing */}

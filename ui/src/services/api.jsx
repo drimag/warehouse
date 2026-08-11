@@ -113,6 +113,12 @@ export const api = {
       .get(`/manifest/get_unit_manifest/${unitId}`)
       .then((res) => res.data),
 
+  // --- Archives ---
+  listArchives: () => apiInstance.get("/admin/archive").then((res) => res.data),
+
+  runArchive: () =>
+    apiInstance.post("/admin/archive/run").then((res) => res.data),
+
   // --- Bulk Upload ---
   // Axios automatically detects FormData payloads and configures multipart/form-data headers for you!
   uploadSheet: (formData) =>
