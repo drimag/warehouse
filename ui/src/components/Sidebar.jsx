@@ -10,17 +10,18 @@ import {
   UploadCloud,
   BookOpen,
   LogOut,
-  Book,
-} from "lucide-react"; // Example using Lucide icons
+  Archive,
+} from "lucide-react";
 
 const Sidebar = () => {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate("/login", { replace: true });
   };
+
   const getNavClass = ({ isActive }) => {
     const baseClasses =
       "flex items-center justify-center w-12 h-12 rounded-lg transition-all duration-200 group";
@@ -67,17 +68,29 @@ const Sidebar = () => {
         <UploadCloud size={24} />
       </NavLink>
 
-      {/* Bulk Upload */}
+      {/* Help */}
       <NavLink to="/help" className={getNavClass} title="Help Page">
         <BookOpen size={24} />
       </NavLink>
 
+      {/* Archive Manager — ADMIN only */}
+      {user?.role === "ADMIN" && (
+        <NavLink
+          to="/admin/archive"
+          className={getNavClass}
+          title="Archive Manager"
+        >
+          <Archive size={24} />
+        </NavLink>
+      )}
+
+      {/* Sign Out */}
       <NavLink
         to="/login"
-        onClick={() => logout()} // Clears localStorage and updates React state on click
+        onClick={handleLogout}
         className={getNavClass}
         title="Sign Out"
-        style={{ color: "#dc2626" }} // Optional: a red accent color to distinguish it
+        style={{ color: "#dc2626" }}
       >
         <LogOut size={24} />
       </NavLink>
