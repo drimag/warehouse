@@ -1,25 +1,52 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-const formatDate = (val) =>
-  val ? new Date(val).toLocaleString() : "—";
+const formatDate = (val) => (val ? new Date(val).toLocaleString() : "—");
 
 const formatDateShort = (val) =>
   val ? new Date(val).toLocaleDateString() : "—";
+
+  const handleDownload = async (archiveId, fileName) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${BASE_URL}/admin/archive/${archiveId}/download`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      if (!response.ok) throw new Error("Download failed.");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download error:", err);
+      alert("Failed to download file.");
+    }
+  };
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 
 const StatusBadge = ({ children, variant }) => {
   const styles = {
     success: "bg-green-100 text-green-800 border border-green-200",
-    error:   "bg-red-100 text-red-700 border border-red-200",
-    info:    "bg-blue-100 text-blue-800 border border-blue-200",
+    error: "bg-red-100 text-red-700 border border-red-200",
+    info: "bg-blue-100 text-blue-800 border border-blue-200",
   };
   return (
-    <span className={`inline-block px-3 py-1 rounded text-sm font-medium ${styles[variant]}`}>
+    <span
+      className={`inline-block px-3 py-1 rounded text-sm font-medium ${styles[variant]}`}
+    >
       {children}
     </span>
   );
@@ -30,7 +57,9 @@ const ArchiveTable = ({ archives }) => {
     return (
       <div className="text-center py-12 text-gray-400 border border-dashed border-gray-200 rounded-lg">
         <p className="text-2xl mb-2">🗂️</p>
-        <p className="text-sm">No archives yet. Run your first archive to get started.</p>
+        <p className="text-sm">
+          No archives yet. Run your first archive to get started.
+        </p>
       </div>
     );
   }
@@ -40,8 +69,18 @@ const ArchiveTable = ({ archives }) => {
       <table className="w-full text-sm text-left">
         <thead className="bg-gray-50 border-b border-gray-200">
           <tr>
-            {["File", "Waybills", "Date Range", "Triggered By", "Created At", "Download"].map((h) => (
-              <th key={h} className="px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">
+            {[
+              "File",
+              "Waybills",
+              "Date Range",
+              "Triggered By",
+              "Created At",
+              "Download",
+            ].map((h) => (
+              <th
+                key={h}
+                className="px-4 py-3 font-semibold text-gray-600 whitespace-nowrap"
+              >
                 {h}
               </th>
             ))}
@@ -54,7 +93,9 @@ const ArchiveTable = ({ archives }) => {
                 {a.file_name}
               </td>
               <td className="px-4 py-3 text-center">
-                <span className="font-semibold text-gray-800">{a.waybill_count}</span>
+                <span className="font-semibold text-gray-800">
+                  {a.waybill_count}
+                </span>
               </td>
               <td className="px-4 py-3 text-gray-600 whitespace-nowrap text-xs">
                 {formatDateShort(a.date_from)} → {formatDateShort(a.date_to)}
@@ -70,14 +111,12 @@ const ArchiveTable = ({ archives }) => {
                 {formatDate(a.created_at)}
               </td>
               <td className="px-4 py-3">
-                <a
-                  href={a.file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => handleDownload(a.id, a.file_name)}
                   className="inline-flex items-center gap-1 px-3 py-1 rounded bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
                 >
                   📥 Download
-                </a>
+                </button>
               </td>
             </tr>
           ))}
@@ -124,7 +163,7 @@ export default function ArchiveManager() {
 
   const handleRunArchive = async () => {
     const confirmed = window.confirm(
-      "This will permanently delete all CLOSED waybills older than 1 week from the database and export them to an Excel file on Cloudinary.\n\nThis cannot be undone. Continue?"
+      "This will permanently delete all CLOSED waybills older than 1 week from the database and export them to an Excel file on Cloudinary.\n\nThis cannot be undone. Continue?",
     );
     if (!confirmed) return;
 
@@ -167,15 +206,18 @@ export default function ArchiveManager() {
 
       {/* Info banner */}
       <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
-        <strong>⚠️ How archiving works:</strong> Closed waybills older than 1 week are exported
-        to an Excel file on Cloudinary and then <strong>permanently deleted</strong> from the
-        database. This runs automatically every <strong>Sunday at 2AM</strong>. You can also
-        trigger it manually below.
+        <strong>⚠️ How archiving works:</strong> Closed waybills older than 1
+        week are exported to an Excel file on Cloudinary and then{" "}
+        <strong>permanently deleted</strong> from the database. This runs
+        automatically every <strong>Sunday at 2AM</strong>. You can also trigger
+        it manually below.
       </div>
 
       {/* Manual trigger */}
       <div className="mb-8 p-6 border border-gray-200 rounded-lg bg-white">
-        <h2 className="text-base font-semibold text-gray-800 mb-1">Manual Archive</h2>
+        <h2 className="text-base font-semibold text-gray-800 mb-1">
+          Manual Archive
+        </h2>
         <p className="text-sm text-gray-500 mb-4">
           Runs the same process as the weekly cron job immediately.
         </p>
@@ -196,7 +238,7 @@ export default function ArchiveManager() {
             </StatusBadge>
             {runResult.success && runResult.fileUrl && (
               <a
-                href={runResult.fileUrl}
+                href={`${runResult.fileUrl}?fl_attachment`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="ml-3 text-sm text-blue-600 underline hover:text-blue-800"

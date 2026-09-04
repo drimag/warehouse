@@ -170,7 +170,7 @@ const uploadToCloudinary = (buffer, fileName) => {
       {
         resource_type: "raw",        // Required for non-image files
         folder: "ila-warehouse/archives",
-        public_id: fileName,
+        public_id: `${fileName}.xlsx`,
         overwrite: false,
       },
       (error, result) => {

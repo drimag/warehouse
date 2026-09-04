@@ -48,4 +48,30 @@ const listArchives = async (req, res) => {
   }
 };
 
-module.exports = { triggerArchive, listArchives };
+const downloadArchive = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await db.query(
+      "SELECT file_url, file_name FROM archives WHERE id = $1",
+      [id]
+    );
+
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: "Archive not found." });
+
+    const { file_url, file_name } = result.rows[0];
+
+    const response = await fetch(file_url);
+    const buffer = await response.arrayBuffer();
+
+    res.setHeader("Content-Disposition", `attachment; filename="${file_name}"`);
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.send(Buffer.from(buffer));
+  } catch (err) {
+    console.error("❌ Archive download error:", err);
+    res.status(500).json({ error: "Failed to download archive." });
+  }
+};
+
+module.exports = { triggerArchive, listArchives, downloadArchive };
