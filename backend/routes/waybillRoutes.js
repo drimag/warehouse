@@ -41,6 +41,13 @@ router.patch(
   waybillController.touchLoadingTimeout,
 );
 
+router.patch(
+  "/:id/close",
+  authenticateToken,
+  restrictToRoles("ADMIN"),
+  waybillController.closeWaybill,
+);
+
 //TODO: set route to something specific
 router.get(
   "/",
