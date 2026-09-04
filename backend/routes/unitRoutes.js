@@ -28,5 +28,17 @@ router.post(
   restrictToRoles("ADMIN", "SCANNER"),
   unitController.insertNewUnit,
 );
+router.get(
+  "/:id",
+  authenticateToken,
+  restrictToRoles("ADMIN", "SCANNER", "VIEWER"),
+  unitController.getUnit,
+);
+router.patch(
+  "/:id",
+  authenticateToken,
+  restrictToRoles("ADMIN"),
+  unitController.updateUnit,
+);
 
 module.exports = router;

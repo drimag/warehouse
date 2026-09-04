@@ -64,6 +64,9 @@ export const api = {
       .patch(`/waybills/loading_timeout/${id}`)
       .then((res) => res.data),
 
+  closeWaybill: (waybillId) =>
+    apiInstance.patch(`/waybills/${waybillId}/close`).then((res) => res.data),
+
   // --- Units ---
   getUnits: () => apiInstance.get("/units").then((res) => res.data),
 
@@ -75,6 +78,12 @@ export const api = {
 
   insertNewUnit: (details) =>
     apiInstance.post("/units/new_unit", details).then((res) => res.data),
+
+  getUnit: (unitId) =>
+    apiInstance.get(`/units/${unitId}`).then((res) => res.data),
+
+  updateUnit: (unitId, updates) =>
+    apiInstance.patch(`/units/${unitId}`, updates).then((res) => res.data),
 
   // --- References ---
   getTrucks: () =>
