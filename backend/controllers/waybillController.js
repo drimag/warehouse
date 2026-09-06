@@ -166,36 +166,41 @@ exports.touchLoadingTimeout = async (req, res) => {
 
 exports.closeWaybill = async (req, res) => {
   const { id } = req.params;
+ 
+  // closeUnits: boolean sent from frontend — whether to also mark arrival units as CLOSED
+  const closeUnits = req.body.closeUnits === true;
+ 
   const client = await db.connect();
-
+ 
   try {
     await client.query("BEGIN");
-
+ 
     const waybill = await Waybill.getCloseCheck(client, id);
-
+ 
     if (!waybill) {
       await client.query("ROLLBACK");
       return res.status(404).json({ error: "Waybill not found." });
     }
-
+ 
     const { status, expected_quantity, arrival_count } = waybill;
-
+ 
     if (status !== "ARRIVED") {
       await client.query("ROLLBACK");
       return res.status(400).json({
         error: `Cannot close waybill. Current status is ${status}.`,
       });
     }
-
+ 
     if (expected_quantity && parseInt(arrival_count) !== expected_quantity) {
       await client.query("ROLLBACK");
       return res.status(400).json({
         error: `Cannot close. Expected ${expected_quantity} units at arrival but only ${arrival_count} were scanned.`,
       });
     }
-
+ 
+    // Close the waybill — SCD2 trigger fires automatically
     await Waybill.setClosed(client, id);
-
+ 
     await logActivity({
       client,
       userEmail: req.user.email,
@@ -207,12 +212,37 @@ exports.closeWaybill = async (req, res) => {
         new_status: "CLOSED",
         arrival_count: parseInt(arrival_count),
         expected_quantity,
+        units_closed: closeUnits,
       },
-      description: `Waybill closed by ${req.user.email}.`,
+      description: `Waybill closed by ${req.user.email}.${closeUnits ? " Arrival units marked as CLOSED." : ""}`,
     });
-
+ 
+    // Optionally close all units that arrived on this waybill
+    let closedUnits = [];
+    if (closeUnits) {
+      closedUnits = await Waybill.closeArrivalUnits(client, id);
+ 
+      // Log the unit closures as a single batch entry
+      await logActivity({
+        client,
+        userEmail: req.user.email,
+        entityType: "waybill",
+        entityId: id,
+        eventType: "BULK_UNIT_CLOSE",
+        metadata: {
+          waybill_id: id,
+          units_closed: closedUnits.map((u) => u.engine),
+          count: closedUnits.length,
+        },
+        description: `${closedUnits.length} arrival unit(s) marked CLOSED by ${req.user.email} on waybill close.`,
+      });
+    }
+ 
     await client.query("COMMIT");
-    return res.status(200).json({ message: "Waybill closed successfully." });
+    return res.status(200).json({
+      message: "Waybill closed successfully.",
+      unitsClosed: closedUnits.length,
+    });
   } catch (err) {
     await client.query("ROLLBACK");
     console.error("❌ ERROR CLOSING WAYBILL:", err.message);

@@ -213,6 +213,31 @@ Waybill.insertFromForm = async (data) => {
   return res.rows[0];
 };
 
+Waybill.getArrivalUnitIds = async (client, waybillId) => {
+  const result = await client.query(
+    `SELECT DISTINCT unit_id
+     FROM waybill_manifest
+     WHERE waybill_id = $1 AND manifest_type = 'ARRIVAL'`,
+    [waybillId]
+  );
+  return result.rows.map((r) => r.unit_id);
+};
+ 
+Waybill.closeArrivalUnits = async (client, waybillId) => {
+  const result = await client.query(
+    `UPDATE units
+     SET status = 'CLOSED', updated_at = now()
+     WHERE id IN (
+       SELECT DISTINCT unit_id
+       FROM waybill_manifest
+       WHERE waybill_id = $1 AND manifest_type = 'ARRIVAL'
+     )
+     RETURNING id, engine`,
+    [waybillId]
+  );
+  return result.rows;
+};
+
 Waybill.insertBulkWaybills = async (data) => {
   const client = await db.connect();
   await checkAndResetSequence();

@@ -64,8 +64,10 @@ export const api = {
       .patch(`/waybills/loading_timeout/${id}`)
       .then((res) => res.data),
 
-  closeWaybill: (waybillId) =>
-    apiInstance.patch(`/waybills/${waybillId}/close`).then((res) => res.data),
+  closeWaybill: (waybillId, closeUnits = false) =>
+    apiInstance
+      .patch(`/waybills/${waybillId}/close`, { closeUnits })
+      .then((res) => res.data),
 
   // --- Units ---
   getUnits: () => apiInstance.get("/units").then((res) => res.data),

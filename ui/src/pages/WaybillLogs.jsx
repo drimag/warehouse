@@ -94,6 +94,7 @@ export default function WaybillLogs() {
   // Close waybill state
   const [closing, setClosing] = useState(false);
   const [closeError, setCloseError] = useState("");
+  const [closeUnits, setCloseUnits] = useState(false);
 
   // Unit edit modal state
   const [editingUnitId, setEditingUnitId] = useState(null);
@@ -128,16 +129,23 @@ export default function WaybillLogs() {
   // ── Close waybill ────────────────────────────────────────────────────────
 
   const handleClose = async () => {
+    const unitWarning = closeUnits
+      ? "\n\n⚠️ All units scanned at arrival will also be marked as CLOSED and removed from active inventory."
+      : "";
+
     const confirmed = window.confirm(
-      "Mark this waybill as CLOSED?\n\nThis action cannot be undone."
+      `Mark this waybill as CLOSED?\n\nThis action cannot be undone.${unitWarning}`
     );
     if (!confirmed) return;
 
     setClosing(true);
     setCloseError("");
     try {
-      await api.closeWaybill(id);
-      await fetchPageData(); // Refresh to show updated status
+      const result = await api.closeWaybill(id, closeUnits);
+      if (closeUnits && result.unitsClosed > 0) {
+        console.log(`✅ ${result.unitsClosed} unit(s) marked as CLOSED.`);
+      }
+      await fetchPageData();
     } catch (err) {
       setCloseError(err.response?.data?.error || "Failed to close waybill.");
     } finally {
@@ -177,23 +185,49 @@ export default function WaybillLogs() {
 
       {/* Close waybill — only shown to ADMIN when status is ARRIVED */}
       {isAdmin && details?.status === "ARRIVED" && (
-        <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-gray-700">Ready to close this waybill?</p>
-            <p className="text-xs text-gray-500 mt-0.5">
-              All arrived units must match the expected quantity before closing.
-            </p>
-            {closeError && (
-              <p className="text-xs text-red-600 mt-1 font-medium">⚠️ {closeError}</p>
-            )}
+        <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-gray-700">Ready to close this waybill?</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                All arrived units must match the expected quantity before closing.
+              </p>
+            </div>
+            <button
+              onClick={handleClose}
+              disabled={closing}
+              className="shrink-0 px-4 py-2 bg-gray-800 hover:bg-gray-900 disabled:bg-gray-400 text-white text-sm font-medium rounded transition-colors"
+            >
+              {closing ? "Closing..." : "✓ Mark as Closed"}
+            </button>
           </div>
-          <button
-            onClick={handleClose}
-            disabled={closing}
-            className="shrink-0 px-4 py-2 bg-gray-800 hover:bg-gray-900 disabled:bg-gray-400 text-white text-sm font-medium rounded transition-colors"
-          >
-            {closing ? "Closing..." : "✓ Mark as Closed"}
-          </button>
+
+          {/* Close units option */}
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={closeUnits}
+                onChange={(e) => setCloseUnits(e.target.checked)}
+                className="mt-0.5 accent-gray-800"
+              />
+              <div>
+                <p className="text-sm font-medium text-gray-700">
+                  Also mark arrived units as Closed
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Units scanned at arrival will be set to <strong>CLOSED</strong> status and
+                  removed from active inventory. Only tick this if these units have reached
+                  their final destination and will no longer be tracked in the system.
+                  This cannot be undone without a manual edit.
+                </p>
+              </div>
+            </label>
+          </div>
+
+          {closeError && (
+            <p className="text-xs text-red-600 mt-3 font-medium">⚠️ {closeError}</p>
+          )}
         </div>
       )}
 
